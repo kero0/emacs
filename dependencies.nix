@@ -27,4 +27,9 @@ with pkgs;
   # python
   (python3.withPackages (ps: with ps; [ black isort pipx python-lsp-server ]))
   poetry
-] ++ lib.optional (!stdenv.isLinux) coreutils-prefixed
+
+  # mu4e
+  mu
+  msmtp
+] ++ lib.optionals (!stdenv.isLinux) [ coreutils-prefixed gnused ]
+++ (if stdenv.isDarwin then [ terminal-notifier ] else [ notify-send ])

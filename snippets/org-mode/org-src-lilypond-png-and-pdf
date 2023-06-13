@@ -1,0 +1,23 @@
+# -*- mode: snippet -*-
+# name: org-src-lilypond-png-and-pdf
+# uuid: org_src_lilypond_png_and_pdf
+# key: <slp
+# --
+#+name: ${1:name}
+#+begin_src lilypond :file-ext png :exports results
+\paper{
+  indent=0\mm
+  line-width=120\mm
+  oddFooterMarkup=##f
+  oddHeaderMarkup=##f
+}
+
+\header { title = \markup "$1" }
+`%`$0
+#+end_src
+
+#+name: $1-doc
+#+begin_src lilypond :file-ext pdf :exports none
+<<$1>>
+#+end_src
+[[file:`(file-name-base buffer-file-name)`/$1-doc.pdf][You can download this verse here]]
