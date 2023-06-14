@@ -244,20 +244,28 @@ Local leader is bound to "SPC m" and always shows the keybindings for the curren
 #+begin_src emacs-lisp :noweb-ref keybindings :tangle no
 (general-create-definer my/local-leader-def
   :prefix "SPC m"
-  :prefix-map 'my/local-leader-map
+  ;; :prefix-map 'my/local-leader-map
   :states '(normal visual motion)
   :keymaps 'override
   :wk-full-keys nil
   :wk-evilified t
   :which-key "Local Leader")
 
+(general-create-definer my/auto-major-mode-def
+  :prefix "SPC M"
+  :states '(normal visual motion)
+  :keymaps 'override
+  :wk-full-keys nil
+  :wk-evilified t
+  :which-key "Auto Major Mode")
+
 ;; automatically add "current major mode"-map to "local-leader-map SPC" menu
-(defun my/local-leader-add-major-mode-map ()
-  (let ((major-mode-map (intern (concat "my/local-leader-" (symbol-name major-mode) "-map"))))
+(defun my/add-major-mode-map ()
+  (let ((major-mode-map (intern (concat (symbol-name major-mode) "-map"))))
     (when (boundp major-mode-map)
-      (my/local-leader-def
+      (my/auto-major-mode-def
        "" (:keymap major-mode-map :wk-full-keys nil :wk-evilified t :which-key "Major Mode")))))
-(add-hook 'after-change-major-mode-hook #'my/local-leader-add-major-mode-map)
+(add-hook 'after-change-major-mode-hook #'my/add-major-mode-map)
 #+end_src
 
 *** Assorted Keybindings
@@ -1206,8 +1214,8 @@ be passed to EVAL-FUNC as its rest arguments"
 (use-package embark-consult
   :if (and (featurep 'embark)
 	   (featurep 'consult))
-  :after (embark consult)
-  :hook (embark-collect-mode . embark-consult-preview-minor-mode))
+  :after (embark consult))
+  ;; :hook (embark-collect-mode . embark-consult-preview-minor-mode))
 #+end_src
 ** Copilot
 #+begin_src emacs-lisp
@@ -1404,15 +1412,11 @@ is available."
          (lsp-mode . lsp-modeline-workspace-status-mode)
          (lsp-mode . lsp-headerline-breadcrumb-mode)
          (lsp-mode . lsp-enable-which-key-integration))
-  ;; :custom (lsp-keymap-prefix "SPC c l"))
-   :config (my/general-global-Code 'normal lsp-mode :definer 'minor-mode
-      "l" lsp-command-map))
-  ;; :custom (lsp-keymap-prefix nil)
-  ;; :config
-  ;; (my/general-global-Code
-  ;;   :keymaps 'lsp-mode-map
-  ;;   :states '(normal visual)
-  ;;   "l" '(:keymap lsp-command-map :wk "LSP" :package lsp-mode)))
+  :custom (lsp-keymap-prefix nil)
+  :config (my/general-global-Code
+	    :states '(normal)
+	    :keymaps 'lsp-mode-map
+	    "l" lsp-command-map))
 #+end_src
 ** LSP UI
 #+begin_src emacs-lisp
@@ -1487,11 +1491,11 @@ is available."
   :general (my/leader-def
 	     :keymap 'python-mode-map
 	     "o r" '(run-python :which-key "repl/python"))
-  :general (my/leader-def
+  :general (my/local-leader-def
 	     :keymap 'python-mode-map
-	     :prefix "m"
 	     "r" '(run-python :which-key "repl/python")
-	     "b" '(python-shell-send-buffer :which-key "send buffer to repl")))
+	     "b" '(python-shell-send-buffer :which-key "send buffer to repl"))
+  :init (setq python-check-command "pyflakes"))
 (use-package pyvenv
   :defer t
   :config
@@ -1507,8 +1511,19 @@ is available."
 	     :prefix "m"
 	     "v" '(pyvenv-workon :which-key "workon")))
 
+(use-package pyimport
+  :after python
+  :general (my/local-leader-def
+	     :keymap 'python-mode-map
+	     "i" '(nil :which-key "import")
+	     "i i" '(pyimport-insert-missing :which-key "insert missing imports")
+	     "i r" '(pyimport-remove-unused :which-key "remove unused imports")))
+
 (use-package py-isort
-  :hook (before-save . py-isort-before-save))
+  :hook (before-save . py-isort-before-save)
+  :general (my/local-leader-def
+	     :keymap 'python-mode-map
+	     "i s" '(py-isort-buffer :which-key "sort imports")))
 
 (use-package poetry
   :after python
@@ -1517,12 +1532,84 @@ is available."
              :keymap 'python-mode-map
 	     :prefix "m"
 	     "p" '(poetry :which-key "poetry")))
+
 (use-package lsp-pyright
-  :ensure t
-  :after (python-mode lsp-mode)
-  :hook (python-mode . (lambda ()
-			 (require 'lsp-pyright)
-			 (lsp-deferred))))
+  :after lsp-mode)
+
+(use-package ob-python
+  :ensure nil
+  :after org
+  :commands org-babel-execute:python
+  :init
+  (add-to-list 'org-babel-load-languages '(python . t))
+  (setq org-babel-python-command "python3"))
+#+end_src
+** Rust
+#+begin_src emacs-lisp
+(use-package rustic
+  :mode ("\\.rs$" . rustic-mode)
+  :init
+  (defun my/startup-rust ()
+    (setq-local compile-command "cargo run")
+    (when (boundp 'flycheck-checkers)
+      (make-local-variable 'flycheck-checkers)
+      (push 'rustic-clippy flycheck-checkers)))
+  (add-hook 'rustic-mode-hook #'my/startup-rust)
+  :config
+  (setq rustic-indent-method-chain t)
+  (my/local-leader-def
+    :keymap 'rustic-mode-map
+    "b" '(nil :which-key "build")
+    "bb" '(rustic-cargo-build :which-key "build")
+    "br" '(rustic-cargo-run :which-key "run")
+    "ba" '(rustic-cargo-audit :which-key "audit")
+    "bt" '(rustic-cargo-test :which-key "test")
+    "bc" '(rustic-cargo-check :which-key "check")
+    "bd" '(rustic-cargo-build-doc :which-key "doc")
+    "bD" '(rustic-cargo-doc :which-key "doc open")
+    "bn" '(rustic-cargo-new :which-key "new")
+    "c" '(nil :which-key "cargo")
+    "co" '(rustic-cargo-outdated :which-key "outdated")
+    "ca" '(rustic-cargo-add :which-key "add")
+    "cd" '(rustic-cargo-rm :which-key "rm")
+    "cA" '(rustic-cargo-add-missing-dependencies :which-key "add missing")
+    "m" '(rustic-cargo-expand :which-key "macro expand")))
+(use-package rustic-babel
+  :ensure nil
+  :after org
+  :commands (org-babel-execute:rustic)
+  :init
+  (add-to-list 'org-src-lang-modes '("rust" . rustic))
+  (add-to-list 'org-babel-tangle-lang-exts '("rustic" . "rs"))
+  (defalias 'org-babel-execute:rust #'org-babel-execute:rustic))
+#+end_src
+** Haskell
+#+begin_src emacs-lisp
+(use-package haskell-mode
+  :init
+  (defun my/haskell-repl ()
+    (interactive)
+    (my/do-in-other-window (lambda ()
+			     (haskell-interactive-bring)
+			     (evil-insert-state))))
+  :mode ("\\.hs$" . haskell-mode)
+  :config
+  (eval-after-load 'projectile (progn
+				 (add-to-list 'projectile-other-file-alist '("hs" "lhs"))
+				 (add-to-list 'projectile-project-root-files "stack.yaml")))
+  (my/general-global-Open
+    :keymaps 'haskell-mode-map
+    "r" 'my/haskell-repl)
+  (my/local-leader-def
+    :keymaps 'haskell-mode-map
+    "b" 'haskell-process-cabal-build
+    "c" 'haskell-cabal-visit-file
+    "h" 'haskell-hide-toggle
+    "H" 'haskell-hide-toggle-all))
+
+(use-package lsp-haskell
+  :after lsp-mode
+  :hook (haskell-mode . lsp))
 #+end_src
 * Mail
 ** mu4e
@@ -1614,14 +1701,6 @@ is available."
 	org-export-in-background t
 	org-export-with-sub-superscripts '{}
 	org-list-allwo-alphabetical t
-	org-babel-default-header-args
-	'((:results . "replace")
-	  (:exports . "both")
-	  (:cache . "yes")
-	  (:noweb . "yes")
-	  (:hlines . "no")
-	  (:mkdirp . "yes")
-	  (:tangle . "no"))
 	org-auto-align-tags t
 	org-tags-column 0
 	org-catch-invisible-edits 'smart
@@ -1635,9 +1714,102 @@ is available."
 	org-hide-emphasis-markers t
 	org-pretty-entities t
 	org-hide-leading-stars nil))
-  ;; (add-to-list 'org-latex-package-alist '("" "fancyhdr"))
-  ;; (add-to-list 'org-latex-package-alist '("" "siunitx"))
-  ;; (plist-put org-format-latex-options :scale 1))
+;; (add-to-list 'org-latex-package-alist '("" "fancyhdr"))
+;; (add-to-list 'org-latex-package-alist '("" "siunitx"))
+;; (plist-put org-format-latex-options :scale 1))
+#+end_src
+** Keybindings
+#+begin_src emacs-lisp
+(use-package org
+  :config
+  (my/local-leader-def
+    :keymaps 'org-mode-map
+    "#" #'org-update-statistics-cookies
+    "'" #'org-edit-special
+    "*" #'org-ctrl-c-star
+    "+" #'org-ctrl-c-minus
+    "," #'org-switchb
+    "@" #'org-cite-insert
+    "." #'consult-org-heading
+    "/" #'counsel-org-goto-all
+    "A" #'org-archive-subtree
+    "e" #'org-export-dispatch
+    "f" #'org-footnote-action
+    "h" #'org-toggle-heading
+    "i" #'org-toggle-item
+    "I" #'org-id-get-create
+    "k" #'org-babel-remove-result
+    "n" #'org-store-link
+    "o" #'org-set-property
+    "q" #'org-set-tags-command
+    "t" #'org-todo
+    "T" #'org-todo-list
+    "x" #'org-toggle-checkbox
+
+    "a" '(nil :which-key "attachments")
+    "aa" 'org-attach
+    "ad" 'org-attach-delete-one
+    "aD" 'org-attach-delete-all
+    "af" '+org/find-file-in-attachments
+    "al" '+org/attach-file-and-insert-link
+    "an" 'org-attach-new
+    "ao" 'org-attach-open
+    "aO" 'org-attach-open-in-emacs
+    "ar" 'org-attach-reveal
+    "aR" 'org-attach-reveal-in-emacs
+    "au" 'org-attach-url
+    "as" 'org-attach-set-directory
+    "aS" 'org-attach-sync
+
+    "b" '(nil :which-key "tabels")
+    "b-" 'org-table-insert-hline
+    "ba" 'org-table-align
+    "bb" 'org-table-blank-field
+    "bc" 'org-table-create-or-convert-from-region
+    "be" 'org-table-edit-field
+    "bf" 'org-table-edit-formulas
+    "bh" 'org-table-field-info
+    "bs" 'org-table-sort-lines
+    "br" 'org-table-recalculate
+    "bR" 'org-table-recalculate-buffer-tables
+
+    "bd" '(nil :which-key "delete")
+    "bdc" 'org-table-delete-column
+    "bdr" 'org-table-kill-row
+
+    "bi" '(nil :which-key "insert")
+    "bic" 'org-table-insert-column
+    "bih" 'org-table-insert-hline
+    "bir" 'org-table-insert-row
+    "biH" 'org-table-hline-and-move
+
+    "l" '(nil :which-key "links")
+    "lc" 'org-cliplink
+    "ld" '+org/remove-link
+    "li" 'org-id-store-link
+    "ll" 'org-insert-link
+    "lL" 'org-insert-all-links
+    "ls" 'org-store-link
+    "lS" 'org-insert-last-stored-link
+    "lt" 'org-toggle-link-display
+    "lg" '(org-mac-link-get-link :if IS-MAC)
+
+
+    "s" '(nil :which-key "subtree")
+    "sa" 'org-toggle-archive-tag
+    "sb" 'org-tree-to-indirect-buffer
+    "sc" 'org-clone-subtree-with-time-shift
+    "sd" 'org-cut-subtree
+    "sh" 'org-promote-subtree
+    "sj" 'org-move-subtree-down
+    "sk" 'org-move-subtree-up
+    "sl" 'org-demote-subtree
+    "sn" 'org-narrow-to-subtree
+    "sr" 'org-refile
+    "ss" 'org-sparse-tree
+    "sA" 'org-archive-subtree
+    "sN" 'widen
+    "sS" 'org-sort))
 #+end_src
 ** Org Modern
 #+begin_src emacs-lisp
@@ -1664,7 +1836,7 @@ is available."
 #+end_src
 ** LilyPond
 #+begin_src emacs-lisp
-(use-package lilypond-mode
+(use-package lilypond
   :ensure nil ;; Comes with lilypond, installed with nix
   :mode ("\\.ly\\'" . LilyPond-mode)
   :commands (LilyPond-mode)
@@ -1745,7 +1917,46 @@ is available."
  :unnarrowed t)
 #+end_src
 
+** Babel
+#+begin_src emacs-lisp
+(use-package org
+  :config
+  (setq org-confirm-babel-evaluate nil
+	org-src-fontify-natively t
+	org-src-tab-acts-natively t
+	org-src-window-setup 'current-window
+	org-src-preserve-indentation t
+	org-src-strip-leading-and-trailing-blank-lines t
+	org-src-ask-before-returning-to-edit-buffer nil
+        org-babel-load-languages '((emacs-lisp . t))
+	org-babel-default-header-args '((:session . "default")
+					(:results . "replace")
+					(:mkdirp . "yes")
+					(:exports . "both")
+					(:cache . "yes")
+					(:noweb . "yes")
+					(:hlines . "no")
+					(:tangle . "no")
+					(:padnewline . "yes")
+					(:comments . "link")))
+  (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages))
+#+end_src
+** Evil Org
+#+begin_src emacs-lisp
+(use-package evil-org
+  :after org
+  :hook (org-mode . evil-org-mode)
+  :config
+  (require 'evil-org-agenda)
+  (evil-org-agenda-set-keys)
+  (add-hook 'evil-org-mode-hook
+	    (lambda ()
+	      (evil-org-set-key-theme)))
+  (require 'evil-org-agenda)
+  (evil-org-agenda-set-keys))
+#+end_src
 * Local Variables
 # Local Variables:
 # eval: (add-hook 'after-save-hook #'org-babel-tangle)
 # End:
+

@@ -31,5 +31,12 @@ with pkgs;
   # mu4e
   mu
   msmtp
+
+  # rust
+  rustup
+  rust-analyzer
+  cargo
+
+  # haskell; not installed by default because it takes a long time
 ] ++ lib.optionals (!stdenv.isLinux) [ coreutils-prefixed gnused ]
 ++ (if stdenv.isDarwin then [ terminal-notifier ] else [ notify-send ])
