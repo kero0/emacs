@@ -1,4 +1,5 @@
 .DS_STORE
 result
 
-*.el
+**.el
+!lisp/*.el

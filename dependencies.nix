@@ -1,4 +1,4 @@
-pkgs:
+{ pkgs, is-work, is-personal }:
 with pkgs;
 [
   # basics
@@ -24,13 +24,16 @@ with pkgs;
   # copilot
   nodejs
 
+  # latex but mostly for ox-latex
+  (with texlive;
+    texlive.combine {
+      inherit scheme-small biblatex latexmk;
+      inherit capt-of siunitx wrapfig xcolor;
+    })
+
   # python
   (python3.withPackages (ps: with ps; [ black isort pipx python-lsp-server ]))
   poetry
-
-  # mu4e
-  mu
-  msmtp
 
   # rust
   rustup
@@ -39,4 +42,9 @@ with pkgs;
 
   # haskell; not installed by default because it takes a long time
 ] ++ lib.optionals (!stdenv.isLinux) [ coreutils-prefixed gnused ]
-++ (if stdenv.isDarwin then [ terminal-notifier ] else [ notify-send ])
+++ (if stdenv.isDarwin then [ terminal-notifier ] else [ libnotify ])
+
+# mu4e
+# Both of these are configured outside this repo
+# Personally, I configure them using home-manager
+++ lib.optionals is-personal [ mu msmtp]

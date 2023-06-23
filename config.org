@@ -1,9 +1,6 @@
-# -*- mode: org; coding: utf-8; lexical-binding: t; -*-
-:DOC-CONFIG:
-#+property: header-args :emacs-lisp :tangle init.el :results output silent :noweb yes :lexical t
-#+startup: fold
-:END:
 * Setup
+#+property: header-args :tangle init.el :results output silent :noweb yes :lexical t :eval never-export
+#+startup: fold
 #+begin_src emacs-lisp
 ;; -*- lexical-binding: t; -*-
 #+end_src
@@ -14,6 +11,9 @@
 (defconst IS-LINUX    (memq system-type '(gnu gnu/linux gnu/kfreebsd berkeley-unix)))
 (defconst IS-WINDOWS  (memq system-type '(cygwin windows-nt ms-dos)))
 (defconst IS-BSD      (memq system-type '(darwin berkeley-unix gnu/kfreebsd)))
+;; personal or work
+(defconst IS-PERSONAL t)
+(defconst IS-WORK     (not IS-PERSONAL))
 #+end_src
 *** Directories
 #+begin_src emacs-lisp
@@ -85,34 +85,41 @@
         `((".*" ,(no-littering-expand-var-file-name "auto-save/") t))
         no-littering-cache-persistent t
         custom-file (no-littering-expand-etc-file-name "custom.el"))
-  (load custom-file 'noerror 'nomessage)
-  (use-package recentf
-    :ensure nil
-    :config
-    (add-to-list 'recentf-exclude no-littering-var-directory)
-    (add-to-list 'recentf-exclude no-littering-etc-directory)
-    (add-to-list 'recentf-exclude "/nix/store/.*")
-    (add-to-list 'recentf-exclude "/tmp/.*")
-    (add-to-list 'recentf-exclude "/var/tmp/.*")
-    (add-to-list 'recentf-exclude "/private/tmp/.*")
-    (add-to-list 'recentf-exclude "/private/var/tmp/.*")))
+  (load custom-file 'noerror 'nomessage))
 #+end_src
 ** History
 *** recentf
 #+begin_src emacs-lisp
-(setq recentf-max-menu-items 25
-      recentf-save-file (expand-file-name "recentf" my/local-dir))
-(recentf-mode 1)
+(use-package recentf
+  :ensure nil
+  :config
+  (dolist (dir `("/nix/store/.*"
+		 "/tmp/.*"
+		 "/var/tmp/.*"
+		 "/private/tmp/.*"
+		 "/private/var/tmp/.*"
+		 ,my/etc-dir
+		 ,my/local-dir
+		 ,my/cache-dir))
+    (add-to-list 'recentf-exclude dir))
+  (when-let ((dir (getenv "XDG_DATA_HOME")))
+    (add-to-list 'recentf-exclude (concat dir "/.*")))
+  (setq recentf-max-menu-items 25
+	recentf-save-file (expand-file-name "recentf" my/local-dir))
+  (recentf-mode 1))
 #+end_src
 *** savehist
 #+begin_src emacs-lisp
-(setq savehist-file (expand-file-name "savehist" my/local-dir)
-      savehist-save-minibuffer-history t
-      savehist-autosave-interval 60
-      savehist-additional-variables '(kill-ring
-                                      search-ring
-                                      regexp-search-ring))
-(savehist-mode 1)
+(use-package savehist
+  :ensure nil
+  :config
+  (setq savehist-file (expand-file-name "savehist" my/local-dir)
+	savehist-save-minibuffer-history t
+	savehist-autosave-interval 60
+	savehist-additional-variables '(kill-ring
+					search-ring
+					regexp-search-ring))
+  (savehist-mode 1))
 #+end_src
 *** saveplace
 #+begin_src emacs-lisp
@@ -172,6 +179,26 @@
       native-comp-verbose nil)
 
 #+end_src
+** Window management
+I want windows that start with '*' to be opened in the lower 1/3 of the frame. These windows should close when their buffer dies and should not be reused. If they are not in ~my/special-window-no-cursor-manage-alist~ then they should automatically grab the cursor.
+#+begin_src emacs-lisp
+(defvar my/special-window-no-cursor-manage-alist '("*Help*" "*Warnings*" "*Backtrace*" "*Messages*"))
+;; (defun my/special-window-manage (x)
+;;     ((bufferp x)))
+#+end_src
+** Proxy Settings
+#+begin_src emacs-lisp
+(defvar my/proxy nil
+  "Proxy to use")
+(when IS-WORK
+  (setq my/proxy  "http://internet.ford.com:83")
+  (setq url-using-proxy my/proxy
+	url-proxy-services `(("http" . ,my/proxy)
+			     ("https" . ,my/proxy)
+			     ("ssh" . ,my/proxy)))
+  (eval-after-load 'lsp
+    (setq lsp-http-proxy my/proxy)))
+#+end_src
 * Keybindings
 ** Basics
 #+begin_src emacs-lisp
@@ -196,14 +223,18 @@
 Macro to define nested keymaps
 #+begin_src emacs-lisp
 ;; copied from https://github.com/progfolio/.emacs.d/blob/master/init.org
-(defmacro my/general-global-menu! (name prefix-key &rest body)
+(cl-defmacro my/general-global-menu! (name prefix-key &rest body &key def-settings &allow-other-keys)
   "Create a definer named +general-global-NAME wrapping global-definer.
   Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX-KEY."
   (declare (indent 2))
   (let* ((n (concat "my/general-global-" name))
-         (prefix-map (intern (concat n "-map"))))
+         (prefix-map (intern (concat n "-map")))
+         (body (if def-settings (remove ':def-settings body) body))
+         (body (if def-settings (remove def-settings body) body)))
     `(progn
+       
        (general-create-definer ,(intern n)
+         ,@(if def-settings def-settings (list))
          :wrapping my/leader-def
          :prefix-map (quote ,prefix-map)
          :prefix ,prefix-key
@@ -218,12 +249,13 @@ Open a buffer at the bottom of the screen
   (unless height (setq height 0.25))
   (let ((buf (get-buffer name)))
     (if buf
-        (progn
- 	  (split-window-below
-	   (floor (* (window-total-height) (- 1 height))))
-	  (other-window 1)
-	  (switch-to-buffer buf))
-
+	(if (get-buffer-window buf)
+	    (select-window (get-buffer-window buf))
+	  (progn
+	    (split-window-below
+	     (floor (* (window-total-height) (- 1 height))))
+	    (other-window 1)
+	    (switch-to-buffer buf)))
       (progn
 	(split-window-below
 	 (floor (* (window-total-height) (- 1 height))))
@@ -243,36 +275,62 @@ Do something in other window
 Local leader is bound to "SPC m" and always shows the keybindings for the current major mode.
 #+begin_src emacs-lisp :noweb-ref keybindings :tangle no
 (general-create-definer my/local-leader-def
-  :prefix "SPC m"
+  :prefix my/local-leader-def-prefix
+  :global-prefix my/local-leader-def-prefix-alt
   ;; :prefix-map 'my/local-leader-map
   :states '(normal visual motion)
   :keymaps 'override
   :wk-full-keys nil
   :wk-evilified t
   :which-key "Local Leader")
-
-(general-create-definer my/auto-major-mode-def
-  :prefix "SPC M"
-  :states '(normal visual motion)
-  :keymaps 'override
-  :wk-full-keys nil
-  :wk-evilified t
-  :which-key "Auto Major Mode")
-
-;; automatically add "current major mode"-map to "local-leader-map SPC" menu
-(defun my/add-major-mode-map ()
-  (let ((major-mode-map (intern (concat (symbol-name major-mode) "-map"))))
-    (when (boundp major-mode-map)
-      (my/auto-major-mode-def
-       "" (:keymap major-mode-map :wk-full-keys nil :wk-evilified t :which-key "Major Mode")))))
-(add-hook 'after-change-major-mode-hook #'my/add-major-mode-map)
 #+end_src
 
-*** Assorted Keybindings
+*** general.el setup
+#+begin_src emacs-lisp :noweb yes
+(defvar my/leader-def-prefix "SPC"
+  "Prefix for general.el leader keybindings.")
+(defvar my/leader-def-prefix-alt "M-SPC"
+  "Alternative prefix for general.el leader keybindings.")
+(defvar my/local-leader-def-prefix (concat my/leader-def-prefix " m")
+  "Prefix for general.el local leader keybindings.")
+(defvar my/local-leader-def-prefix-alt (concat my/leader-def-prefix-alt " m")
+  "Alternative prefix for general.el local leader keybindings.")
+(defvar my/prefix-states '(normal visual motion insert)
+  "States in which to bind general.el leader keybindings.")
+
+
+(use-package general
+  :config
+  (general-evil-setup)
+  (general-override-mode 1)
+  (general-auto-unbind-keys)
+  (general-define-key
+   :keymaps 'override
+   :states my/prefix-states
+   :prefix-map 'my/prefix-map
+   :prefix my/leader-def-prefix
+   :global-prefix my/leader-def-prefix-alt)
+
+  (general-create-definer my/leader-def
+    :wk-full-keys nil
+    :keymaps 'my/prefix-map)
+  (my/leader-def
+    "SPC" '(projectile-find-file :which-key "Find file")
+    "h"   '(:keymap help-map :which-key "Help")
+    "H"   '(helpful-at-point :which-key "Help at point")
+    ";"   '(execute-extended-command :which-key "M-x")
+    ":"   '(eval-expression :which-key "Eval")
+    "."   '(repeat :which-key "Repeat")
+    "r"   '(async-shell-command :which-key "Run command")
+    "R"   '(shell-command :which-key "Run command synchronously"))
+ <<keybindings>>
+  )
+#+end_src
+**** Assorted Keybindings
 :PROPERTIES:
 :header-args: :tangle no :noweb-ref keybindings
 :END:
-**** Quit
+***** Quit
 #+begin_src emacs-lisp
 (my/general-global-menu! "Quit" "q"
   "q" '(save-buffers-kill-terminal :which-key "Quit Emacs")
@@ -280,8 +338,11 @@ Local leader is bound to "SPC m" and always shows the keybindings for the curren
   "r" '(restart-emacs :which-key "Restart Emacs")
   "R" '(restart-emacs--daemon :which-key "Restart Emacs daemon")
   "d" '(restart-emacs-debug-init :which-key "Restart Emacs with debug init"))
+
+
+(message "Loading general-global-menu... Done")
 #+end_src
-**** Buffer
+***** Buffer
 #+begin_src emacs-lisp
 (defun my/open-scratch-buffer ()
   (interactive)
@@ -299,6 +360,7 @@ Local leader is bound to "SPC m" and always shows the keybindings for the curren
         
 
 (my/general-global-menu! "Buffer" "b"
+
   ;; "b" '(switch-to-buffer :which-key "Switch buffer") ;; overriden by consult
   "B" '(switch-to-buffer-other-window :which-key "Switch buffer other window")
   "d" '(kill-current-buffer :which-key "Kill current buffer")
@@ -317,11 +379,11 @@ Local leader is bound to "SPC m" and always shows the keybindings for the curren
 (my/leader-def
   "x" '(my/open-scratch-buffer :which-key "Open scratch buffer"))
 #+end_src
-**** Code
+***** Code
 #+begin_src emacs-lisp
 (my/general-global-menu! "Code" "c")
 #+end_src
-**** File
+***** File
 #+begin_src emacs-lisp
 (defun my/find-file-other-window ()
   (interactive)
@@ -335,21 +397,22 @@ Local leader is bound to "SPC m" and always shows the keybindings for the curren
   (let ((file-name (buffer-file-name)))
     (find-file (concat "/sudo:root@localhost:" file-name))))
 (my/general-global-menu! "File" "f"
+
   "f" '(find-file :which-key "Find file")
-    "F" '(find-file-other-window :which-key "Find file other window")
-    "s" '(save-buffer :which-key "Save buffer")
-    "S" '(write-file :which-key "Save file as")
-    "r" '(recentf-open-files :which-key "Recent files")
-    "R" '(rename-file :which-key "Rename file")
-    "d" '(delete-file :which-key "Delete file")
-    "u" '(my/find-file-sudo :which-key "Find file as root")
-    "U" '(my/this-file-sudo :which-key "Open this file as root"))
+  "F" '(find-file-other-window :which-key "Find file other window")
+  "s" '(save-buffer :which-key "Save buffer")
+  "S" '(write-file :which-key "Save file as")
+  "r" '(recentf-open-files :which-key "Recent files")
+  "R" '(rename-file :which-key "Rename file")
+  "d" '(delete-file :which-key "Delete file")
+  "u" '(my/find-file-sudo :which-key "Find file as root")
+  "U" '(my/this-file-sudo :which-key "Open this file as root"))
 #+end_src
-**** Git
+***** Git
 #+begin_src emacs-lisp
 (my/general-global-menu! "Git" "g")
 #+end_src
-**** Open
+***** Open
 #+begin_src emacs-lisp
 (defvar my/open-proc (cond (IS-MAC "open")
                            (IS-LINUX "xdg-open"))
@@ -362,10 +425,11 @@ Local leader is bound to "SPC m" and always shows the keybindings for the curren
   (my/open-create-or-switch-buffer "*shell*" #'shell))
 
 (my/general-global-menu! "Open" "o"
+
                          "o" '((lambda () (interactive) (my/default-open (buffer-file-name))) :which-key "Open file")
                          "s" '(my/shell :which-key "Shell"))
 #+end_src
-**** Toggle
+***** Toggle
 #+begin_src emacs-lisp
 (defun my/toggle-comment (beg end)
   "Comment or uncomment current region or line."
@@ -378,35 +442,11 @@ Local leader is bound to "SPC m" and always shows the keybindings for the curren
   "t" '(modus-themes-toggle :which-key "theme")
   "/" '(comment-or-uncomment-region :which-key "comment"))
 #+end_src
-*** general.el setup
-#+begin_src emacs-lisp :noweb yes
-(use-package general
-  :config
-  (general-evil-setup)
-  (general-override-mode 1)
-  (general-auto-unbind-keys)
-  (general-define-key
-   :keymaps 'override
-   :states '(insert normal motion visual)
-   :prefix-map 'my/prefix-map
-   :prefix "SPC"
-   :global-prefix "M-SPC")
-
-  (general-create-definer my/leader-def
-    :wk-full-keys nil
-    :keymaps 'my/prefix-map)
-  (my/leader-def
-    "SPC" '(projectile-find-file :which-key "Find file")
-    "h"   '(:keymap help-map :which-key "Help")
-    "H"   '(helpful-at-point :which-key "Help at point")
-    ";"   '(execute-extended-command :which-key "M-x")
-    ":"   '(eval-expression :which-key "Eval")
-    "."   '(repeat :which-key "Repeat")
-    "r"   '(async-shell-command :which-key "Run command")
-    "R"   '(shell-command :which-key "Run command synchronously"))
-  <<keybindings>>
-  )
+***** Search
+#+begin_src emacs-lisp
+(my/general-global-menu! "Search" "s")
 #+end_src
+
 ** evil
 #+begin_src emacs-lisp
 (use-package evil
@@ -499,6 +539,7 @@ Local leader is bound to "SPC m" and always shows the keybindings for the curren
             "A" 'evil-mc-make-cursor-in-visual-selection-end
             "I" 'evil-mc-make-cursor-in-visual-selection-beg)
   :general (my/general-global-menu! "Multi-Cursor" "c m"
+
                                     "a" '(evil-mc-make-all-cursors :which-key "Make all cursors")
                                     "n" '(evil-mc-make-and-goto-next-match :which-key "Make and go to next match")
                                     "N" '(evil-mc-make-and-goto-prev-match :which-key "Make and go to previous match")
@@ -507,58 +548,33 @@ Local leader is bound to "SPC m" and always shows the keybindings for the curren
   (global-evil-mc-mode 1))
 #+end_src
 *** Extra Text Objects
-#+begin_src emacs-lisp :tangle no
-(use-package evil-args
-  :after evil
-  :general (:states 'normal
-		    "gl" 'evil-forward-arg
-		    "gh" 'evil-backward-arg
-		    ;; overriding visual line motions
-		    "gk" 'evil-jump-out-args
-		    'evil-textobj-
-		    "gj" 'evil-jump-out-args)
-  :general (:states 'visual
-		    "]a"
-  ;; :config
-  ;; (define-key evil-inner-text-objects-map "a" 'evil-inner-arg)
-  ;; (define-key evil-outer-text-objects-map "a" 'evil-outer-arg)
-  ;; (define-key evil-inner-text-objects-map "A" 'evil-inner-argument)
-  ;; (define-key evil-outer-text-objects-map "A" 'evil-outer-argument))
-
-(use-package evil-textobj-anyblock
-  :after evil
-  :general (:states 'visual
-		    "ib" 'evil-textobj-anyblock-inner-block
-		    "ab" 'evil-textobj-anyblock-a-block
-		    "iq" 'evil-textobj-anyblock-inner-quote
-		    "aq" 'evil-textobj-anyblock-a-quote)
-  :general (:states 'normal
-		    "]b" 'evil-textobj-anyblock-forward-any-block-start
-		    "[b" 'evil-textobj-anyblock-backward-any-block-start
-		    "]q" 'evil-textobj-anyblock-forward-any-quote-start
-		    "[q" 'evil-textobj-anyblock-backward-any-quote-start
-		    "]B" 'evil-textobj-anyblock-forward-any-block-end
-		    "[B" 'evil-textobj-anyblock-backward-any-block-end))
-(use-package evil
+#+begin_src emacs-lisp
+(use-package targets
   :config
-  (define-key evil-inner-text-objects-map "f" 'evil-inner-file)
-  (define-key evil-outer-text-objects-map "f" 'evil-outer-file)
-  (define-key evil-inner-text-objects-map "u" '+evil:inner-url-txtobj)
-  (define-key evil-outer-text-objects-map "u" '+evil:outer-url-txtobj)
-  (define-key evil-inner-text-objects-map "q" '+evil:inner-any-quote)
-  (define-key evil-outer-text-objects-map "q" '+evil:outer-any-quote)
-  (define-key evil-inner-text-objects-map "c" 'evil-inner-comment)
-  (define-key evil-outer-text-objects-map "c" 'evil-outer-comment))
-  ;; (define-key evil-inner-text-objects-map "b" 'evil-textobj-anyblock-inner-block)
-  ;; (define-key evil-outer-text-objects-map "b" 'evil-textobj-anyblock-a-block))
-
+  (setq targets-composite-text-objects
+	'((all-quotes
+	   (("\"" "\"" quote)
+	    ("'" "'" quote)
+	    ("`" "`" quote)
+	    ("‘" "’" quote)
+	    ("“" "”" quote))
+	   :bind t
+	   :keys "q")
+	  (all-brackets
+	   (("[" "]" pair)
+	    ("{" "}" pair)
+	    ("<" ">" pair)
+	    ("</" ">" pair)
+	    ("(" ")" pair))
+	   :bind t
+	   :keys "b")))
+  (targets-setup t))
 #+end_src
 **** Tree Sitter
 #+begin_src emacs-lisp
 (use-package evil-textobj-tree-sitter
-  :after evil
-  :after tree-sitter
-  :when (package-installed-p 'tree-sitter)
+  :after (evil tree-sitter)
+  :if (and (package-installed-p 'evil) (package-installed-p 'tree-sitter))
   :config
   ;; bind `function.outer`(entire function block) to `f` for use in things like `vaf`, `yaf`
   (define-key evil-outer-text-objects-map "f" (evil-textobj-tree-sitter-get-textobj "function.outer"))
@@ -585,20 +601,6 @@ Local leader is bound to "SPC m" and always shows the keybindings for the curren
   (define-key evil-normal-state-map (kbd "[F") (lambda ()
                                                  (interactive)
                                                  (evil-textobj-tree-sitter-goto-textobj "function.outer" t t))))
-#+end_src
-**** Anyblock
-#+begin_src emacs-lisp
-(use-package evil-textobj-anyblock
-  :after evil
-  :commands (evil-textobj-anyblock-inner-block
-             evil-textobj-anyblock-a-block
-             evil-textobj-anyblock-inner-quote
-             evil-textobj-anyblock-a-quote)
-  :init
-  (define-key evil-inner-text-objects-map "b" 'evil-textobj-anyblock-inner-block)
-  (define-key evil-outer-text-objects-map "b" 'evil-textobj-anyblock-a-block)
-  (define-key evil-inner-text-objects-map "q" 'evil-textobj-anyblock-inner-quote)
-  (define-key evil-outer-text-objects-map "q" 'evil-textobj-anyblock-a-quote))
 #+end_src
 ** which-key
 #+begin_src emacs-lisp
@@ -752,18 +754,6 @@ I'm going to use the file [[./dashboard.org][dashboard.org]] as my dashboard. Th
    (5 . (rainbow (height 1.1)))
    (t . (variable-pitch extrabold))))
 
-(defun my/modus-themes-custom-faces ()
-  (modus-themes-with-colors
-    (custom-set-faces
-     ;; Replace green with blue if you use `modus-themes-deuteranopia'.
-     `(git-gutter-fr:added ((,class :foreground ,green-fringe-bg)))
-     `(git-gutter-fr:deleted ((,class :foreground ,red-fringe-bg)))
-     `(git-gutter-fr:modified ((,class :foreground ,yellow-fringe-bg)))))
-  (set-face-attribute 'cursor nil :background (modus-themes-color 'blue-alt-faint))
-  (custom-set-faces! `(cursor nil :background ,(modus-themes-color 'blue-alt-faint)))
-  (set-face-attribute 'font-lock-type-face nil :foreground (modus-themes-color 'magenta-alt)))
-(add-hook 'modus-themes-after-load-theme-hook #'my/modus-themes-custom-faces)
-
 (load-theme 'modus-operandi t)
 #+end_src
 ** UI
@@ -798,6 +788,9 @@ I'm going to use the file [[./dashboard.org][dashboard.org]] as my dashboard. Th
                 eshell-mode-hook))
   (add-hook mode (lambda () (display-line-numbers-mode 0))))
 
+#+end_src
+** Modeline
+#+begin_src emacs-lisp
 (use-package doom-modeline
   :init
   (unless (equal "Battery status not available"
@@ -807,11 +800,85 @@ I'm going to use the file [[./dashboard.org][dashboard.org]] as my dashboard. Th
   :custom
   (doom-modeline-height 15)
   (doom-modeline-continuous-word-count-modes '(markdown-mode gfm-mode org-mode)))
+  #+end_src
+** Word Wrapping
+#+begin_src emacs-lisp
+(global-visual-line-mode t)
+(my/general-global-Toggle
+ "w" '(visual-line-mode :wk "Word wrap"))
 #+end_src
 ** Rainbow delimeters
 #+begin_src emacs-lisp
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode))
+#+end_src
+* Project management
+** Projectile
+#+begin_src emacs-lisp
+(use-package projectile
+  :diminish projectile-mode
+  :config (projectile-mode)
+  :general (my/general-global-menu! "Projects" "p"
+
+              "" '(:keymap projectile-command-map :wk "Projectile"))
+  :general (:keymaps 'projectile-command-map "a" 'projectile-add-known-project))
+(when (and (package-installed-p 'projectile) (package-installed-p 'counsel))
+  (use-package counsel-projectile
+    :after projectile
+    :config (counsel-projectile-mode)))
+#+end_src
+** Workspaces
+#+begin_src emacs-lisp
+(use-package persp-mode
+  :init
+  (setq persp-save-dir (concat my/cache-dir "persp/"))
+  :config
+  (setq persp-auto-resume-time -1)
+  (setq persp-add-buffer-on-after-change-major-mode t
+	persp-keymap-prefix nil)
+  (add-hook 'after-init-hook #'(lambda () (persp-mode 1)))
+  (my/general-global-menu! "Workspaces" "TAB"
+
+    "TAB" '(persp-frame-switch :wk "Switch workspace")
+    "n" '(persp-next :wk "Next workspace")
+    "p" '(persp-prev :wk "Previous workspace")
+    "c" '(persp-switch :wk "Create workspace")
+    "r" '(persp-rename :wk "Rename workspace")
+    "k" '(persp-kill :wk "Kill workspace")
+    "a" '(persp-add-buffer :wk "Add buffer to workspace")
+    "A" '(persp-remove-buffer :wk "Remove buffer from workspace")
+    "s" '(persp-switch-to-buffer :wk "Switch to buffer in workspace")
+    "S" '(persp-save-to-file-by-names :wk "Save workspace to file")
+    "L" '(persp-load-from-file-by-names :wk "Load workspace from file"))
+
+  (add-hook 'persp-common-buffer-filter-functions
+	    #'(lambda (b) (string-prefix-p "*" (buffer-name b))))
+  ;;; eshell
+  (persp-def-buffer-save/load
+   :mode 'eshell-mode :tag-symbol 'def-eshell-buffer
+   :save-vars '(major-mode default-directory))
+  ;; compile
+  (persp-def-buffer-save/load
+   :mode 'compilation-mode :tag-symbol 'def-compilation-buffer
+   :save-vars '(major-mode default-directory compilation-directory
+			   compilation-environment compilation-arguments))
+  ;; magit
+  (persp-def-buffer-save/load
+   :mode 'magit-status-mode :tag-symbol 'def-magit-status-buffer
+   :save-vars '(default-directory)
+   :load-function (lambda (savelist &rest _)
+		    (cl-destructuring-bind (buffer-name vars &rest _rest) (cdr savelist)
+		      (magit-status (alist-get 'default-directory vars))))))
+(when (and (package-installed-p 'projectile) (package-installed-p 'persp-mode))
+  (use-package persp-mode-projectile-bridge
+    :after (persp-mode projectile)
+    :config (setq projectile-switch-project-action #'projectile-persp-switch-project)
+    (add-hook 'persp-mode-projectile-bridge-mode-hook
+	      #'(lambda ()
+		  (if persp-mode-projectile-bridge-mode
+		      (persp-mode-projectile-bridge-find-perspectives-for-all-buffers)
+		    (persp-mode-projectile-bridge-kill-perspectives))))
+    (persp-mode-projectile-bridge-mode 1)))
 #+end_src
 * Dired
 #+begin_src emacs-lisp
@@ -920,8 +987,9 @@ be passed to EVAL-FUNC as its rest arguments"
 #+begin_src emacs-lisp
 (use-package string-inflection
   :after evil
-  :general (my/general-global-menu! "c ~" "naming convention"
-	     "~" '(string-inflection-all-cycle :wk "cycle")
+  :general (my/general-global-menu! "naming convention" "c ~"
+
+             "~" '(string-inflection-all-cycle :wk "cycle")
 	     "t" '(string-inflection-toggle :wk "toggle")
 	     "c" '(string-inflection-camelcase :wk "CamelCase")
 	     "d" '(string-inflection-lower-camelcase :wk "downCase")
@@ -939,9 +1007,15 @@ be passed to EVAL-FUNC as its rest arguments"
       (setq evil-repeat-info '([?g ?~])))
     (define-key evil-normal-state-map (kbd "g~") 'evil-operator-string-inflection))
     #+end_src
-* Electric Pair Mode
+* Smartparens
 #+begin_src emacs-lisp
-(add-hook 'prog-mode-hook 'electric-pair-mode)
+(use-package smartparens
+  :config
+  (show-smartparens-global-mode t)
+  (add-hook 'prog-mode-hook #'turn-on-smartparens-strict-mode))
+(use-package evil-smartparens
+  :after (evil smartparens)
+  :hook (smartparens-enabled . evil-smartparens-mode))
 #+end_src
 * Help
 ** Helpful
@@ -960,31 +1034,12 @@ be passed to EVAL-FUNC as its rest arguments"
   :commands (tldr tldr-update-docs)
   :init
   (my/general-global-menu! "Command line help" "h h"
+
                            "t" '('tldr :wk "tldr")
                            "h" '('man :wk "man")
                            "w" '('woman :wk "Woman"))
   :config
   (setq tldr-directory-path (concat my/cache-dir "tldr/")))
-#+end_src
-* Projectile
-#+begin_src emacs-lisp
-(use-package projectile
-  :diminish projectile-mode
-  :config (projectile-mode)
-  :custom ((projectile-completion-system 'ivy))
-  :general (my/leader-def "p" '(:keymap projectile-command-map :wk "Projectile"))
-  :general (:keymaps 'projectile-command-map "a" 'projectile-add-known-project))
-(use-package counsel-projectile
-  :after projectile
-  :config (counsel-projectile-mode))
-#+end_src
-* Wgrep
-#+begin_src emacs-lisp
-(use-package wgrep
-  :commands wgrep-change-to-wgrep-mode
-  :config
-  (setq wgrep-auto-save-buffer t)
-  (setq wgrep-change-readonly-file t))
 #+end_src
 * Undo Tree
 #+begin_src emacs-lisp
@@ -1003,6 +1058,16 @@ be passed to EVAL-FUNC as its rest arguments"
   (advice-add 'undo-tree-visualizer-set :after #'undo-tree-visualizer-update-linum) 
   (setq evil-undo-system 'undo-tree
 	undo-tree-history-directory-alist `(("." . ,(concat my/cache-dir "undo-tree-hist/"))))
+  ;; no need to save history for these modes
+  (dolist (m '(read-only-mode
+	       eshell-mode
+	       term-mode
+	       vterm-mode
+	       magit-status-mode
+	       magit-log-mode
+	       magit-diff-mode
+	       magit-commit-mode))
+    (add-to-list 'undo-tree-incompatible-major-modes m))
   :general (my/leader-def "o u" 'undo-tree-visualize))
 #+end_src
 * Completion
@@ -1053,6 +1118,7 @@ be passed to EVAL-FUNC as its rest arguments"
             (list (cape-super-capf #'cape-dabbrev #'cape-file #'cape-keyword #'cape-symbol)))
 (use-package cape
   :general (my/general-global-menu! "Completions" "c p"
+
                                     "p" '(completion-at-point :wk "Complete at point")
                                     "t" '(complete-tag :wk "Complete tag")
                                     "d" '(cape-dabbrev :wk "Dabbrev")
@@ -1117,7 +1183,7 @@ be passed to EVAL-FUNC as its rest arguments"
 :END:
 #+begin_src emacs-lisp
 (use-package tempel
-  :disable t
+  :disabled t
   :init
   ;; Setup completion at point
   (defun tempel-setup-capf ()
@@ -1135,7 +1201,7 @@ be passed to EVAL-FUNC as its rest arguments"
   :hook (text-mode . tempel-setup-capf)
   :defer 1)
 (use-package tempel-collection
-  :disable t
+  :disabled t
   :after tempel
   :config)
 #+end_src
@@ -1207,10 +1273,12 @@ be passed to EVAL-FUNC as its rest arguments"
                  nil
                  (window-parameters (mode-line-format . none))))
   :general (my/general-global-menu! "Embark" "e"
+
 	     "o" '(embark-export :wk "export")
 	     "e" '(embark-act :wk "act")
 	     "b" '(embark-bindings :wk "bindings")
-	     "c" '(embark-collect :wk "collect")))
+	     "c" '(embark-collect :wk "collect"))
+  :general (general-def "C-c e" '(embark-act :wk "act")))
 (use-package embark-consult
   :if (and (featurep 'embark)
 	   (featurep 'consult))
@@ -1223,12 +1291,13 @@ be passed to EVAL-FUNC as its rest arguments"
 #+end_src
 #+begin_src emacs-lisp
 (use-package copilot
+  :if IS-PERSONAL
   :after editorconfig
   :hook (prog-mode . copilot-mode)
   :hook (text-mode . copilot-mode)
   :config
   (general-def :map copilot-completion-map
-    "C-s"   #'copilot-accept-completion
+    "C-s"	#'copilot-accept-completion
     "M-<right>" #'copilot-accept-completion-by-word
     "C-f"       #'copilot-accept-completion-by-line
     "M-n"       #'copilot-next-completion
@@ -1301,6 +1370,7 @@ is available."
 (use-package flycheck
   :init (global-flycheck-mode)
   :general (my/general-global-menu! "Errors" "c e"
+
                                    "e" '(consult-flycheck :wk "List errors")
                                    "n" '(flycheck-next-error :wk "Next error")
                                    "p" '(flycheck-previous-error :wk "Previous error")
@@ -1318,6 +1388,7 @@ is available."
   :hook ((text-mode . flyspell-mode)
          (prog-mode . flyspell-prog-mode))
   :general (my/general-global-menu! "Spell" "e s"
+
                                    "s" '(flyspell-buffer :wk "Spell buffer")
                                    "n" '(flyspell-goto-next-error :wk "Next error")
                                    "p" '(flyspell-goto-previous-error :wk "Previous error"))
@@ -1413,10 +1484,70 @@ is available."
          (lsp-mode . lsp-headerline-breadcrumb-mode)
          (lsp-mode . lsp-enable-which-key-integration))
   :custom (lsp-keymap-prefix nil)
-  :config (my/general-global-Code
-	    :states '(normal)
-	    :keymaps 'lsp-mode-map
-	    "l" lsp-command-map))
+  :config
+  (when my/proxy (setq lsp-http-proxy my/proxy))
+  (my/general-global-Code
+    '(normal visual insert) lsp-mode-map
+    "l"   '(nil :wk "LSP")
+
+    "lw"  '(nil :wk "workspace")
+    "lwD" '(lsp-disconnect :wk "disconnect")
+    "lwd" '(lsp-describe-session :wk "describe session")
+    "lwq" '(lsp-workspace-shutdown :wk "shutdown server")
+    "lwr" '(lsp-workspace-restart :wk "restart server")
+    "lws" '(lsp :wk "start server")
+
+    "l="  '(nil :wk "format")
+    "l==" '(lsp-format-buffer :wk "format buffer")
+    "l=r" '(lsp-format-region :wk "format region")
+
+    "lF"  '(nil :wk "folders")
+    "lFa" '(lsp-workspace-folders-add :wk "add folder")
+    "lFb" '(lsp-workspace-blacklist-remove :wk "un-blacklist folder")
+    "lFr" '(lsp-workspace-folders-remove :wk "remove folder")
+
+    "lt"  '(nil :wk "toggle")
+    "ltD" '(lsp-modeline-diagnostics-mode :wk "toggle modeline diagnostics")
+    "ltL" '(lsp-toggle-trace-io :wk "toggle log io")
+    "ltS" '(lsp-ui-sideline-mode :wk "toggle sideline")
+    "ltT" '(lsp-treemacs-sync-mode :wk "toggle treemacs integration")
+    "lta" '(lsp-modeline-code-actions-mode :wk "toggle modeline code actions")
+    "ltb" '(lsp-headerline-breadcrumb-mode :wk "toggle breadcrumb")
+    "ltd" '(lsp-ui-doc-mode :wk "toggle documentation popup")
+    "ltf" '(lsp-toggle-on-type-formatting :wk "toggle on type formatting")
+    "lth" '(lsp-toggle-symbol-highlight :wk "toggle highlighting")
+    "ltl" '(lsp-lens-mode :wk "toggle lenses")
+    "lts" '(lsp-toggle-signature-auto-activate :wk "toggle signature")
+
+    "lg"  '(nil :wk "goto")
+    "lga" '(xref-find-apropos :wk "find symbol in workspace")
+    "lgd" '(lsp-find-declaration :wk "find declarations")
+    "lge" '(lsp-treemacs-errors-list :wk "show errors")
+    "lgg" '(lsp-find-definition :wk "find definitions")
+    "lgh" '(lsp-treemacs-call-hierarchy :wk "call hierarchy")
+    "lgi" '(lsp-find-implementation :wk "find implementations")
+    "lgr" '(lsp-find-references :wk "find references")
+    "lgt" '(lsp-find-type-definition :wk "find type definition")
+
+    "lh"  '(nil :wk "help")
+    "lhg" '(lsp-ui-doc-glance :wk "glance symbol")
+    "lhh" '(lsp-describe-thing-at-point :wk "describe symbol at point")
+    "lhs" '(lsp-signature-activate :wk "signature help")
+
+    "lr"  '(nil :wk "refactor")
+    "lro" '(lsp-organize-imports :wk "organize imports")
+    "lrr" '(lsp-rename :wk "rename")
+
+    "la"  '(nil :wk "actions")
+    "laa" '(lsp-execute-code-action :wk "code actions")
+    "lah" '(lsp-document-highlight :wk "highlight symbol")
+    "lal" '(lsp-avy-lens :wk "lens")
+
+    "lg"  '(nil :wk "peek")
+    "lgg" '(lsp-ui-peek-find-definitions :wk "peek definitions")
+    "lgi" '(lsp-ui-peek-find-implementation :wk "peek implementations")
+    "lgr" '(lsp-ui-peek-find-references :wk "peek references")
+    "lgs" '(lsp-ui-peek-find-workspace-symbol :wk "peek workspace symbol")))
 #+end_src
 ** LSP UI
 #+begin_src emacs-lisp
@@ -1432,6 +1563,7 @@ is available."
 (use-package dap-mode
   :config (dap-auto-configure-mode)
   :general (my/general-global-menu! "DAP" "d"
+
                                     "n" '(dap-next :wk "Next")
                                     "i" '(dap-step-in :wk "Step in")
                                     "o" '(dap-step-out :wk "Step out")
@@ -1441,14 +1573,17 @@ is available."
                                     "q"  '(dap-disconnect :wk "Quit")
                                     "d"  '(:keymap dap-mode-map :wk "DAP"))
   :general (my/general-global-menu! "Debug" "dd"
+
                                     "r" '(dap-debug-recent :wk "Recent")
                                     "l" '(dap-debug-last :wk "Last")
                                     "s" '(dap-debug :wk "Debug"))
   :general (my/general-global-menu! "Eval" "de"
+
                                     "e" '(dap-eval :wk "Eval")
                                     "r" '(dap-eval-region :wk "Eval region")
                                     "s" '(dap-eval-thing-at-point :wk "Eval thing at point"))
   :general (my/general-global-menu! "Breakpoint" "db"
+
                                     "b" '(dap-breakpoint-toggle :wk "Toggle")
                                     "B" '(dap-breakpoint-add :wk "Add")
                                     "d" '(dap-breakpoint-delete :wk "Delete")
@@ -1507,14 +1642,14 @@ is available."
   :after python
   :hook (python-mode . pyvenv-mode)
   :general (my/leader-def
-	     :keymap 'python-mode-map
+	     :keymaps 'python-mode-map
 	     :prefix "m"
 	     "v" '(pyvenv-workon :which-key "workon")))
 
 (use-package pyimport
   :after python
   :general (my/local-leader-def
-	     :keymap 'python-mode-map
+	     :keymaps 'python-mode-map
 	     "i" '(nil :which-key "import")
 	     "i i" '(pyimport-insert-missing :which-key "insert missing imports")
 	     "i r" '(pyimport-remove-unused :which-key "remove unused imports")))
@@ -1522,14 +1657,14 @@ is available."
 (use-package py-isort
   :hook (before-save . py-isort-before-save)
   :general (my/local-leader-def
-	     :keymap 'python-mode-map
+	     :keymaps 'python-mode-map
 	     "i s" '(py-isort-buffer :which-key "sort imports")))
 
 (use-package poetry
   :after python
   :hook (python-mode . poetry-tracking-mode)
   :general (my/leader-def
-             :keymap 'python-mode-map
+             :keymaps 'python-mode-map
 	     :prefix "m"
 	     "p" '(poetry :which-key "poetry")))
 
@@ -1558,7 +1693,7 @@ is available."
   :config
   (setq rustic-indent-method-chain t)
   (my/local-leader-def
-    :keymap 'rustic-mode-map
+    :keymaps 'rustic-mode-map
     "b" '(nil :which-key "build")
     "bb" '(rustic-cargo-build :which-key "build")
     "br" '(rustic-cargo-run :which-key "run")
@@ -1592,10 +1727,11 @@ is available."
     (my/do-in-other-window (lambda ()
 			     (haskell-interactive-bring)
 			     (evil-insert-state))))
-  :mode ("\\.hs$" . haskell-mode)
+  :mode ("\\.hs\\'" . haskell-mode)
   :config
-  (eval-after-load 'projectile (progn
-				 (add-to-list 'projectile-other-file-alist '("hs" "lhs"))
+  (eval-after-load 'projectile (lambda ()
+				 (add-to-list 'projectile-other-file-alist "hs")
+				 (add-to-list 'projectile-other-file-alist "lhs")
 				 (add-to-list 'projectile-project-root-files "stack.yaml")))
   (my/general-global-Open
     :keymaps 'haskell-mode-map
@@ -1610,6 +1746,25 @@ is available."
 (use-package lsp-haskell
   :after lsp-mode
   :hook (haskell-mode . lsp))
+
+(use-package ob-haskell
+  :ensure nil
+  :after org
+  :commands org-babel-execute:haskell
+  :init
+  (add-to-list 'org-babel-load-languages '(haskell . t)))
+#+end_src
+** PDF
+#+begin_src emacs-lisp
+(use-package pdf-tools
+  :mode ("\\.pdf\\'" . pdf-view-mode)
+  :config
+  (setq pdf-view-use-scaling t)
+  (add-hook 'pdf-view-mode-hook (lambda () (display-line-numbers-mode -1)))
+  ;; remove from recentf and undo-tree
+  (add-to-list 'recentf-exclude "/**/*.pdf")
+  (add-to-list 'undo-tree-incompatible-major-modes 'pdf-view-mode)
+  )
 #+end_src
 * Mail
 ** mu4e
@@ -1622,24 +1777,15 @@ is available."
 (defvar my/mail-dir (my/get-mail-dir))
 
 (use-package mu4e
+  :if IS-PERSONAL
   :ensure nil ;; mu4e is included with mu
   :general (my/general-global-Open "m" '(mu4e :wk "Email"))
-  ;; :load-path "/usr/share/emacs/site-lisp/mu4e/"
-  ;; :defer 20 ; Wait until 20 seconds after startup
   :config
-
-  ;; This is set to 't' to avoid mail syncing issues when using mbsync
-  (setq mu4e-change-filenames-when-moving t)
-
-  ;; Refresh mail using isync every 10 minutes
-  (setq mu4e-update-interval (* 10 60))
-  (setq mu4e-get-mail-command "mbsync -a")
-  (setq mu4e-maildir my/mail-dir)
-
   ;; Context switching for multiple accounts
-  (defun my/create-mu4e-context (name address signature server)
+  (defun my/create-mu4e-context (name address signature server &optional key)
+    (unless key (setq key (substring name 0 1)))
     (make-mu4e-context
-     :name name
+     :name (format "%s(%s)" key name)
      :enter-func (lambda () (mu4e-message "Entering context %s" name))
      :leave-func (lambda () (mu4e-message "Leaving context %s" name))
      :match-func (lambda (msg)
@@ -1667,14 +1813,29 @@ is available."
     (concat
      "\n*" user-full-name "*\n"
      "Email: bakheakm@udmercy.edu"))
-  (setq mu4e-context-policy 'pick-first)
-  (setq mu4e-contexts
-	(list
-	 (my/create-mu4e-context "kbakheat-gmail" "kbakheat@gmail.com" (my/gmail-signature "kbakheat") "smtp.gmail.com")
-	 (my/create-mu4e-context "kirolsb5-gmail" "kirolsb5@gmail.com" (my/gmail-signature "kirolsb5") "smtp.gmail.com")
-	 (my/create-mu4e-context "bakheakm-udmercy" "bakheakm@udmercy.ed" (my/udmercy-signature) "smtp.office365.com"))))
+
+  (setq
+   mail-user-agent 'mu4e-user-agent
+   read-mail-command 'mu4e
+   mu4e-maildir my/mail-dir
+   ;; This is set to 't' to avoid mail syncing issues when using mbsync
+   mu4e-change-filenames-when-moving t
+
+   ;; Refresh mail using isync every 10 minutes
+   mu4e-update-interval (* 10 60)
+   mu4e-get-mail-command "mbsync -a"
+
+   ;; Context policy
+   mu4e-context-policy 'pick-first
+   mu4e-compose-context-policy 'ask
+   mu4e-contexts (list
+                  (my/create-mu4e-context "kbakheat-gmail" "kbakheat@gmail.com" (my/gmail-signature "kbakheat") "smtp.gmail.com")
+                  (my/create-mu4e-context "kirolsb5-gmail" "kirolsb5@gmail.com" (my/gmail-signature "kirolsb5") "smtp.gmail.com" "a")
+                  (my/create-mu4e-context "bakheakm-udmercy" "bakheakm@udmercy.edu" (my/udmercy-signature) "smtp.office365.com"))))
+
 
 (use-package mu4e-alert
+  :if IS-PERSONAL
   :after mu4e
   :config
   (when IS-LINUX
@@ -1684,6 +1845,38 @@ is available."
     (progn (mu4e-alert-set-default-style 'notifier)
 	   (add-hook 'after-init-hook #'mu4e-alert-enable-notifications)))
   (add-hook 'after-init-hook #'mu4e-alert-enable-mode-line-display))
+#+end_src
+** Compose mail with org mode
+#+begin_src emacs-lisp
+(use-package org-msg
+  :if IS-PERSONAL
+  :after (org mu4e)
+  :config (setq org-msg-options "html-postamble:nil H:5 num:nil ^:{} toc:nil author:nil email:nil \\n:t"
+	org-msg-startup "hidestars indent inlineimages"
+	org-msg-greeting-fmt "\nHey%s,\n\n"
+	;; org-msg-recipient-names '(("jeremy.compostella@gmail.com" . "Jérémy"))
+	org-msg-greeting-name-limit 3
+	org-msg-default-alternatives '((new		. (text html))
+				       (reply-to-html	. (text html))
+				       (reply-to-text	. (text)))
+	org-msg-convert-citation t
+	org-msg-signature "
+
+ Regards,
+
+ ,#+begin_signature
+ ---
+ ,*Kirols Bakheat*
+ ,#+end_signature")
+)
+;; (use-package org-mime
+;;   :if IS-PERSONAL
+;;   :after org
+;;   :config
+;;   (setq org-mime-export-options '(:section-numbers nil
+;; 				      :with-author nil
+;;                                   :with-toc nil))
+;;   (add-hook 'message-send-hook 'org-mime-htmlize))
 #+end_src
 * Org Mode
 #+begin_src emacs-lisp
@@ -1696,7 +1889,7 @@ is available."
   :config
   (setq org-src-preserve-indentation nil
         org-edit-src-content-indentation 0
-	org-directory (my/relative-org "general")
+	org-directory (my/relative-org "general/")
 	org-insert-heading-respect-content t
 	org-export-in-background t
 	org-export-with-sub-superscripts '{}
@@ -1713,10 +1906,20 @@ is available."
 	org-ellipsis " ↷ "
 	org-hide-emphasis-markers t
 	org-pretty-entities t
-	org-hide-leading-stars nil))
-;; (add-to-list 'org-latex-package-alist '("" "fancyhdr"))
-;; (add-to-list 'org-latex-package-alist '("" "siunitx"))
-;; (plist-put org-format-latex-options :scale 1))
+	org-hide-leading-stars nil
+
+	org-startup-indented t
+      org-use-property-inheritance t))
+#+end_src
+** Delimiters
+#+begin_src emacs-lisp
+#+end_src
+
+** Org Tempo
+#+begin_src emacs-lisp
+(use-package org-tempo
+  :ensure nil
+  :after org)
 #+end_src
 ** Keybindings
 #+begin_src emacs-lisp
@@ -1861,6 +2064,8 @@ is available."
       <<roam-templates>>
       ))
   :general (my/general-global-menu! "Roam" "nr"
+
+	     "" '(nil :which-key "roam")
 	     "f" '(org-roam-node-find :which-key "find")
 	     "i" '(org-roam-node-insert :which-key "insert")
 	     "g" '(org-roam-graph :which-key "graph")
@@ -1878,7 +2083,7 @@ is available."
 #+end_src
 *** Templates
 :PROPERTIES:
-:header-args: :tangle yes :noweb-ref roam-templates
+:header-args: :tangle no :noweb-ref roam-templates
 :END:
 **** Religious
 #+begin_src emacs-lisp
@@ -1938,8 +2143,106 @@ is available."
 					(:hlines . "no")
 					(:tangle . "no")
 					(:padnewline . "yes")
+					(:eval . "never-export")
 					(:comments . "link")))
   (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages))
+#+end_src
+** Export
+*** =ox-latex=
+#+begin_src emacs-lisp
+(use-package ox-latex
+  :ensure nil
+  :config
+  (add-to-list 'org-latex-logfiles-extensions "tex")
+  (add-to-list 'org-latex-packages-alist '("" "siunitx"))
+  (add-to-list 'org-latex-packages-alist '("" "amsmath"))
+  (add-to-list 'org-latex-packages-alist '("" "fancyhdr"))
+  (add-to-list 'org-latex-classes
+               '("IEEEtran" "\\documentclass[11pt]{IEEEtran}"
+                 ("\\section{%s}" . "\\section*{%s}")
+                 ("\\subsection{%s}" . "\\subsection*{%s}")
+                 ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+                 ("\\paragraph{%s}" . "\\paragraph*{%s}")
+                 ("\\subparagraph{%s}" .    "\\subparagraph*{%s}")))
+  (add-to-list 'org-latex-classes
+               '("exam"
+                 "\\documentclass{exam}"
+                 ("\\begin{questions} %% %s"
+                  "\\end{questions}"
+                  "\\begin{questions} %% %s"
+                  "\\end{questions}")
+                 ("\\question %s " . "\\question* %s")
+		 ("\\begin{parts} %s"
+		  "\\end{parts}"
+                  "\\begin{parts} %s"
+                  "\\end{parts}"))))
+#+end_src
+*** =ox-html=
+#+begin_src emacs-lisp
+(use-package ox-html
+:ensure nil
+:after org)
+#+end_src
+*** Syntax Highlighting
+#+name: engrave-faces-init
+#+begin_src emacs-lisp :tangle no
+;;; Definers
+(defmacro defadvice! (symbol arglist &optional docstring &rest body)
+  "Define an advice called SYMBOL and add it to PLACES.
+
+ARGLIST is as in `defun'. WHERE is a keyword as passed to `advice-add', and
+PLACE is the function to which to add the advice, like in `advice-add'.
+DOCSTRING and BODY are as in `defun'.
+
+\(fn SYMBOL ARGLIST &optional DOCSTRING &rest [WHERE PLACES...] BODY\)"
+  (declare (doc-string 3) (indent defun))
+  (unless (stringp docstring)
+    (push docstring body)
+    (setq docstring nil))
+  (let (where-alist)
+    (while (keywordp (car body))
+      (push `(cons ,(pop body) (ensure-list ,(pop body)))
+            where-alist))
+    `(progn
+       (defun ,symbol ,arglist ,docstring ,@body)
+       (dolist (targets (list ,@(nreverse where-alist)))
+	 (dolist (target (cdr targets))
+	   (advice-add target (car targets) #',symbol))))))
+(defvar-local org-export-has-code-p nil)
+
+(defadvice! org-export-expect-no-code (&rest _)
+	    :before #'org-export-as
+	    (setq org-export-has-code-p nil))
+
+(defadvice! org-export-register-code (&rest _)
+	    :after #'org-latex-src-block
+	    :after #'org-latex-inline-src-block-engraved
+	    (setq org-export-has-code-p t))
+
+(defadvice! org-latex-example-block-engraved (orig-fn example-block contents info)
+	    "Like `org-latex-example-block', but supporting an engraved backend"
+	    :around #'org-latex-example-block
+	    (let ((output-block (funcall orig-fn example-block contents info)))
+	      (if (eq 'engraved (plist-get info :latex-listings))
+		  (format "\\begin{Code}[alt]\n%s\n\\end{Code}" output-block)
+		output-block)))
+#+end_src
+#+begin_src emacs-lisp
+;; both installed by engrave-faces
+(use-package engrave-faces-latex
+  :ensure nil
+  :after ox-latex
+  :init
+  <<engrave-faces-init>>
+  :config
+  (setq org-latex-listings 'engraved))
+(use-package engrave-faces-html
+  :ensure nil
+  :after ox-html
+  :init
+  <<engrave-faces-init>>
+  :config
+  (setq org-latex-listings 'engraved))
 #+end_src
 ** Evil Org
 #+begin_src emacs-lisp
@@ -1957,6 +2260,6 @@ is available."
 #+end_src
 * Local Variables
 # Local Variables:
-# eval: (add-hook 'after-save-hook #'org-babel-tangle)
+# org-use-property-inheritance: t
 # End:
 
