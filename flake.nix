@@ -71,7 +71,7 @@
             is-personal = true;
           };
         in rec {
-          packages.${system}.default = pkgs.emacsWithPackagesFromUsePackage {
+          packages.${system}.default = (pkgs.emacsWithPackagesFromUsePackage {
             config = ./config.org;
             defaultInitFile = pkgs.writeText "default.el"
               (let deps = nixpkgs.lib.makeBinPath dependencies;
@@ -120,7 +120,7 @@
                 '';
               });
             };
-          };
+          }).overrideAttrs (old: { name = "emacs"; });
           devShell.${system} =
             pkgs.mkShell { buildInputs = [ packages.${system}.default ]; };
         };
