@@ -1999,10 +1999,8 @@ is available."
 ** mu4e
 #+begin_src emacs-lisp :lexical t
 (defun my/get-mail-dir ()
-  (let ((dir (expand-file-name "mail/" (getenv "XDG_DATA_HOME"))))
-    (unless (file-exists-p dir)
-      (error "Mail directory %s does not exist" dir))
-    dir))
+  (expand-file-name "mail/" (getenv "XDG_DATA_HOME")))
+
 (defconst my/mail-dir (my/get-mail-dir))
 ;; Only load on personal machines with mail
 (defconst my/enable/mu4e (and IS-PERSONAL (f-directory? my/mail-dir)))
