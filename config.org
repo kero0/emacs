@@ -403,7 +403,9 @@ Local leader is bound to "SPC m" and always shows the keybindings for the curren
 #+end_src
 ***** Code
 #+begin_src emacs-lisp
-(my/general-global-menu! "Code" "c")
+(my/general-global-menu! "Code" "c"
+  "c" '(recompile :wk "Recompile")
+  "C" '(compile :wk "Compile"))
 #+end_src
 ***** File
 #+begin_src emacs-lisp
@@ -628,6 +630,12 @@ Local leader is bound to "SPC m" and always shows the keybindings for the curren
 (add-to-list 'default-frame-alist `(alpha . ,my/frame-transparency))
 (set-frame-parameter (selected-frame) 'fullscreen 'maximized)
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
+#+end_src
+** ANSI colors in compilation buffers
+#+begin_src emacs-lisp
+(use-package ansi-color
+  :ensure nil
+  :hook  (compilation-filter . ansi-color-compilation-filter))
 #+end_src
 ** Fonts
 #+begin_src emacs-lisp
