@@ -32,7 +32,7 @@ with pkgs;
     })
 
   # python
-  (python3.withPackages (ps: with ps; [ black isort pipx python-lsp-server ]))
+  (python3.withPackages (ps: with ps; [ black isort pipx pyflakes python-lsp-server ]))
   poetry
 
   # rust

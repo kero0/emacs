@@ -17,6 +17,10 @@
       url = "github:noctuid/targets.el";
       flake = false;
     };
+    packages-org-pretty-table = {
+      url = "github:Fuco1/org-pretty-table";
+      flake = false;
+    };
     packages-ox-chameleon = {
       url = "github:tecosaur/ox-chameleon";
       flake = false;
@@ -43,17 +47,7 @@
             inherit system;
             overlays = [ emacs-overlay.overlay ];
           };
-          emacs = (pkgs.emacs-pgtk.override {
-            withWebP = true;
-            withXwidgets = pkgs.stdenv.isDarwin; # only use this on macbook
-            withTreeSitter = true;
-          }).overrideAttrs (old: {
-            nativeBuildInputs = (old.nativeBuildInputs or [ ])
-              ++ (pkgs.lib.optional pkgs.stdenv.isDarwin [
-                pkgs.darwin.apple_sdk.frameworks.Cocoa
-                pkgs.darwin.apple_sdk.frameworks.WebKit
-              ]);
-          });
+          emacs = pkgs.emacs-pgtk;
           config = pkgs.runCommand "config" { } ''
             mkdir -p $out/
             cp -r ${./.}/. $out
@@ -102,6 +96,11 @@
                 name = "copilot";
                 buildInputs = with self; [ dash editorconfig s ];
                 extraFiles = [ "dist/" ];
+              });
+              org-pretty-table = (mkTrivialPkg {
+                pkgs = self;
+                name = "org-pretty-table";
+                buildInputs = with self; [ ];
               });
               ox-chameleon = (mkTrivialPkg {
                 pkgs = self;
