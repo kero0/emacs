@@ -75,8 +75,9 @@
   (message "Emacs loaded in %s with %d garbage collections."
            (format "%.2f seconds"
                    (float-time
-                     (time-subtract after-init-time before-init-time)))
-           gcs-done))
+                    (time-subtract after-init-time before-init-time)))
+           gcs-done)
+  (setq gc-cons-threshold (* 2 1000 1000)))
 
 (add-hook 'emacs-startup-hook #'my/display-startup-time)
 #+end_src
@@ -329,8 +330,6 @@ Local leader is bound to "SPC m" and always shows the keybindings for the curren
 
 
 (use-package general
-  :init
-  (setq general-extended-def-global-ignore-keywords (append general-extended-def-global-ignore-keywords '(:which-key :wk)))
   :config
   (general-evil-setup)
   (general-override-mode 1)
