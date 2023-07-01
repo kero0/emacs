@@ -273,16 +273,16 @@ Open a buffer at the bottom of the screen
   (unless height (setq height 0.35))
   (let ((buf (get-buffer name)))
     (if buf
-        (if (get-buffer-window buf)
-            (if (eq (current-buffer) buf)
-                (delete-window (get-buffer-window buf))
-              (select-window (get-buffer-window buf)))
-          (progn
-            (split-window-below
-             (floor (* (window-total-height) (- 1 height))))
-            (other-window 1)
-            (funcall new)
-            (rename-buffer name))))))
+	(if (get-buffer-window buf)
+	    (if (eq (current-buffer) buf)
+		(delete-window (get-buffer-window buf))
+	      (select-window (get-buffer-window buf))))
+      (progn
+	(split-window-below
+	 (floor (* (window-total-height) (- 1 height))))
+	(other-window 1)
+	(funcall new)
+	(rename-buffer name)))))
 #+end_src
 Do something in other window
 #+begin_src emacs-lisp
