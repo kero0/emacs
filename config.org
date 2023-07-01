@@ -905,7 +905,7 @@ I'm going to use the file [[./dashboard.org][dashboard.org]] as my dashboard. Th
           compilation-mode))
 
   (setq popper-group-function #'popper-group-by-directory
-	popper-display-function #'display-buffer-in-child-frame)
+	popper-display-function #'display-buffer-at-bottom)
   (popper-mode +1))
 #+end_src
 * Project management
