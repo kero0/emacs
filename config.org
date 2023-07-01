@@ -890,6 +890,24 @@ I'm going to use the file [[./dashboard.org][dashboard.org]] as my dashboard. Th
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode))
 #+end_src
+** Popper
+#+begin_src emacs-lisp
+(use-package popper
+  :bind (("C-`"   . popper-toggle-latest)
+         ("M-`"   . popper-cycle)
+         ("C-M-`" . popper-toggle-type))
+  :init
+  (setq popper-reference-buffers
+        '("\\*Messages\\*"
+          "Output\\*$"
+          "\\*Async Shell Command\\*"
+          help-mode
+          compilation-mode))
+
+  (setq popper-group-function #'popper-group-by-directory
+	popper-display-function #'display-buffer-in-child-frame)
+  (popper-mode +1))
+#+end_src
 * Project management
 ** Projects
 #+begin_src emacs-lisp
@@ -1539,8 +1557,11 @@ is available."
     (my/open-create-or-switch-buffer "*vterm*" #'vterm))
   (my/general-global-Open
     "t" '(my/vterm :wk "vterm"))
-  :config
   (setq vterm-shell (or (getenv "SHELL") (executable-find "fish") (executable-find "bash")))
+  :config
+  (after! popper
+          (append! popper-reference-buffers
+            "^\\*vterm.*\\*$"  'vterm-mode))
   (add-hook 'vterm-mode-hook #'my/disable-line-numbers))
 #+end_src
 ** Eshell
@@ -1550,13 +1571,11 @@ is available."
   :commands eshell
   :init
   (defun my/eshell--auto-close-window () (when (string= (buffer-name) "*eshell*") (delete-window)))
-  (add-hook 'eshell-exit-hook #'my/eshell--auto-close-window)
   (defun my/eshell ()
     (interactive)
     (my/open-create-or-switch-buffer "*eshell*" #'eshell))
   (my/general-global-Open
     "e" '(my/eshell :wk "eshell"))
-  :config
   (setq eshell-aliases-file (concat my/cache-dir "eshell/alias")
 	eshell-history-file-name (concat my/cache-dir "eshell/history")
 	eshell-buffer-maximum-lines 10000
@@ -1566,7 +1585,12 @@ is available."
 	eshell-glob-case-insensitive t
 	eshell-scroll-show-maximum-output nil)
   (make-directory (concat my/cache-dir "eshell") t)
+  :config
+  (after! popper
+          (append! popper-reference-buffers
+            "^\\*eshell.*\\*$" 'eshell-mode))
   (add-hook 'eshell-mode-hook #'my/disable-line-numbers)
+  (add-hook 'eshell-exit-hook #'my/eshell--auto-close-window)
   (after! corfu (add-hook 'eshell-mode-hook #'corfu-mode)))
 (use-package eshell-syntax-highlighting
   :hook (eshell-mode . eshell-syntax-highlighting-mode))
