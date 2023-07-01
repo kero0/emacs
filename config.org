@@ -42,7 +42,8 @@
 (setq package-enable-at-startup nil)
 #+end_src
 
-** After macro
+** Macros
+*** ~after!~
 #+begin_src emacs-lisp
 (cl-defmacro after! (features &rest body)
   "A smart wrapper around `with-eval-after-load'"
@@ -56,6 +57,15 @@
 	      (after! ,(cdr features) ,@body))))
     `(with-eval-after-load (quote ,features)
        (progn ,@body))))
+#+end_src
+*** ~append!~
+#+begin_src emacs-lisp
+(cl-defmacro append! (var &rest values)
+  "Append VALUES to the end of VAR, if they don't already exist in VAR."
+  (declare (indent defun))
+  `(dolist (value (list ,@values))
+     (unless (member value ,var)
+       (setf ,var (append ,var (list value))))))
 #+end_src
 ** Startup
 #+begin_src emacs-lisp
