@@ -2014,14 +2014,21 @@ is available."
 	     (smtpmail-stream-type . starttls)
 	     (smtpmail-debug-info . t)
 	     (smtpmail-debug-verb . t))))
+  (defun my/wrap-signature (str)
+    (concat
+     "#+begin_signature\n"
+     str
+     "\n#+end_signature"))
   (defun my/gmail-signature (name)
-    (concat
-     "\n*" user-full-name "*\n"
-     "Email: " name "@gmail.com\n"))
+    (my/wrap-signature
+     (concat
+      "\n*" user-full-name "*\n"
+      "Email: " name "@gmail.com\n")))
   (defun my/udmercy-signature ()
-    (concat
-     "\n*" user-full-name "*\n"
-     "Email: bakheakm@udmercy.edu"))
+    (my/wrap-signature
+     (concat
+      "\n*" user-full-name "*\n"
+      "Email: bakheakm@udmercy.edu")))
 
   (setq
    mail-user-agent 'mu4e-user-agent
@@ -2056,27 +2063,37 @@ is available."
 	   (add-hook 'after-init-hook #'mu4e-alert-enable-notifications)))
   (add-hook 'after-init-hook #'mu4e-alert-enable-mode-line-display))
 #+end_src
+** msmtp
+#+begin_src emacs-lisp
+(after! mu4e
+        (setq message-send-mail-function #'message-send-mail-with-sendmail
+              sendmail-program (executable-find "msmtp")
+              send-mail-function #'smtpmail-send-it
+              message-sendmail-f-is-evil t
+              message-sendmail-extra-arguments '("--read-envelope-from")))
+#+end_src
 ** Compose mail with org mode
 #+begin_src emacs-lisp
 (use-package org-msg
   :if my/enable/mu4e
   :after (org mu4e)
   :config (setq org-msg-options "html-postamble:nil H:5 num:nil ^:{} toc:nil author:nil email:nil \\n:t"
-		org-msg-startup "hidestars indent inlineimages"
-		org-msg-greeting-fmt "\nHey%s,\n\n"
-		org-msg-greeting-name-limit 3
-		org-msg-default-alternatives '((new		. (text html))
-					       (reply-to-html	. (text html))
-					       (reply-to-text	. (text)))
-		org-msg-convert-citation t
-		org-msg-signature "
+                org-msg-startup "hidestars indent inlineimages"
+                org-msg-greeting-fmt "\nHey%s,\n\n"
+                org-msg-greeting-name-limit 3
+                org-msg-default-alternatives '((new		. (text html))
+                                               (reply-to-html	. (text html))
+                                               (reply-to-text	. (text)))
+                org-msg-convert-citation t
+                org-msg-signature "")
+  ;; 		org-msg-signature "
 
- Regards,
+  ;; Regards,
 
- ,#+begin_signature
- ---
- ,*Kirols Bakheat*
- ,#+end_signature")
+  ;; #+begin_signature
+  ;; ---
+  ;; *Kirols Bakheat*
+  ;; #+end_signature")
   (org-msg-mode))
 #+end_src
 * Org Mode
