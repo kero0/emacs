@@ -1646,6 +1646,18 @@ is available."
 	    "C-j" 'git-timemachine-show-next-revision
 	    "q" 'git-timemachine-quit))
 #+end_src
+** Git Gutter
+#+begin_src emacs-lisp
+(use-package git-gutter+
+  :init
+  (global-git-gutter+-mode t)
+  :config
+  (my/general-global-Git
+    "n" '(git-gutter+-next-hunk :wk "next hunk")
+    "p" '(git-gutter+-previous-hunk :wk "previous hunk")
+    "s" '(git-gutter+-stage-hunks :wk "stage hunk")
+    "r" '(git-gutter+-revert-hunk :wk "revert hunk")))
+#+end_src
 * LSP & DAP
 ** LSP
 #+begin_src emacs-lisp
