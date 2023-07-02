@@ -70,7 +70,6 @@
             defaultInitFile = pkgs.writeText "default.el"
               (let deps = nixpkgs.lib.makeBinPath dependencies;
                in ''
-                   (add-to-list 'load-path "${./.}/lisp")
                 	 (setq my/emacs-dir "${./.}/")
                    (setenv "PATH" (concat (getenv "PATH") ":${deps}"))
               '' + nixpkgs.lib.concatStringsSep "\n"
