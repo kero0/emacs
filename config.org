@@ -2086,14 +2086,6 @@ is available."
                                                (reply-to-text	. (text)))
                 org-msg-convert-citation t
                 org-msg-signature "")
-  ;; 		org-msg-signature "
-
-  ;; Regards,
-
-  ;; #+begin_signature
-  ;; ---
-  ;; *Kirols Bakheat*
-  ;; #+end_signature")
   (org-msg-mode))
 #+end_src
 * Org Mode
@@ -2453,6 +2445,15 @@ is available."
 (use-package ox-html
 :ensure nil
 :after org)
+#+end_src
+*** =ox-chameleon=
+#+begin_src emacs-lisp
+(use-package ox-chameleon
+  :ensure nil
+  :after org
+  :config
+  (after! org-msg
+	  (setq org-msg-options (concat org-msg-options " html-content-class: chameleon "))))
 #+end_src
 *** Syntax Highlighting
 #+name: engrave-faces-init
