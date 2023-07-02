@@ -741,11 +741,10 @@ I'm going to use the file [[./dashboard.org][dashboard.org]] as my dashboard. Th
         dashboard-show-shortcuts t
         dashboard-display-icons-p t
         dashboard-icon-type 'nerd-icons
-	    dashboard-projects-backend 'project-el
+        dashboard-projects-backend (if (package-installed-p 'projectile) 'projectile 'project)
         dashboard-items '((recents  . 5)
                           (bookmarks . 5)
                           (projects . 5)
-                          (agenda . 5)
                           (registers . 5))
         dashboard-set-navigator t
         dashboard-set-init-info t
@@ -909,89 +908,25 @@ I'm going to use the file [[./dashboard.org][dashboard.org]] as my dashboard. Th
   (popper-mode +1))
 #+end_src
 * Project management
-** Projects
+** Projectile
 #+begin_src emacs-lisp
-(use-package project
-  :ensure nil
-  :general (my/leader-def "p" '(:keymap project-prefix-map :wk "Project"))
-  :general (:keymaps 'project-prefix-map
-                     "!" '(project-async-shell-command))
-  :config
-  (setq project-switch-commands '((project-find-file "Find file")
-                                  (project-dired "Dired")
-                                  (project-eshell "Eshell")
-                                  (project-shell "Shell")
-                                  (project-compile "Compile")
-                                  (project-test "Test"))))
-#+end_src
-** =Tabspaces=
-#+begin_src emacs-lisp
-(use-package tabspaces
-  :hook (after-init . tabspaces-mode) ;; use this only if you want the minor-mode loaded at startup. 
-  :commands (tabspaces-switch-or-create-workspace
-             tabspaces-open-or-create-project-and-workspace)
+(use-package projectile
+  :diminish
   :init
-  (defun my--tabspace-setup ()
-    "Set up tabspace at startup."
-    (tabspaces-mode 1)
-    (progn
-      (tab-bar-rename-tab "Home")
-      (when (get-buffer "*Messages*")
-        (set-frame-parameter nil
-                             'buffer-list
-                             (cons (get-buffer "*Messages*")
-                                   (frame-parameter nil 'buffer-list))))
-      (when (get-buffer "*dashboard*")
-        (set-frame-parameter nil
-                             'buffer-list
-                             (cons (get-buffer "*dashboard*")
-                                   (frame-parameter nil 'buffer-list))))))
-
-  (add-hook 'after-init-hook #'my--tabspace-setup)
-  :config
-  ;; (add-hook 'tabspaces-mode-hook (lambda () (tab-bar-mode -1)))
-  (my/general-global-menu! "Workspaces" "TAB"
-    "C" '(tabspaces-clear-buffers :wk "Clear buffers")
-    "b" '(tabspaces-switch-to-buffer :wk "Switch to buffer")
-    "d" '(tabspaces-close-workspace :wk "Close workspace")
-    "k" '(tabspaces-kill-buffers-close-workspace :wk "Kill buffers and close workspace")
-    "o" '(tabspaces-open-or-create-project-and-workspace :wk "Open or create project and workspace")
-    "r" '(tabspaces-remove-current-buffer :wk "Remove current buffer")
-    "R" '(tabspaces-remove-selected-buffer :wk "Remove selected buffer")
-    "s" '(tabspaces-switch-or-create-workspace :wk "Switch or create workspace")
-    "t" '(tabspaces-switch-buffer-and-tab :wk "Switch buffer and tab")
-    "TAB" '(tabspaces-switch-or-create-workspace :wk "Switch or create workspace"))
-  ;; Filter Buffers for Consult-Buffer
-
-  (after! consult
-    ;; hide full buffer list (still available with "b" prefix)
-    (consult-customize consult--source-buffer :hidden t :default nil)
-    ;; set consult-workspace buffer list
-    (defvar consult--source-workspace
-      (list :name     "Workspace Buffers"
-            :narrow   ?w
-            :history  'buffer-name-history
-            :category 'buffer
-            :state    #'consult--buffer-state
-            :default  t
-            :items    (lambda () (consult--buffer-query
-                                  :predicate #'tabspaces--local-buffer-p
-                                  :sort 'visibility
-                                  :as #'buffer-name)))
-
-      "Set workspace buffer list for consult-buffer.")
-    (add-to-list 'consult-buffer-sources 'consult--source-workspace))
-  :custom
-  (tab-bar-show nil)
-  (tabspaces-session-file (concat my/cache-dir "tabspaces-session.el"))
-  (tabspaces-keymap-prefix nil)
-  (tabspaces-use-filtered-buffers-as-default t)
-  (tabspaces-default-tab "Default")
-  (tabspaces-remove-to-default t)
-  (tabspaces-include-buffers '("*scratch*"))
-  ;; sessions
-  (tabspaces-session t)
-  (tabspaces-session-auto-restore t))
+  (projectile-mode +1)
+  (my/general-global-menu! "Projects" "p"
+    "" '(:keymap projectile-command-map :wk "projectile"))
+  (setq projectile-switch-project-action #'projectile-dired))
+#+end_src
+** Bufler
+#+begin_src emacs-lisp
+(use-package bufler
+  :diminish
+  :hook (after-init . bufler-mode)
+  :general (my/leader-def
+	  "TAB" #'bufler)
+  :config)
+  
 #+end_src
 * Dired
 #+begin_src emacs-lisp
