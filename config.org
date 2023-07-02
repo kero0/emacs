@@ -935,18 +935,16 @@ I'm going to use the file [[./dashboard.org][dashboard.org]] as my dashboard. Th
   :general (my/general-global-Open "d" '(dired :wk "dired"))
   :config
   (setq dired-listing-switches "-alh --group-directories-first"
-        dired-dwim-target t
-        dired-recursive-copies 'always
-        dired-recursive-deletes 'always
-        dired-hide-details-hide-symlink-targets nil
-        dired-hide-details-hide-information-lines nil
-        insert-directory-program (if IS-MAC (executable-find "gls") insert-directory-program)
-        dired-use-ls-dired t
-        dired-auto-revert-buffer t)
-  (add-hook 'dired-mode-hook #'dired-hide-details-mode)
+	dired-dwim-target t
+	dired-recursive-copies 'always
+	dired-recursive-deletes 'always
+	dired-hide-details-hide-symlink-targets nil
+	dired-hide-details-hide-information-lines nil
+	insert-directory-program (if IS-MAC (executable-find "gls") insert-directory-program)
+	dired-use-ls-dired t
+	dired-auto-revert-buffer t)
   (add-hook 'dired-mode-hook #'hl-line-mode)
-  (add-hook 'dired-mode-hook #'dired-omit-mode)
-  (add-hook 'dired-mode-hook #'auto-revert-mode))
+  (add-hook 'dired-mode-hook #'dired-omit-mode))
 #+end_src
 * Tree Sitter
 #+begin_src emacs-lisp
@@ -1440,7 +1438,12 @@ be passed to EVAL-FUNC as its rest arguments"
 	     "e" '(embark-act :wk "act")
 	     "b" '(embark-bindings :wk "bindings")
 	     "c" '(embark-collect :wk "collect"))
-  :general (general-def "C-c e" '(embark-act :wk "act")))
+  :general (general-def
+	     :prefix "C-c e"
+	     "o" '(embark-export :wk "export")
+	     "e" '(embark-act :wk "act")
+	     "b" '(embark-bindings :wk "bindings")
+	     "c" '(embark-collect :wk "collect")))
 (use-package embark-consult
   :if (and (featurep 'embark)
 	   (featurep 'consult))
@@ -1625,6 +1628,7 @@ is available."
   (setq magit-log-arguments '("--graph" "--decorate" "--color"))
   (setq git-commit-fill-column 72)
   :config
+  (append! popper-reference-buffers "\\*\\*magit-process:.*\\*\\*")
   (setq magit-buffer-name-format (concat "*" magit-buffer-name-format "*"))
   (evil-define-key* '(normal visual) magit-mode-map
     "zz" #'evil-scroll-line-to-center))
@@ -1658,7 +1662,9 @@ is available."
   :config
   (when my/proxy (setq lsp-http-proxy my/proxy))
   (my/general-global-Code
-    '(normal visual insert) lsp-mode-map
+    :definer 'minor-mode
+    :keymaps 'lsp-mode
+    :states '(normal visual)
     "l"   '(nil :wk "LSP")
 
     "lw"  '(nil :wk "workspace")
