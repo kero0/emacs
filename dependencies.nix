@@ -32,7 +32,8 @@ with pkgs;
     })
 
   # python
-  (python3.withPackages (ps: with ps; [ black isort pipx pyflakes python-lsp-server ]))
+  (python3.withPackages
+    (ps: with ps; [ black isort pipx pyflakes python-lsp-server ]))
   poetry
 
   # rust
@@ -47,4 +48,4 @@ with pkgs;
 # mu4e
 # Both of these are configured outside this repo
 # Personally, I configure them using home-manager
-++ lib.optionals is-personal [ mu msmtp]
+++ lib.optionals is-personal [ mu msmtp ]
