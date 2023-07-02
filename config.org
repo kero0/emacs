@@ -1941,20 +1941,6 @@ is available."
   :init
   (add-to-list 'org-babel-load-languages '(haskell . t)))
 #+end_src
-** OCaml
-#+begin_src emacs-lisp
-(use-package tuareg
-  :mode ("\\.ml[ily]?$" . tuareg-mode)
-  :config
-  (when (package-installed-p 'lsp-mode)
-    (add-hook 'tuareg-mode-hook #'lsp-deferred))
-  (setq tuareg-match-patterns-aligned t)
-  :general (my/general-global-Open
-	     :keymaps 'tuareg-mode-map
-	     "r" '(run-ocaml :wk "ocaml repl")))
-(use-package merlin
-  :hook (tuareg-mode . merlin-mode))
-#+end_src
 ** PDF
 #+begin_src emacs-lisp
 (use-package pdf-tools
