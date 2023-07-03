@@ -1673,61 +1673,66 @@ is available."
   :custom (lsp-keymap-prefix nil)
   :config
   (when my/proxy (setq lsp-http-proxy my/proxy))
-  (my/general-global-Code
-    :definer 'minor-mode
-    :keymaps 'lsp-mode
-    :states '(normal visual)
-    "l"   '(nil :wk "LSP")
 
-    "lw"  '(nil :wk "workspace")
-    "lwD" '(lsp-disconnect :wk "disconnect")
-    "lwd" '(lsp-describe-session :wk "describe session")
-    "lwq" '(lsp-workspace-shutdown :wk "shutdown server")
-    "lwr" '(lsp-workspace-restart :wk "restart server")
-    "lws" '(lsp :wk "start server")
+  (my/general-global-menu! "LSP" ""
+    :def-settings (
+		   :definer 'minor-mode
+		   :keymaps 'lsp-mode
+		   :states my/prefix-states
+		   :prefix (concat my/leader-def-prefix " c l")
+		   :global-prefix (concat my/leader-def-prefix-alt " c l")
+		   )
+    ""   '(nil :wk "LSP")
 
-    "l="  '(nil :wk "format")
-    "l==" '(lsp-format-buffer :wk "format buffer")
-    "l=r" '(lsp-format-region :wk "format region")
+    "w"  '(nil :wk "workspace")
+    "wD" '(lsp-disconnect :wk "disconnect")
+    "wd" '(lsp-describe-session :wk "describe session")
+    "wq" '(lsp-workspace-shutdown :wk "shutdown server")
+    "wr" '(lsp-workspace-restart :wk "restart server")
+    "ws" '(lsp :wk "start server")
 
-    "lF"  '(nil :wk "folders")
-    "lFa" '(lsp-workspace-folders-add :wk "add folder")
-    "lFb" '(lsp-workspace-blacklist-remove :wk "un-blacklist folder")
-    "lFr" '(lsp-workspace-folders-remove :wk "remove folder")
+    "="  '(nil :wk "format")
+    "==" '(lsp-format-buffer :wk "format buffer")
+    "=r" '(lsp-format-region :wk "format region")
 
-    "lt"  '(nil :wk "toggle")
-    "ltD" '(lsp-modeline-diagnostics-mode :wk "toggle modeline diagnostics")
-    "ltL" '(lsp-toggle-trace-io :wk "toggle log io")
-    "ltT" '(lsp-treemacs-sync-mode :wk "toggle treemacs integration")
-    "lta" '(lsp-modeline-code-actions-mode :wk "toggle modeline code actions")
-    "ltb" '(lsp-headerline-breadcrumb-mode :wk "toggle breadcrumb")
-    "ltf" '(lsp-toggle-on-type-formatting :wk "toggle on type formatting")
-    "lth" '(lsp-toggle-symbol-highlight :wk "toggle highlighting")
-    "ltl" '(lsp-lens-mode :wk "toggle lenses")
-    "lts" '(lsp-toggle-signature-auto-activate :wk "toggle signature")
+    "F"  '(nil :wk "folders")
+    "Fa" '(lsp-workspace-folders-add :wk "add folder")
+    "Fb" '(lsp-workspace-blacklist-remove :wk "un-blacklist folder")
+    "Fr" '(lsp-workspace-folders-remove :wk "remove folder")
 
-    "lg"  '(nil :wk "goto")
-    "lga" '(xref-find-apropos :wk "find symbol in workspace")
-    "lgd" '(lsp-find-declaration :wk "find declarations")
-    "lge" '(lsp-treemacs-errors-list :wk "show errors")
-    "lgg" '(lsp-find-definition :wk "find definitions")
-    "lgh" '(lsp-treemacs-call-hierarchy :wk "call hierarchy")
-    "lgi" '(lsp-find-implementation :wk "find implementations")
-    "lgr" '(lsp-find-references :wk "find references")
-    "lgt" '(lsp-find-type-definition :wk "find type definition")
+    "t"  '(nil :wk "toggle")
+    "tD" '(lsp-modeline-diagnostics-mode :wk "toggle modeline diagnostics")
+    "tL" '(lsp-toggle-trace-io :wk "toggle log io")
+    "tT" '(lsp-treemacs-sync-mode :wk "toggle treemacs integration")
+    "ta" '(lsp-modeline-code-actions-mode :wk "toggle modeline code actions")
+    "tb" '(lsp-headerline-breadcrumb-mode :wk "toggle breadcrumb")
+    "tf" '(lsp-toggle-on-type-formatting :wk "toggle on type formatting")
+    "th" '(lsp-toggle-symbol-highlight :wk "toggle highlighting")
+    "tl" '(lsp-lens-mode :wk "toggle lenses")
+    "ts" '(lsp-toggle-signature-auto-activate :wk "toggle signature")
 
-    "lh"  '(nil :wk "help")
-    "lhh" '(lsp-describe-thing-at-point :wk "describe symbol at point")
-    "lhs" '(lsp-signature-activate :wk "signature help")
+    "g"  '(nil :wk "goto")
+    "ga" '(xref-find-apropos :wk "find symbol in workspace")
+    "gd" '(lsp-find-declaration :wk "find declarations")
+    "ge" '(lsp-treemacs-errors-list :wk "show errors")
+    "gg" '(lsp-find-definition :wk "find definitions")
+    "gh" '(lsp-treemacs-call-hierarchy :wk "call hierarchy")
+    "gi" '(lsp-find-implementation :wk "find implementations")
+    "gr" '(lsp-find-references :wk "find references")
+    "gt" '(lsp-find-type-definition :wk "find type definition")
 
-    "lr"  '(nil :wk "refactor")
-    "lro" '(lsp-organize-imports :wk "organize imports")
-    "lrr" '(lsp-rename :wk "rename")
+    "h"  '(nil :wk "help")
+    "hh" '(lsp-describe-thing-at-point :wk "describe symbol at point")
+    "hs" '(lsp-signature-activate :wk "signature help")
 
-    "la"  '(nil :wk "actions")
-    "laa" '(lsp-execute-code-action :wk "code actions")
-    "lah" '(lsp-document-highlight :wk "highlight symbol")
-    "lal" '(lsp-avy-lens :wk "lens")))
+    "r"  '(nil :wk "refactor")
+    "ro" '(lsp-organize-imports :wk "organize imports")
+    "rr" '(lsp-rename :wk "rename")
+
+    "a"  '(nil :wk "actions")
+    "aa" '(lsp-execute-code-action :wk "code actions")
+    "ah" '(lsp-document-highlight :wk "highlight symbol")
+    "al" '(lsp-avy-lens :wk "lens")))
 
 #+end_src
 ** LSP UI
@@ -1737,17 +1742,17 @@ is available."
   :config
   (setq lsp-ui-sideline-enable nil
 	    lsp-ui-doc-delay 2)
-  (my/general-global-Code '(normal visual insert) lsp-ui-mode-map
-    "ltS" '(lsp-ui-sideline-mode :wk "toggle sideline")
-    "ltd" '(lsp-ui-doc-mode :wk "toggle documentation popup")
+  (my/general-global-LSP
+    "tS" '(lsp-ui-sideline-mode :wk "toggle sideline")
+    "td" '(lsp-ui-doc-mode :wk "toggle documentation popup")
 
-    "lhg" '(lsp-ui-doc-glance :wk "glance symbol")
+    "hg" '(lsp-ui-doc-glance :wk "glance symbol")
 
-    "lg"  '(nil :wk "peek")
-    "lgg" '(lsp-ui-peek-find-definitions :wk "peek definitions")
-    "lgi" '(lsp-ui-peek-find-implementation :wk "peek implementations")
-    "lgr" '(lsp-ui-peek-find-references :wk "peek references")
-    "lgs" '(lsp-ui-peek-find-workspace-symbol :wk "peek workspace symbol")))
+    "g"  '(nil :wk "peek")
+    "gg" '(lsp-ui-peek-find-definitions :wk "peek definitions")
+    "gi" '(lsp-ui-peek-find-implementation :wk "peek implementations")
+    "gr" '(lsp-ui-peek-find-references :wk "peek references")
+    "gs" '(lsp-ui-peek-find-workspace-symbol :wk "peek workspace symbol")))
 
 #+end_src
 ** DAP
