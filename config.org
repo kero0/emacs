@@ -4,6 +4,10 @@
 #+begin_src emacs-lisp
 ;; -*- lexical-binding: t; -*-
 #+end_src
+** Requires
+#+begin_src emacs-lisp
+(require 'cl-lib)
+#+end_src
 ** Basic variables
 *** System type
 #+begin_src emacs-lisp
@@ -14,6 +18,11 @@
 ;; personal or work
 (defconst IS-PERSONAL t)
 (defconst IS-WORK     (not IS-PERSONAL))
+(defconst my/available-cores
+  (string-to-number
+   (shell-command-to-string (if (eq system-type 'darwin)
+                                "sysctl -n hw.ncpu"
+                              "nproc --all"))))
 #+end_src
 *** Directories
 #+begin_src emacs-lisp
@@ -53,8 +62,14 @@
 	(1 `(with-eval-after-load (quote ,(car features))
 	      (progn
 		,@body)))
-	(t `(with-eval-after-load (quote ,(car features))
-	      (after! ,(cdr features) ,@body))))
+        (t (if (eq (car features) 'or)
+               `(progn
+                  ,@(cl-map 'list
+                           (lambda (feature)
+                             `(after! ,feature ,@body))
+                           (cdr features)))
+             `(with-eval-after-load (quote ,(car features))
+                (after! ,(cdr features) ,@body)))))
     `(with-eval-after-load (quote ,features)
        (progn ,@body))))
 #+end_src
