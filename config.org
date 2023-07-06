@@ -477,6 +477,18 @@ Local leader is bound to "SPC m" and always shows the keybindings for the curren
                          "o" '((lambda () (interactive) (my/default-open (buffer-file-name))) :wk "Open file")
                          "s" '(my/shell :wk "Shell"))
 #+end_src
+***** REPL
+#+begin_src emacs-lisp
+(defvar my/repl-alist '( ) "Alist of modes to repls.")
+(defvar my/repl-fallback #'my/shell "The fallback repl to use.")
+(defun my/repl ()
+  (interactive)
+  (let* ((mode (buffer-local-value 'major-mode (current-buffer)))
+         (repl (alist-get mode my/repl-alist my/repl-fallback))
+                (repl-buffer-name (concat "*" (symbol-name mode) ":repl*")))
+        (my/open-create-or-switch-buffer repl-buffer-name repl)))
+(my/general-global-Open "r" '(my/repl :wk "REPL"))
+#+end_src
 ***** Toggle
 #+begin_src emacs-lisp
 (defun my/toggle-comment (beg end)
@@ -915,6 +927,7 @@ I'm going to use the file [[./dashboard.org][dashboard.org]] as my dashboard. Th
         '("\\*Messages\\*"
           "Output\\*$"
           "\\*Async Shell Command\\*"
+          "\\*helpful .*\\*"
           help-mode
           compilation-mode))
 
@@ -1503,7 +1516,9 @@ is available."
 (use-package vterm
   :commands vterm
   :init
-  (defun my/vterm--auto-close-window () (when (string= (buffer-name) "*vterm*") (delete-window)))
+  (defun my/vterm--auto-close-window (buf event)
+    (when (y-or-n-p (concat event " - kill buffer: " (buffer-name buf) "?"))
+      (kill-buffer-and-window)))
   (add-hook 'vterm-exit-functions #'my/vterm--auto-close-window)
   (defun my/vterm ()
     (interactive)
@@ -1523,7 +1538,6 @@ is available."
   :ensure nil
   :commands eshell
   :init
-  (defun my/eshell--auto-close-window () (when (string= (buffer-name) "*eshell*") (delete-window)))
   (defun my/eshell ()
     (interactive)
     (my/open-create-or-switch-buffer "*eshell*" #'eshell))
@@ -1543,7 +1557,6 @@ is available."
           (append! popper-reference-buffers
             "^\\*eshell.*\\*$" 'eshell-mode))
   (add-hook 'eshell-mode-hook #'my/disable-line-numbers)
-  (add-hook 'eshell-exit-hook #'my/eshell--auto-close-window)
   (after! corfu (add-hook 'eshell-mode-hook #'corfu-mode)))
 (use-package eshell-syntax-highlighting
   :hook (eshell-mode . eshell-syntax-highlighting-mode))
