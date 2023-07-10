@@ -99,6 +99,7 @@
 ** gcmh
 #+begin_src emacs-lisp
 (use-package gcmh
+  :unless noninteractive
   :demand
   :hook
   (focus-out-hook . gcmh-idle-garbage-collect)
@@ -154,6 +155,7 @@
 *** savehist
 #+begin_src emacs-lisp
 (use-package savehist
+  :unless noninteractive
   :ensure nil
   :config
   (setq savehist-file (expand-file-name "savehist" my/local-dir)
@@ -166,8 +168,12 @@
 #+end_src
 *** saveplace
 #+begin_src emacs-lisp
-(setq save-place-file (expand-file-name "saveplace" my/local-dir))
-(save-place-mode 1)
+(use-package saveplace
+  :unless noninteractive
+  :ensure nil
+  :config
+  (setq save-place-file (expand-file-name "saveplace" my/local-dir))
+  (save-place-mode 1))
 #+end_src
 *** bookmarks
 #+begin_src emacs-lisp
@@ -193,22 +199,19 @@
 #+end_src
 ** Auto-revert
 #+begin_src emacs-lisp
-(global-auto-revert-mode t)
-(setq auto-revert-verbose t)
-(setq global-auto-revert-non-file-buffers t)
+(use-package autorevert
+  :ensure nil
+  :diminish auto-revert-mode
+  :config
+  (setq auto-revert-verbose nil
+        auto-revert-interval 2
+        auto-revert-check-vc-info t
+        auto-revert-remote-files t)
+  (global-auto-revert-mode +1))
 #+end_src
 ** Yes-or-No
 #+begin_src emacs-lisp
 (defalias 'yes-or-no-p 'y-or-n-p)
-;; map empty string to y
-;; (defadvice y-or-n-p (around y-or-n-p-hack activate)
-;;   "If the user enters an empty string, assume it means yes."
-;;   (let ((read-answer (lambda () (let ((answer (read-string (ad-get-arg 0))))
-;;                                   (if (string= answer "")
-;;                                       'y
-;;                                     (read answer))))))
-;;     (ad-set-arg 0 read-answer)
-;;     ad-do-it))
 #+end_src
 ** Authsources
 #+begin_src emacs-lisp
@@ -220,14 +223,11 @@
       native-comp-async-report-warnings-errors nil
       native-comp-deferred-compilation t
       native-comp-verbose nil)
-
 #+end_src
 ** Window management
 I want windows that start with '*' to be opened in the lower 1/3 of the frame. These windows should close when their buffer dies and should not be reused. If they are not in ~my/special-window-no-cursor-manage-alist~ then they should automatically grab the cursor.
 #+begin_src emacs-lisp
 (defvar my/special-window-no-cursor-manage-alist '("*Help*" "*Warnings*" "*Backtrace*" "*Messages*"))
-;; (defun my/special-window-manage (x)
-;;     ((bufferp x)))
 #+end_src
 ** Proxy Settings
 #+begin_src emacs-lisp
@@ -282,24 +282,6 @@ Macro to define nested keymaps
            :prefix ,prefix-key
            "" '(:ignore t :wk ,name))
          (,(intern n) ,@body)))))
-#+end_src
-Open a buffer at the bottom of the screen
-#+begin_src emacs-lisp
-(defun my/open-create-or-switch-buffer (name new &optional height)
-  (interactive)
-  (unless height (setq height 0.35))
-  (let ((buf (get-buffer name)))
-    (if buf
-	(if (get-buffer-window buf)
-	    (if (eq (current-buffer) buf)
-		(delete-window (get-buffer-window buf))
-	      (select-window (get-buffer-window buf))))
-      (progn
-	(split-window-below
-	 (floor (* (window-total-height) (- 1 height))))
-	(other-window 1)
-	(funcall new)
-	(rename-buffer name)))))
 #+end_src
 Do something in other window
 #+begin_src emacs-lisp
@@ -357,7 +339,6 @@ Do something in other window
 (defvar my/prefix-states '(normal visual motion insert)
   "States in which to bind general.el leader keybindings.")
 
-
 (use-package general
   :config
   (general-evil-setup)
@@ -404,10 +385,6 @@ Do something in other window
 #+end_src
 ***** Buffer
 #+begin_src emacs-lisp
-(defun my/open-scratch-buffer ()
-  (interactive)
-  (my/open-create-or-switch-buffer "*scratch*" #'scratch))
-
 (defun my/kill-buffer (&optional buf)
   (interactive)
   (let ((buf (or buf (current-buffer)))
@@ -420,8 +397,6 @@ Do something in other window
         
 
 (my/general-global-menu! "Buffer" "b"
-
-  ;; "b" '(switch-to-buffer :wk "Switch buffer") ;; overriden by consult
   "B" '(switch-to-buffer-other-window :wk "Switch buffer other window")
   "d" '(kill-current-buffer :wk "Kill current buffer")
   "k" '(my/kill-buffer :wk "Kill buffer")
@@ -435,9 +410,9 @@ Do something in other window
   "S" '(save-some-buffers :wk "Save some buffers")
   "u" '(bury-buffer :wk "Bury buffer")
   "U" '(unbury-buffer :wk "Unbury buffer")
-  "x" '(my/open-scratch-buffer :wk "Open scratch buffer"))
+  "x" '(scratch :wk "Open scratch buffer"))
 (my/leader-def
-  "x" '(my/open-scratch-buffer :wk "Open scratch buffer"))
+  "x" '(scratch :wk "Open scratch buffer"))
 #+end_src
 ***** Code
 #+begin_src emacs-lisp
@@ -449,7 +424,7 @@ Do something in other window
 #+begin_src emacs-lisp
 (defun my/find-file-other-window ()
   (interactive)
-  (my/open-create-or-switch-buffer (buffer-name) #'find-file-other-window))
+  (my/do-in-other-window #'find-file))
 (defun my/find-file-sudo ()
   (interactive)
   (let ((file-name (read-file-name "Find file (as root): ")))
@@ -482,25 +457,49 @@ Do something in other window
 (defun my/default-open (file)
   (interactive)
   (start-process my/open-proc nil my/open-proc file))
-(defun my/shell ()
-  (interactive)
-  (my/open-create-or-switch-buffer "*shell*" #'shell))
 
 (my/general-global-menu! "Open" "o"
-
                          "o" '((lambda () (interactive) (my/default-open (buffer-file-name))) :wk "Open file")
-                         "s" '(my/shell :wk "Shell"))
+                         "s" '(shell :wk "Shell"))
 #+end_src
 ***** REPL
 #+begin_src emacs-lisp
-(defvar my/repl-alist '( ) "Alist of modes to repls.")
+(defvar my/repl-alist '((emacs-lisp-mode . ielm)
+                        (fallback . my/repl-fallback))
+  "Alist of modes to repls.")
 (defvar my/repl-fallback #'shell "The fallback repl to use.")
-(defun my/repl ()
-  (interactive)
+(defun my/repl--open-or-create ()
   (let* ((mode (buffer-local-value 'major-mode (current-buffer)))
-         (repl (alist-get mode my/repl-alist my/repl-fallback))
-                (repl-buffer-name (concat "*" (symbol-name mode) ":repl*")))
-        (my/open-create-or-switch-buffer repl-buffer-name repl)))
+	 (repl (alist-get mode my/repl-alist my/repl-fallback))
+	 (repl-buffer-name (concat "*"
+				   (symbol-name (if (eq repl my/repl-fallback) mode repl))
+				   ":repl*")))
+    (if (get-buffer repl-buffer-name)
+	(popper--find-buried-popups (get-buffer repl-buffer-name))
+      (progn
+	(add-popup! repl-buffer-name)
+	(funcall repl)
+	(rename-buffer repl-buffer-name)))))
+(defun my/repl--choose (arg)
+  (interactive (list (completing-read "Choose repl: " (mapcar #'symbol-name (mapcar #'car my/repl-alist)) nil t)))
+  (let* ((repl (if (string= arg "fallback")
+                   my/repl-fallback
+                 (alist-get (intern arg) my/repl-alist my/repl-fallback)))
+	 (repl-buffer-name (concat "*"
+				   (symbol-name repl)
+				   ":repl*")))
+    (if (get-buffer repl-buffer-name)
+        (popper-raise-popup (get-buffer repl-buffer-name))
+      (progn
+	(add-popup! repl-buffer-name)
+	(funcall repl)
+	(rename-buffer repl-buffer-name)))))
+
+(defun my/repl (arg)
+  (interactive "P")
+  (if arg
+      (call-interactively #'my/repl--choose)
+    (my/repl--open-or-create)))
 (my/general-global-Open "r" '(my/repl :wk "REPL"))
 #+end_src
 ***** Toggle
@@ -532,7 +531,7 @@ Do something in other window
 	evil-undo-system 'undo-tree
 	x-select-enable-clipboard nil)
   :config
-  (evil-mode 1)
+  (evil-mode (not noninteractive))
   (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
   (define-key evil-insert-state-map (kbd "C-h") 'evil-delete-backward-char-and-join)
 
@@ -552,7 +551,8 @@ Do something in other window
   :custom
   (evil-collection-setup-minibuffer t)
   :config
-  (evil-collection-init)
+  (unless noninteractive
+    (evil-collection-init))
   (general-def minibuffer-local-map
     :states 'normal
     [escape] 'abort-recursive-edit))
@@ -647,6 +647,7 @@ Do something in other window
 ** which-key
 #+begin_src emacs-lisp
 (use-package which-key
+  :unless noninteractive
   :hook (after-init . which-key-mode)
   :config
   (setq which-key-idle-delay 0.4
@@ -684,6 +685,7 @@ Do something in other window
 ** ANSI colors in compilation buffers
 #+begin_src emacs-lisp
 (use-package ansi-color
+  :unless noninteractive
   :ensure nil
   :hook  (compilation-filter . ansi-color-compilation-filter))
 #+end_src
@@ -752,11 +754,12 @@ Do something in other window
 		 ,(macroexpand 
 		   `(my/prettify-symbols-extend ,@pairs)))))
   :config
-  (global-prettify-symbols-mode 1))
+  (global-prettify-symbols-mode noninteractive))
 #+end_src
 *** Emoji
 #+begin_src emacs-lisp
 (use-package emojify
+  :unless noninteractive
   :hook (after-init . global-emojify-mode)
   :config (setq emojify-styles '(unicode)))
 #+end_src
@@ -770,11 +773,11 @@ Do something in other window
     "U" '(unicode-fonts-insert 'interactive "Insert Unicode char (by name)")))
 #+end_src
 ** Dashboard
-I'm going to use the file [[./dashboard.org][dashboard.org]] as my dashboard. This needs a special mode.
 #+begin_src emacs-lisp
 (use-package nerd-icons)
 (use-package dashboard
-  :demand t
+  :unless noninteractive
+  :hook (after-init . dashboard-setup-startup-hook)
   :init
   (setq dashboard-banner-logo-title "Welcome to Emacs Dashboard"
         dashboard-startup-banner 'logo
@@ -790,8 +793,7 @@ I'm going to use the file [[./dashboard.org][dashboard.org]] as my dashboard. Th
         dashboard-set-navigator t
         dashboard-set-init-info t
         inhibit-startup-screen t)
-  (add-hook 'dashboard-mode-hook #'my/disable-line-numbers)
-  (dashboard-setup-startup-hook))
+  (add-hook 'dashboard-mode-hook #'my/disable-line-numbers))
 #+end_src
 ** Theme
 #+begin_src emacs-lisp
@@ -910,6 +912,7 @@ I'm going to use the file [[./dashboard.org][dashboard.org]] as my dashboard. Th
 ** Modeline
 #+begin_src emacs-lisp
 (use-package doom-modeline
+  :unless noninteractive
   :init
   (unless (equal "Battery status not available"
 		 (battery))
@@ -933,9 +936,15 @@ I'm going to use the file [[./dashboard.org][dashboard.org]] as my dashboard. Th
 ** Popper
 #+begin_src emacs-lisp
 (use-package popper
+  :unless noninteractive
+  :demand t
   :bind (("C-`"   . popper-toggle-latest)
          ("M-`"   . popper-cycle)
          ("C-M-`" . popper-toggle-type))
+  :general (my/general-global-menu! "Popper" "`"
+                                    "`" '(popper-toggle-latest :wk "Toggle latest")
+                                    "c" '(popper-cycle :wk "Cycle")
+                                    "T" '(popper-toggle-type :wk "Toggle type"))
   :init
   (setq popper-reference-buffers
         '("\\*Messages\\*"
@@ -948,13 +957,22 @@ I'm going to use the file [[./dashboard.org][dashboard.org]] as my dashboard. Th
 
   (setq popper-group-function #'popper-group-by-directory
 	popper-display-function #'display-buffer-at-bottom)
+  (cl-defmacro add-popup! (&rest rules)
+    "Add popup rules."
+    `(after! popper
+	     (append! popper-reference-buffers ,@rules)
+	     (popper--set-reference-vars)))
+  :config
   (popper-mode +1))
+(when noninteractive
+  (defmacro add-popup! (&rest _)))
 #+end_src
 * Project management
 ** Projectile
 #+begin_src emacs-lisp
 (use-package projectile
   :diminish
+  :unless noninteractive
   :init
   (projectile-mode +1)
   (my/general-global-menu! "Projects" "p"
@@ -965,6 +983,7 @@ I'm going to use the file [[./dashboard.org][dashboard.org]] as my dashboard. Th
 #+begin_src emacs-lisp
 (use-package bufler
   :diminish
+  :unless noninteractive
   :hook (after-init . bufler-mode)
   :general (my/leader-def
 	  "TAB" #'bufler)
@@ -974,6 +993,7 @@ I'm going to use the file [[./dashboard.org][dashboard.org]] as my dashboard. Th
 * Dired
 #+begin_src emacs-lisp
 (use-package dired
+  :unless noninteractive
   :ensure nil
   :general (my/general-global-Open "d" '(dired :wk "dired"))
   :config
@@ -992,6 +1012,7 @@ I'm going to use the file [[./dashboard.org][dashboard.org]] as my dashboard. Th
 * Tree Sitter
 #+begin_src emacs-lisp
 (use-package tree-sitter
+  :unless noninteractive
   :disabled t
   :hook (prog-mode . tree-sitter-mode)
   :config
@@ -1068,6 +1089,7 @@ I'm going to use the file [[./dashboard.org][dashboard.org]] as my dashboard. Th
 * Buffer management
 #+begin_src emacs-lisp
 (use-package ibuffer
+  :unless noninteractive
   :ensure nil
   :general (my/general-global-Buffer
 	     "i" '(ibuffer :wk "ibuffer"))
@@ -1082,64 +1104,17 @@ I'm going to use the file [[./dashboard.org][dashboard.org]] as my dashboard. Th
 ; next/prev buffer skip special buffers
 (setq switch-to-prev-buffer-skip-regexp '("^\\*.*\\*$"))
 #+end_src
-* Quickrun
-#+begin_src emacs-lisp
-(use-package eros
-  :commands 'eros--eval-overlay
-  :init
-  (defmacro my/eros-eval-region (fn)
-    (declare (indent defun))
-    `(defun ,(intern (format "my/eros-eval-%s" fn)) (start end)
-       (interactive "r")
-       (eros--eval-overlay
-        (string-trim
-         (with-output-to-string
-           (,fn start end standard-output)))
-        (max (point) (mark)))))
-  :config
-  (setq eros-eval-result-duration 0.5)
-  (setq eros-eval-result-prefix " ➤ "))
-(use-package quickrun
-  :commands (quickrun quickrun-region quickrun-shell quickrun-arg quickrun-select quickrun-repl)
-  :init
-  (defcustom evil-extra-operator-eval-modes-alist
-    '((emacs-lisp-mode . eval-region)
-      (clojure-mode . cider-eval-region)
-      (jupyter-python . jupyter-eval-region) ;; when executing in src block
-      (python-mode . python-shell-send-region) ;; when executing in org-src-edit mode
-      )
-    "Alist used to determine evil-operator-eval's behaviour.
-Each element of this alist should be of this form:
- (MAJOR-MODE EVAL-FUNC [ARGS...])
-MAJOR-MODE denotes the major mode of buffer. EVAL-FUNC should be a function
-with at least 2 arguments: the region beginning and the region end. ARGS will
-be passed to EVAL-FUNC as its rest arguments"
-    :type '(alist :key-type symbol)
-    :group 'evil-extra-operator)
-
-  (evil-define-operator evil-operator-eval (beg end)
-    "Evil operator for evaluating code."
-    :move-point nil
-    (interactive "<r>")
-    (let ((mode (if (eq major-mode 'org-mode)
-                    (intern (car (org-babel-get-src-block-info)))
-                  major-mode)))
-      (if-let (func (assoc mode evil-extra-operator-eval-modes-alist))
-          (funcall (cdr func) beg end)
-        (quickrun-region beg end))))
-
-  (define-key evil-motion-state-map "gr" 'evil-operator-eval))
-#+end_src
-
 * Aggressive Indent Mode
 #+begin_src emacs-lisp
 (use-package aggressive-indent
+  :unless noninteractive
   :init
   (global-aggressive-indent-mode 1))
 #+end_src
 * Calc
 #+begin_src emacs-lisp
 (use-package calc
+  :unless noninteractive
   :ensure nil ;; built-in
   :general (my/general-global-Open
 	     "c" '(calc :wk "calc")
@@ -1160,6 +1135,7 @@ be passed to EVAL-FUNC as its rest arguments"
 * String Inflection
 #+begin_src emacs-lisp
 (use-package string-inflection
+  :unless noninteractive
   :after evil
   :general (my/general-global-menu! "naming convention" "c ~"
 
@@ -1184,12 +1160,14 @@ be passed to EVAL-FUNC as its rest arguments"
 * Smartparens
 #+begin_src emacs-lisp
 (use-package smartparens
+  :unless noninteractive
   :general (my/general-global-Toggle "p" #'smartparens-mode)
   :hook (prog-mode . smartparens-mode)
   :hook (prog-mode . show-smartparens-mode)
   :config
   (show-smartparens-global-mode t))
 (use-package evil-smartparens
+  :unless noninteractive
   :after (evil smartparens)
   :hook (smartparens-mode . evil-smartparens-mode)
   :hook (smartparens-strict-mode . evil-smartparens-mode))
@@ -1198,6 +1176,7 @@ be passed to EVAL-FUNC as its rest arguments"
 ** Helpful
 #+begin_src emacs-lisp
 (use-package helpful
+  :unless noninteractive
   :bind
   ([remap describe-function] . helpful-callable)
   ([remap describe-variable] . helpful-variable)
@@ -1208,6 +1187,7 @@ be passed to EVAL-FUNC as its rest arguments"
 ** Man & TLDR
 #+begin_src emacs-lisp
 (use-package tldr
+  :unless noninteractive
   :commands (tldr tldr-update-docs)
   :init
   (my/general-global-menu! "Command line help" "h h"
@@ -1221,6 +1201,7 @@ be passed to EVAL-FUNC as its rest arguments"
 * Undo Tree
 #+begin_src emacs-lisp
 (use-package undo-tree 
+  :unless noninteractive
   :init
   (global-undo-tree-mode)
   :diminish
@@ -1251,6 +1232,7 @@ be passed to EVAL-FUNC as its rest arguments"
 ** Corfu
 #+begin_src emacs-lisp
 (use-package corfu
+  :unless noninteractive
   :bind (:map corfu-map
               ("TAB" . corfu-next)
               ([tab] . corfu-next)
@@ -1289,6 +1271,7 @@ be passed to EVAL-FUNC as its rest arguments"
   (setq tab-always-indent 'complete))
 ;; Use Dabbrev with Corfu!
 (use-package dabbrev
+  :unless noninteractive
   :ensure nil
   ;; Swap M-/ and C-M-/
   :bind (("M-/" . dabbrev-completion)
@@ -1297,54 +1280,79 @@ be passed to EVAL-FUNC as its rest arguments"
   :custom
   (dabbrev-ignored-buffer-regexps '("\\.\\(?:pdf\\|jpe?g\\|png\\)\\'")))
 #+end_src
+*** Corfu Popup Info
+#+begin_src emacs-lisp
+(use-package corfu-popupinfo
+  :unless noninteractive
+  :ensure corfu
+  :hook (corfu-mode . corfu-popupinfo-mode)
+  :custom
+  (corfu-popupinfo-hide nil)
+  (corfu-popupinfo-delay '(0.25 . 0)))
+#+end_src
+*** Corfu History
+#+begin_src emacs-lisp
+(use-package corfu-history
+  :unless noninteractive
+  :ensure corfu
+  :hook (corfu-mode . corfu-history-mode)
+  :config)
+  ;; (after! savehist
+  ;; 	  (append! savehist-additional-variables corfu-history)))
+#+end_src
 ** Icons
 #+begin_src emacs-lisp
 (use-package kind-icon
+  :unless noninteractive
   :after corfu
   :custom (kind-icon-default-face 'corfu-default) ; to compute blended backgrounds correctly
   :config (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
 #+end_src
 ** Cape
 #+begin_src emacs-lisp
-(setq-local completion-at-point-functions
-            (list (cape-super-capf #'cape-dabbrev #'cape-file #'cape-keyword #'cape-symbol)))
 (use-package cape
+  :unless noninteractive
   :general (my/general-global-menu! "Completions" "c p"
-
-                                    "p" '(completion-at-point :wk "Complete at point")
-                                    "t" '(complete-tag :wk "Complete tag")
-                                    "d" '(cape-dabbrev :wk "Dabbrev")
-                                    "f" '(cape-file :wk "File")
-                                    "k" '(cape-keyword :wk "Keyword")
-                                    "s" '(cape-symbol :wk "Symbol")
-                                    "a" '(cape-abbrev :wk "Abbrev")
-                                    "i" '(cape-ispell :wk "Ispell")
-                                    "l" '(cape-line :wk "Line")
-                                    "w" '(cape-dict :wk "Dict")
-                                    "\\" '(cape-tex :wk "Tex")
-                                    "_" '(cape-tex :wk "Tex")
-                                    "^" '(cape-tex :wk "Tex")
-                                    "&" '(cape-sgml :wk "Sgml")
-                                    "r" '(cape-rfc1345 :wk "Rfc1345"))
-  :init
+             "p" '(completion-at-point :wk "Complete at point")
+             "t" '(complete-tag :wk "Complete tag")
+             "d" '(cape-dabbrev :wk "Dabbrev")
+             "f" '(cape-file :wk "File")
+             "k" '(cape-keyword :wk "Keyword")
+             "s" '(cape-symbol :wk "Symbol")
+             "a" '(cape-abbrev :wk "Abbrev")
+             "i" '(cape-ispell :wk "Ispell")
+             "l" '(cape-line :wk "Line")
+             "w" '(cape-dict :wk "Dict")
+             "\\" '(cape-tex :wk "Tex")
+             "_" '(cape-tex :wk "Tex")
+             "^" '(cape-tex :wk "Tex")
+             "&" '(cape-sgml :wk "Sgml")
+             "r" '(cape-rfc1345 :wk "Rfc1345"))
+  :config
   ;; Add `completion-at-point-functions', used by `completion-at-point'.
-  (add-to-list 'completion-at-point-functions #'cape-file)
-  ;(add-to-list 'completion-at-point-functions #'cape-tex)
-  (add-to-list 'completion-at-point-functions #'cape-abbrev)
-  (add-to-list 'completion-at-point-functions #'cape-keyword)
-  ;;(add-to-list 'completion-at-point-functions #'cape-sgml)
-  ;;(add-to-list 'completion-at-point-functions #'cape-rfc1345)
-  ;;(add-to-list 'completion-at-point-functions #'cape-abbrev)
-  ;;(add-to-list 'completion-at-point-functions #'cape-ispell)
-  ;;(add-to-list 'completion-at-point-functions #'cape-dict)
-  ;;(add-to-list 'completion-at-point-functions #'cape-symbol)
-  ;;(add-to-list 'completion-at-point-functions #'cape-line)
-)
+  (setq completion-at-point-functions
+              (cape-super-capf #'cape-dabbrev #'cape-file #'cape-keyword #'cape-symbol))
+  (append! completion-at-point-functions
+    #'cape-abbrev
+    #'cape-file
+    #'cape-elisp-block
+    #'cape-history
+    ;;#'cape-tex
+    #'cape-keyword
+    ;;#'cape-sgml
+    ;;#'cape-rfc1345
+    #'cape-symbol
+    ;;#'cape-line
+    #'cape-dict
+    #'cape-ispell
+    )
+  )
 #+end_src
 ** Templates
 *** Yasnippet
 #+begin_src emacs-lisp
 (use-package yasnippet
+  :unless noninteractive
   :if nil
   :hook (prog-mode . yas-minor-mode)
   :hook (text-mode . yas-minor-mode)
@@ -1363,9 +1371,11 @@ be passed to EVAL-FUNC as its rest arguments"
 	yas-triggers-in-field t
 	yas-also-private t))
 (use-package yasnippet-snippets
+  :unless noninteractive
   :disabled t ;; Some weird bug when trying to load org-mode > video snippet
   :after yasnippet)
 (use-package auto-yasnippet
+  :unless noninteractive
   :general (my/leader-def "o y" 'aya-create)
   :init
   (setq aya-persist-snippets-dir (concat my/cache-dir "yasnippet"))
@@ -1403,6 +1413,7 @@ be passed to EVAL-FUNC as its rest arguments"
 #+begin_src emacs-lisp
 ;; Enable rich annotations using the Marginalia package
 (use-package marginalia
+  :unless noninteractive
   ;; Bind `marginalia-cycle' locally in the minibuffer.  To make the binding
   ;; available in the *Completions* buffer, add it to the
   ;; `completion-list-mode-map'.
@@ -1416,6 +1427,7 @@ be passed to EVAL-FUNC as its rest arguments"
 ;; Enable orderless matching style.  See `+orderless-dispatch' in
 ;; `consult-config.el' for an advanced Orderless style dispatcher.
 (use-package orderless
+  :unless noninteractive
   :after vertico
   :custom (completion-styles '(orderless)))
 #+end_src
@@ -1423,6 +1435,7 @@ be passed to EVAL-FUNC as its rest arguments"
 #+begin_src emacs-lisp
 ;; Enable vertico
 (use-package vertico
+  :unless noninteractive
   :init
   (vertico-mode)
   :custom
@@ -1453,6 +1466,7 @@ be passed to EVAL-FUNC as its rest arguments"
 ** Consult
 #+begin_src emacs-lisp
 (use-package consult
+  :unless noninteractive
   :general (my/leader-def
              "/" '(consult-ripgrep :wk "Search project"))
   :general (my/general-global-Search
@@ -1465,6 +1479,7 @@ be passed to EVAL-FUNC as its rest arguments"
 ** Embark
 #+begin_src emacs-lisp
 (use-package embark
+  :unless noninteractive
   :init
   (add-hook 'eldoc-documentation-functions #'embark-eldoc-first-target)
   (setq which-key-use-C-h-commands nil
@@ -1499,6 +1514,7 @@ be passed to EVAL-FUNC as its rest arguments"
 #+end_src
 #+begin_src emacs-lisp
 (use-package copilot
+  :unless noninteractive
   :if IS-PERSONAL
   :after editorconfig
   :hook (prog-mode . copilot-mode)
@@ -1529,36 +1545,31 @@ is available."
 ** Vterm
 #+begin_src emacs-lisp
 (use-package vterm
+  :unless noninteractive
   :commands vterm
   :init
   (defun my/vterm--auto-close-window (buf event)
     (when (y-or-n-p (concat event " - kill buffer: " (buffer-name buf) "?"))
       (kill-buffer-and-window)))
   (add-hook 'vterm-exit-functions #'my/vterm--auto-close-window)
-  (defun my/vterm ()
-    (interactive)
-    (my/open-create-or-switch-buffer "*vterm*" #'vterm))
   (my/general-global-Open
-    "t" '(my/vterm :wk "vterm"))
+    "t" '(vterm :wk "vterm"))
   (setq vterm-shell (or (getenv "SHELL") (executable-find "fish") (executable-find "bash")))
   :config
-  (after! popper
-          (append! popper-reference-buffers
-            "^\\*vterm.*\\*$"  'vterm-mode))
+  (add-popup!
+   "^\\*vterm.*\\*$"  'vterm-mode)
   (add-hook 'vterm-mode-hook #'my/disable-line-numbers))
 #+end_src
 ** Eshell
 #+begin_src emacs-lisp
 (use-package eshell
+  :unless noninteractive
   :ensure nil
   :commands eshell
   :init
   (setq my/repl-fallback #'eshell)
-  (defun my/eshell ()
-    (interactive)
-    (my/open-create-or-switch-buffer "*eshell*" #'eshell))
   (my/general-global-Open
-    "e" '(my/eshell :wk "eshell"))
+    "e" '(eshell :wk "eshell"))
   (setq eshell-aliases-file (concat my/cache-dir "eshell/alias")
 	eshell-history-file-name (concat my/cache-dir "eshell/history")
 	eshell-buffer-maximum-lines 10000
@@ -1569,9 +1580,7 @@ is available."
 	eshell-scroll-show-maximum-output nil)
   (make-directory (concat my/cache-dir "eshell") t)
   :config
-  (after! popper
-          (append! popper-reference-buffers
-            "^\\*eshell.*\\*$" 'eshell-mode))
+  (add-popup! "^\\*eshell.*\\*$" 'eshell-mode)
   (add-hook 'eshell-mode-hook #'my/disable-line-numbers)
   (after! corfu (add-hook 'eshell-mode-hook #'corfu-mode)))
 (use-package eshell-syntax-highlighting
@@ -1581,11 +1590,13 @@ is available."
 ** Format on save
 #+begin_src emacs-lisp
 (use-package apheleia
+  :unless noninteractive
   :init (apheleia-global-mode +1))
 #+end_src
 ** Linting
 #+begin_src emacs-lisp
 (use-package flycheck
+  :unless noninteractive
   :init (global-flycheck-mode)
   :general (my/general-global-menu! "Errors" "c e"
 
@@ -1603,6 +1614,7 @@ is available."
 ** Spell Checking (aspell)
 #+begin_src emacs-lisp
 (use-package flycheck-aspell
+  :unless noninteractive
   :hook ((text-mode . flyspell-mode)
          (prog-mode . flyspell-prog-mode))
   :general (my/general-global-menu! "Spell" "e s"
@@ -1660,6 +1672,7 @@ is available."
 ** Magit
 #+begin_src emacs-lisp
 (use-package magit
+  :unless noninteractive
   :general (my/general-global-Git
              "g" '(magit-status :wk "Status")
              "b" '(magit-blame :wk "Blame")
@@ -1672,7 +1685,7 @@ is available."
   (setq magit-log-arguments '("--graph" "--decorate" "--color"))
   (setq git-commit-fill-column 72)
   :config
-  (append! popper-reference-buffers "\\*\\*magit-process:.*\\*\\*")
+  (add-popup! "\\*\\*magit-process:.*\\*\\*")
   (setq magit-buffer-name-format (concat "*" magit-buffer-name-format "*"))
   (append! magit-status-sections-hook #'magit-insert-modules)
   (evil-define-key* '(normal visual) magit-mode-map
@@ -1681,6 +1694,7 @@ is available."
 ** Time Machine
 #+begin_src emacs-lisp
 (use-package git-timemachine
+  :unless noninteractive
   :init (setq git-timemachine-show-minibuffer-details t)
   :config (add-hook 'git-timemachine-mode-hook 'evil-normalize-keymaps)
   :general
@@ -1694,6 +1708,7 @@ is available."
 ** Git Gutter
 #+begin_src emacs-lisp
 (use-package git-gutter+
+  :unless noninteractive
   :init
   (global-git-gutter+-mode t)
   :config
@@ -1705,12 +1720,24 @@ is available."
 #+end_src
 ** Forge
 #+begin_src emacs-lisp
-(use-package forge)
+(use-package forge
+  :unless noninteractive)
 #+end_src
 * LSP & DAP
 ** LSP
 #+begin_src emacs-lisp
+(when (package-installed-p 'corfu)
+  (use-package lsp-mode
+    :custom
+    (lsp-completion-provider :none) ;; we use Corfu!
+    :init
+    (defun my/lsp-mode-setup-completion ()
+      (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
+            '(orderless))) ;; Configure orderless
+    :hook
+    (lsp-completion-mode . my/lsp-mode-setup-completion)))
 (use-package lsp-mode
+  :unless noninteractive
   :commands (lsp lsp-deferred)
   :hook ((lsp-mode . lsp-enable-which-key-integration)
          (lsp-mode . lsp-diagnostics-modeline-mode)
@@ -1787,6 +1814,7 @@ is available."
 ** LSP UI
 #+begin_src emacs-lisp
 (use-package lsp-ui
+  :unless noninteractive
   :hook (lsp-mode . lsp-ui-mode)
   :config
   (setq lsp-ui-sideline-enable nil
@@ -1807,6 +1835,7 @@ is available."
 ** DAP
 #+begin_src emacs-lisp
 (use-package dap-mode
+  :unless noninteractive
   :config (dap-auto-configure-mode)
   :general (my/general-global-menu! "DAP" "d"
 
@@ -1882,11 +1911,9 @@ is available."
       ("None" . "∅")))
   (add-hook 'python-mode-hook
             (lambda ()
-              ;; prettify-symbols setup
               (setq-local prettify-symbols-alist
                           (append my/prettify-symbols-extra-python
                                   prettify-symbols-alist))
-              ;; repl setup
               (setf (alist-get 'python-mode my/repl-alist) #'run-python))))
 
 (use-package ob-python
@@ -2040,10 +2067,7 @@ is available."
   :hook (julia-mode . julia-vterm-mode)
   :init (setq julia-vterm-repl-program (concat (executable-find "julia") " --color=yes --startup-file=no -t " (number-to-string my/available-cores)))
   :config
-  (after! popper
-	  (append! popper-reference-buffers "\\*julia:main\\*")
-	  (popper-mode -1)
-	  (popper-mode 1))
+  (add-popup! "\\*julia:main\\*")
   (add-hook 'julia-mode-hook (lambda () (setf (alist-get 'julia-mode my/repl-alist) #'julia-vterm-repl))))
 #+end_src
 *** Babel
@@ -2084,13 +2108,14 @@ is available."
 
 (defconst my/mail-dir (my/get-mail-dir))
 ;; Only load on personal machines with mail
-(defconst my/enable/mu4e (and IS-PERSONAL (f-directory? my/mail-dir)))
+(defconst my/enable/mu4e (and (not noninteractive) IS-PERSONAL (file-directory-p my/mail-dir)))
 
 (use-package mu4e
   :if my/enable/mu4e
   :ensure nil ;; mu4e is included with mu
-  :general (my/general-global-Open "m" '(mu4e :wk "Email"))
-  :init (add-to-list 'recentf-exclude my/mail-dir)
+  :general(my/general-global-Open "m" '(mu4e :wk "Email"))
+  :init
+  (add-to-list 'recentf-exclude my/mail-dir)
   :config
   ;; Context switching for multiple accounts
   (defun my/create-mu4e-context (name address signature server &optional key)
@@ -2367,6 +2392,7 @@ is available."
 *** Org Tempo
 #+begin_src emacs-lisp
 (use-package org-tempo
+  :unless noninteractive
   :ensure nil
   :after org)
 #+end_src
@@ -2386,17 +2412,19 @@ is available."
 #+begin_src emacs-lisp
 (use-package org
   :config
-  (add-hook 'org-mode-hook 'org-num-mode))
+  (add-hook 'org-mode-hook #'org-num-mode))
 #+end_src
 ** Presenting
 #+begin_src emacs-lisp
 (use-package visual-fill-column
+  :unless noninteractive
   :hook (org-present . visual-fill-column)
   :hook (org-present . visual-fill-line)
   :custom
   (visual-fill-column-width 110)
   (visual-fill-column-center-text t))
 (use-package org-present
+  :unless noninteractive
   :commands (org-present))
 #+end_src
 ** LilyPond
@@ -2415,13 +2443,12 @@ is available."
 #+end_src
 ** Notes
 #+begin_src emacs-lisp
-#+end_src
-#+begin_src emacs-lisp
 (my/general-global-menu! "Notes" "n")
 #+end_src
 *** Deft
 #+begin_src emacs-lisp
 (use-package deft
+  :unless noninteractive
   :commands (deft)
   :custom
   (deft-directory (my/relative-org "deft"))
@@ -2442,6 +2469,7 @@ is available."
 *** Roam
 #+begin_src emacs-lisp
 (use-package org-roam
+  :unless noninteractive
   :hook (after-init . org-roam-mode)
   :custom
   (org-roam-v2-ack t)
@@ -2547,6 +2575,7 @@ is available."
 (use-package ox-latex
   :ensure nil
   :config
+  (setq org-latex-compiler "xelatex")
   (add-to-list 'org-latex-logfiles-extensions "tex")
   (add-to-list 'org-latex-packages-alist '("" "siunitx"))
   (add-to-list 'org-latex-packages-alist '("" "amsmath"))
@@ -2585,6 +2614,27 @@ is available."
   :config
   (after! org-msg
 	  (setq org-msg-options (concat org-msg-options " html-content-class: chameleon "))))
+#+end_src
+*** Async patch
+#+begin_src emacs-lisp
+;; I don't use ~/.emacs which is the default value if default.el was loaded.
+(when (and (not noninteractive) (string= user-init-file "~/.emacs")) 
+  (after! (org ox default)
+	  (setq org-export-async-init-file (concat my/cache-dir "org-export-async-init-file.el"))
+	  (defun my/get-loaded-nix-file (name)
+	    (car (load-history-filename-element
+		  (concat
+		   "^/nix/store/.*emacs-packages-deps/share/emacs/site-lisp/"
+		   name
+		   "\\.elc?\\(\\.gz\\)?$"))))
+
+	  (with-temp-file org-export-async-init-file
+	    (mapc (lambda (s)
+		    (insert (format "(load \"%s\")\n" s)))
+		  (list
+		   (my/get-loaded-nix-file "site-start")
+		   (my/get-loaded-nix-file "subdirs")
+		   (my/get-loaded-nix-file "default"))))))
 #+end_src
 *** Syntax Highlighting
 #+name: engrave-faces-init
@@ -2634,23 +2684,22 @@ DOCSTRING and BODY are as in `defun'.
 ;; both installed by engrave-faces
 (use-package engrave-faces-latex
   :ensure engrave-faces
-  :after ox-latex
-  :init
-  <<engrave-faces-init>>
+  ;; :after org
   :config
+  <<engrave-faces-init>>
   (setq org-latex-listings 'engraved))
 (use-package engrave-faces-html
   :ensure engrave-faces
-  :after ox-html
-  :init
-  <<engrave-faces-init>>
+  ;; :after org
   :config
+  <<engrave-faces-init>>
   (setq org-latex-listings 'engraved))
 #+end_src
 ** Evil Org
 #+begin_src emacs-lisp
 (use-package evil-org
-  :after org
+  :unless noninteractive
+  :after (evil org)
   :hook (org-mode . evil-org-mode)
   :config
   (require 'evil-org-agenda)
@@ -2660,6 +2709,15 @@ DOCSTRING and BODY are as in `defun'.
 	      (evil-org-set-key-theme)))
   (require 'evil-org-agenda)
   (evil-org-agenda-set-keys))
+#+end_src
+** Poly Org
+#+begin_src emacs-lisp :tangle no
+(use-package poly-org
+  :unless noninteractive
+  :commands (poly-org-mode)
+  :init
+  (my/local-leader-def org-mode
+        "p" '(poly-org-mode :wk "poly-org-mode")))
 #+end_src
 * Local Variables
 # Local Variables:

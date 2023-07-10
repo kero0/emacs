@@ -28,7 +28,8 @@ with pkgs;
   (with texlive;
     texlive.combine {
       inherit scheme-small biblatex latexmk;
-      inherit capt-of siunitx wrapfig xcolor;
+      inherit capt-of environ float fvextra pdfcol siunitx tcolorbox wrapfig
+        xcolor;
     })
 
   # julia

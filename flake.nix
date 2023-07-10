@@ -77,6 +77,7 @@
               (map (s: ''(add-to-list 'exec-path "${s}/bin")'') dependencies)
               + ''
                 (load-file "${config}/init.el")
+                (provide 'default)
               '');
             package = emacs;
             alwaysEnsure = true;
