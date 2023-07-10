@@ -70,11 +70,11 @@
             config = ./config.org;
             defaultInitFile = pkgs.writeText "default.el"
               (let deps = nixpkgs.lib.makeBinPath dependencies;
-               in ''
-                	 (setq my/emacs-dir "${./.}/")
+              in ''
+                	 (setq my/emacs-dir "${config}/")
                    (setenv "PATH" (concat (getenv "PATH") ":${deps}"))
               '' + nixpkgs.lib.concatStringsSep "\n"
-                (map (s: ''(add-to-list 'exec-path "${s}/bin")'') dependencies)
+              (map (s: ''(add-to-list 'exec-path "${s}/bin")'') dependencies)
               + ''
                 (load-file "${config}/init.el")
               '');

@@ -132,13 +132,15 @@
 *** recentf
 #+begin_src emacs-lisp
 (use-package recentf
+  :unless noninteractive
   :ensure nil
   :config
   (dolist (dir `("/nix/store/.*"
 		 "/tmp/.*"
 		 "/var/tmp/.*"
+		 "/var/folders/.*"
 		 "/private/tmp/.*"
-		 "/private/var/tmp/.*"
+		 "/private/var/.*"
 		 ,my/etc-dir
 		 ,my/local-dir
 		 ,my/cache-dir))
@@ -307,15 +309,21 @@ Do something in other window
         (apply fn args)
         (switch-to-buffer buf)))
 #+end_src
-**** Local Leader
-Local leader is bound to "SPC m" and always shows the keybindings for the current major mode.
+**** Local Bindings
 #+begin_src emacs-lisp :noweb-ref keybindings :tangle no
-(general-create-definer my/local-leader--def
-  :wrapping my/leader-def
-  :prefix (concat my/leader-def-prefix " " my/local-leader-def-prefix)
-  :global-prefix (concat my/leader-def-prefix-alt " " my/local-leader-def-prefix)
-  :states my/prefix-states
-  "" '(:ignore t :wk "local leader"))
+(general-create-definer my/local--def
+  :prefix my/leader-def-prefix
+  :global-prefix my/leader-def-prefix-alt
+  :states ',my/prefix-states
+  :keymaps 'local)
+(defmacro my/local-def (mode &rest args)
+  (declare (indent defun))
+  `(add-hook (intern (concat (symbol-name ,mode) "-hook"))
+	     (lambda ()
+	       (my/local--def ,@args))))
+#+end_src
+
+#+begin_src emacs-lisp :noweb-ref keybindings :tangle no
 (defmacro my/local-leader-def (mode &rest args)
   "Define a local leader key sequence in mode"
   `(progn
@@ -331,6 +339,12 @@ Local leader is bound to "SPC m" and always shows the keybindings for the curren
                (lambda ()
                  (,(intern (concat "my/local-leader-def-" (symbol-name mode)))
                   ,@args)))))
+(defmacro my/local-def (mode definer &rest args)
+  `(add-hook ',(intern (concat (symbol-name mode) "-hook"))
+	     (lambda ()
+	       (,definer
+		:keymaps 'local
+		,@args))))
 #+end_src
 *** general.el setup
 #+begin_src emacs-lisp :noweb yes
@@ -480,7 +494,7 @@ Local leader is bound to "SPC m" and always shows the keybindings for the curren
 ***** REPL
 #+begin_src emacs-lisp
 (defvar my/repl-alist '( ) "Alist of modes to repls.")
-(defvar my/repl-fallback #'my/shell "The fallback repl to use.")
+(defvar my/repl-fallback #'shell "The fallback repl to use.")
 (defun my/repl ()
   (interactive)
   (let* ((mode (buffer-local-value 'major-mode (current-buffer)))
@@ -928,6 +942,7 @@ I'm going to use the file [[./dashboard.org][dashboard.org]] as my dashboard. Th
           "Output\\*$"
           "\\*Async Shell Command\\*"
           "\\*helpful .*\\*"
+          "\\*.*:repl\\*"
           help-mode
           compilation-mode))
 
@@ -1538,6 +1553,7 @@ is available."
   :ensure nil
   :commands eshell
   :init
+  (setq my/repl-fallback #'eshell)
   (defun my/eshell ()
     (interactive)
     (my/open-create-or-switch-buffer "*eshell*" #'eshell))
@@ -1658,6 +1674,7 @@ is available."
   :config
   (append! popper-reference-buffers "\\*\\*magit-process:.*\\*\\*")
   (setq magit-buffer-name-format (concat "*" magit-buffer-name-format "*"))
+  (append! magit-status-sections-hook #'magit-insert-modules)
   (evil-define-key* '(normal visual) magit-mode-map
     "zz" #'evil-scroll-line-to-center))
 #+end_src
@@ -1685,6 +1702,10 @@ is available."
     "p" '(git-gutter+-previous-hunk :wk "previous hunk")
     "s" '(git-gutter+-stage-hunks :wk "stage hunk")
     "r" '(git-gutter+-revert-hunk :wk "revert hunk")))
+#+end_src
+** Forge
+#+begin_src emacs-lisp
+(use-package forge)
 #+end_src
 * LSP & DAP
 ** LSP
@@ -1851,23 +1872,22 @@ is available."
   :mode ("[./]flake8\\'" . conf-mode)
   :mode ("/Pipfile\\'" . conf-mode)
   :interpreter ("python" . python-mode)
-  :general (my/leader-def
-	     :definer 'minor-mode
-	     :keymaps 'python-mode-map
-	     "o r" '(run-python :wk "repl/python"))
   :general (my/local-leader-def python-mode
-	     "r" '(run-python :wk "repl/python")
-	     "b" '(python-shell-send-buffer :wk "send buffer to repl"))
+				"r" '(run-python :wk "repl/python")
+				"b" '(python-shell-send-buffer :wk "send buffer to repl"))
   :init (setq python-check-command "pyflakes")
   :config
   (defconst my/prettify-symbols-extra-python
-     '(("def" . "ƒ")
+    '(("def" . "ƒ")
       ("None" . "∅")))
   (add-hook 'python-mode-hook
             (lambda ()
+              ;; prettify-symbols setup
               (setq-local prettify-symbols-alist
                           (append my/prettify-symbols-extra-python
-                                  prettify-symbols-alist)))))
+                                  prettify-symbols-alist))
+              ;; repl setup
+              (setf (alist-get 'python-mode my/repl-alist) #'run-python))))
 
 (use-package ob-python
   :ensure nil
@@ -1986,6 +2006,54 @@ is available."
   :init
   (add-to-list 'org-babel-load-languages '(haskell . t)))
 #+end_src
+** Julia
+#+begin_src emacs-lisp
+(use-package julia-mode
+  :mode ("\\.jl\\'" . julia-mode)
+  :config
+  (my/local-leader-def julia-mode
+		       "b" 'julia-repl-send-buffer
+		       "r" 'julia-repl-send-region-or-line
+		       "R" 'julia-repl
+		       "f" 'julia-repl-send-defun
+		       "l" 'julia-repl-send-line
+		       "s" 'julia-repl
+		       "S" 'julia-repl-switch)
+  (defun my/julia-def ()
+    (my/general-global-Open :keymaps 'local
+      "r" 'julia-repl-send-region-or-line
+      "f" 'julia-repl-send-defun
+      "l" 'julia-repl-send-line))
+  (add-hook 'julia-mode-hook #'my/julia-def))
+;; First use requires running 'import Pkg; Pkg.add("LanguageServer")' in the Julia REPL
+(use-package lsp-julia
+  :after lsp-mode
+  :init
+  (setq lsp-julia-package-dir nil)
+  :hook (julia-mode . (lambda ()
+                        (require 'lsp-julia)
+                        (lsp-deferred))))
+#+end_src
+*** REPL
+#+begin_src emacs-lisp
+(use-package julia-vterm
+  :hook (julia-mode . julia-vterm-mode)
+  :init (setq julia-vterm-repl-program (concat (executable-find "julia") " --color=yes --startup-file=no -t " (number-to-string my/available-cores)))
+  :config
+  (after! popper
+	  (append! popper-reference-buffers "\\*julia:main\\*")
+	  (popper-mode -1)
+	  (popper-mode 1))
+  (add-hook 'julia-mode-hook (lambda () (setf (alist-get 'julia-mode my/repl-alist) #'julia-vterm-repl))))
+#+end_src
+*** Babel
+#+begin_src emacs-lisp
+(use-package ob-julia-vterm
+  :after org
+  :commands org-babel-execute:julia-vterm
+  :init
+  (add-to-list 'org-babel-load-languages '(julia-vterm . t)))
+#+end_src
 ** PDF
 #+begin_src emacs-lisp
 (use-package pdf-tools
@@ -2022,6 +2090,7 @@ is available."
   :if my/enable/mu4e
   :ensure nil ;; mu4e is included with mu
   :general (my/general-global-Open "m" '(mu4e :wk "Email"))
+  :init (add-to-list 'recentf-exclude my/mail-dir)
   :config
   ;; Context switching for multiple accounts
   (defun my/create-mu4e-context (name address signature server &optional key)
@@ -2080,8 +2149,7 @@ is available."
    mu4e-contexts (list
                   (my/create-mu4e-context "kbakheat-gmail" "kbakheat@gmail.com" (my/gmail-signature "kbakheat") "smtp.gmail.com")
                   (my/create-mu4e-context "kirolsb5-gmail" "kirolsb5@gmail.com" (my/gmail-signature "kirolsb5") "smtp.gmail.com" "a")
-                  (my/create-mu4e-context "bakheakm-udmercy" "bakheakm@udmercy.edu" (my/udmercy-signature) "smtp.office365.com")))
-  (add-to-list 'recentf-exclude mu4e-maildir))
+                  (my/create-mu4e-context "bakheakm-udmercy" "bakheakm@udmercy.edu" (my/udmercy-signature) "smtp.office365.com"))))
 
 
 (use-package mu4e-alert
@@ -2348,7 +2416,30 @@ is available."
 ** Notes
 #+begin_src emacs-lisp
 #+end_src
-** Roam
+#+begin_src emacs-lisp
+(my/general-global-menu! "Notes" "n")
+#+end_src
+*** Deft
+#+begin_src emacs-lisp
+(use-package deft
+  :commands (deft)
+  :custom
+  (deft-directory (my/relative-org "deft"))
+  (deft-recursive t)
+  (deft-use-filename-as-title t)
+  (deft-use-filter-string-for-filename t)
+  (deft-extensions '("org" "md" "txt"))
+  (deft-default-extension "org")
+  (deft-file-naming-rules '((noslash . "-")
+                            (nospace . "-")
+                            (case-fn . downcase)))
+  (deft-text-mode 'org-mode)
+  :general (my/general-global-Notes
+            :infix "d"
+            "" '(nil :wk "deft")
+            "d" '(deft :wk "deft")))
+#+end_src
+*** Roam
 #+begin_src emacs-lisp
 (use-package org-roam
   :hook (after-init . org-roam-mode)
@@ -2360,7 +2451,8 @@ is available."
    '(
       <<roam-templates>>
       ))
-  :general (my/general-global-menu! "Roam" "Nr"
+  :general (my/general-global-Notes
+       :infix "r"
 	     "" '(nil :wk "roam")
 	     "f" '(org-roam-node-find :wk "find")
 	     "i" '(org-roam-node-insert :wk "insert")
@@ -2377,47 +2469,53 @@ is available."
 	     "s" '(org-roam-db-sync :wk "sync")
 	     "S" '(org-roam-server-mode :wk "server")))
 #+end_src
-*** Templates
+**** Templates
 :PROPERTIES:
 :header-args: :tangle no :noweb-ref roam-templates
 :END:
-**** Religious
+***** Religious
 #+begin_src emacs-lisp
 ("r" "Templates for religious meditations")
 #+end_src
-***** Bible
+****** Bible
 #+begin_src emacs-lisp
 ("rb" "Bible Study" plain "#+filetags: \"bible study\" \"Book: ${book}\" \"Topic: ${topic}\"\n\n* Topic\n\n* Related\n** Passages\n\n** Meditations\n\n* Personal Meditation\n\n"
  :if-new (file+head "religious/bible-study/%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
  :unnarrowed t)
 #+end_src
-***** Saint
+****** Saint
 #+begin_src emacs-lisp
 ("rs" "Saint" plain "#+filetags: saint \"Saint Type: ${saint type}\" \"Years: ${birth year}-${death year}\" \"Country: ${country}\" \"City: ${city}\"\n\n* Birth\n%?\n\n* Life\n\n\n* Death\n\n\n* Related saints\n\n"
  :if-new (file+head "religious/saints/%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
  :unnarrowed t)
 #+end_src
-***** Lesson
+****** Lesson
 #+begin_src emacs-lisp
 ("rl" "Lesson" plain "#+filetags: lesson \"Topic: ${topic}\"\n* %?"
  :if-new (file+head "religious/lessons/%<%Y%m%d%H%M%S>-${slug}.org"
 		    "#+title: ${title}\n\n")
  :unnarrowed t)
 #+end_src
-**** Generic
-***** Default
+***** Generic
+****** Default
 #+begin_src emacs-lisp
 ("d" "Default" plain "#+filetags: \"${tags}\"\n\n* %?"
  :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n\n")
  :unnarrowed t)
 #+end_src
-***** Note
+****** Note
 #+begin_src emacs-lisp
 ("n" "Note" plain "#+filetags: note\n\n* %?"
  :if-new (file+head "notes/%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n\n#+tags: note ${field}\n\n")
  :unnarrowed t)
 #+end_src
 
+****** Project
+#+begin_src emacs-lisp
+("p" "Project" plain "#+filetags: project\n\n* %?"
+ :if-new (file+head "projects/%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n\n#+tags: project ${field}\n\n")
+ :unnarrowed t)
+#+end_src
 ** Babel
 #+begin_src emacs-lisp
 (use-package org

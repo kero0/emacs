@@ -31,9 +31,24 @@ with pkgs;
       inherit capt-of siunitx wrapfig xcolor;
     })
 
+  # julia
+  julia-bin
+
   # python
-  (python3.withPackages
-    (ps: with ps; [ black isort pipx pyflakes python-lsp-server ]))
+  (python3.withPackages (ps:
+    with ps; [
+      # default for python
+      black
+      isort
+      pipx
+      pyflakes
+      python-lsp-server
+      # handy for org-mode src blocks
+      ipython
+      matplotlib
+      numpy
+      pandas
+    ]))
   poetry
 
   # rust
