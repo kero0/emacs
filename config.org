@@ -665,7 +665,7 @@ Do something in other window
 (scroll-bar-mode -1)         ; Disable visible scrollbar
 (tool-bar-mode -1)           ; Disable the toolbar
 (tooltip-mode -1)            ; Disable tooltips
-(set-fringe-mode '(12 . 10)) ; Give some breathing room
+(set-fringe-mode '(14 . 10)) ; Give some breathing room
 
 (menu-bar-mode -1)           ; Disable the menu bar
 
@@ -966,6 +966,34 @@ Do something in other window
   (popper-mode +1))
 (when noninteractive
   (defmacro add-popup! (&rest _)))
+#+end_src
+* Evil Marks
+#+begin_src emacs-lisp
+(use-package evil-fringe-mark
+  :unless noninteractive
+  :requires evil
+  :after evil
+  :hook (after-init . global-evil-fringe-mark-mode)
+  :general (my/general-global-Toggle "f" '(evil-fringe-mark-mode :wk "Evil Marks"))
+  :init
+  ;; Persist global marks
+  (after! savehist
+	  (add-to-list 'savehist-additional-variables 'evil-markers-alist)
+	  (add-hook 'savehist-save-hook (lambda ()
+					  (kill-local-variable 'evil-markers-alist)
+					  (dolist (entry evil-markers-alist)
+					    (when (markerp (cdr entry))
+					      (setcdr entry (cons (file-truename (buffer-file-name (marker-buffer (cdr entry))))
+								  (marker-position (cdr entry))))))))
+	  (add-hook 'savehist-mode-hook (lambda ()
+					  (setq-default evil-markers-alist evil-markers-alist)
+					  (kill-local-variable 'evil-markers-alist)
+					  (make-local-variable 'evil-markers-alist))))
+  ;; Persist local marks
+  (append! desktop-locals-to-save evil-markers-alist)
+  ;; Show Marks in buffer
+  (my/general-global-Open "`" '(evil-show-marks :wk "Show marks"))
+  :config (setq evil-fringe-mark-show-special t))
 #+end_src
 * Project management
 ** Projectile
