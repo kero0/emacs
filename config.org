@@ -494,7 +494,6 @@ Do something in other window
   (comment-or-uncomment-region beg end))
 (my/general-global-menu! "Toggle" "t"
   "d" '(toggle-debug-on-error :wk "debug")
-  "t" '(modus-themes-toggle :wk "theme")
   "/" '(comment-or-uncomment-region :wk "comment"))
 #+end_src
 ***** Search
@@ -664,7 +663,7 @@ Do something in other window
 (set-frame-parameter (selected-frame) 'fullscreen 'maximized)
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
 #+end_src
-** ANSI colors in compilation buffers
+** Fancy Compile
 #+begin_src emacs-lisp
 (use-package ansi-color
   :unless noninteractive
@@ -719,6 +718,32 @@ Do something in other window
 #+end_src
 *** Prettify symbols
 #+begin_src emacs-lisp
+(use-package pretty-mode
+  :unless noninteractive
+  :defer 5
+  :config
+  (pretty-activate-groups '(:function
+			    :greek-capitals :greek-lowercase
+			    :greek
+			    :equality
+			    :ordering :ordering-double :ordering-triple
+			    :logic
+			    :logic-nary
+			    :nil
+			    :sets :sets-operations :sets-relations
+			    :sets-operations-nary
+			    :arrows :arrows-twoheaded
+			    :arrows-tails
+			    :arithmetic :arithmetic-double
+			    :arithmetic-triple
+			    :punctuation
+			    :subscripts :superscripts
+			    :sub-and-superscripts
+			    :parentheses
+                      :types))
+    (global-pretty-mode t))
+#+end_src
+#+begin_src emacs-lisp
 (use-package emacs
   :ensure nil
   :init
@@ -736,7 +761,7 @@ Do something in other window
 		 ,(macroexpand 
 		   `(my/prettify-symbols-extend ,@pairs)))))
   :config
-  (global-prettify-symbols-mode noninteractive))
+  (global-prettify-symbols-mode nil))
 #+end_src
 *** Emoji
 #+begin_src emacs-lisp
@@ -775,6 +800,7 @@ Do something in other window
         dashboard-set-navigator t
         dashboard-set-init-info t
         inhibit-startup-screen t)
+
   (add-hook 'dashboard-mode-hook #'my/disable-line-numbers))
 #+end_src
 ** Theme
@@ -786,43 +812,6 @@ Do something in other window
  modus-themes-tabs-accented t
  modus-themes-variable-pitch-ui t
  modus-themes-inhibit-reload t ; only applies to `customize-set-variable' and related
-
- modus-themes-fringes 'intense ; {nil,'subtle,'intense}
-
- ;; Options for `modus-themes-lang-checkers' are either nil (the
- ;; default), or a list of properties that may include any of those
- ;; symbols: `straight-underline', `text-also', `background',
- ;; `intense' OR `faint'.
- modus-themes-lang-checkers '(straight-underline text-also background faint)
-
- ;; Options for `modus-themes-mode-line' are either nil, or a list
- ;; that can combine any of `3d' OR `moody', `borderless',
- ;; `accented', a natural number for extra padding (or a cons cell
- ;; of padding and NATNUM), and a floating point for the height of
- ;; the text relative to the base font size (or a cons cell of
- ;; height and FLOAT)
- modus-themes-mode-line '(borderless accented)
-
- ;; Options for `modus-themes-syntax' are either nil (the default),
- ;; or a list of properties that may include any of those symbols:
- ;; `faint', `yellow-comments', `green-strings', `alt-syntax'
- modus-themes-syntax '(yellow-comments green-strings alt-syntax)
-
- ;; Options for `modus-themes-hl-line' are either nil (the default),
- ;; or a list of properties that may include any of those symbols:
- ;; `accented', `underline', `intense'
- modus-themes-hl-line '(accented)
-
- ;; Options for `modus-themes-paren-match' are either nil (the
- ;; default), or a list of properties that may include any of those
- ;; symbols: `bold', `intense', `underline'
- modus-themes-paren-match '(bold intense)
-
- ;; Options for `modus-themes-links' are either nil (the default),
- ;; or a list of properties that may include any of those symbols:
- ;; `neutral-underline' OR `no-underline', `faint' OR `no-color',
- ;; `bold', `italic', `background'
- modus-themes-links '(neutral-underline italic)
 
  ;; Options for `modus-themes-prompts' are either nil (the
  ;; default), or a list of properties that may include any of those
@@ -847,24 +836,7 @@ Do something in other window
    (selection . (extrabold accented))
    (popup . (extrabold accented)))
 
- modus-themes-mail-citations 'faint ; {nil,'intense,'faint,'monochrome}
-
- ;; Options for `modus-themes-region' are either nil (the default),
- ;; or a list of properties that may include any of those symbols:
- ;; `no-extend', `bg-only', `accented'
- modus-themes-region '(accented)
-
- ;; Options for `modus-themes-diffs': nil, 'desaturated, 'bg-only
- modus-themes-diffs nil
-
  modus-themes-org-blocks 'tinted-background ; {nil,'gray-background,'tinted-background}
-
- modus-themes-org-agenda ; this is an alist: read the manual or its doc string
- '((header-block . (variable-pitch light 1.6))
-   (header-date . (underline-today grayscale workaholic 1.2))
-   (event . (accented italic varied))
-   (scheduled . rainbow)
-   (habit . simplified))
 
  ;; The `modus-themes-headings' is an alist with lots of possible
  ;; combinations, include per-heading-level tweaks: read the
@@ -878,7 +850,47 @@ Do something in other window
    (5 . (rainbow (height 1.1)))
    (t . (variable-pitch extrabold))))
 
-(load-theme 'modus-operandi t)
+(setq modus-themes-italic-constructs t
+      modus-themes-bold-constructs t
+      modus-themes-mixed-fonts t
+      modus-themes-variable-pitch-ui t
+      modus-themes-custom-auto-reload nil
+      modus-themes-disable-other-themes t
+
+      ;; Options for `modus-themes-prompts' are either nil (the
+      ;; default), or a list of properties that may include any of those
+      ;; symbols: `italic', `WEIGHT'
+      modus-themes-prompts '(italic bold)
+
+      ;; The `modus-themes-completions' is an alist that reads two
+      ;; keys: `matches', `selection'.  Each accepts a nil value (or
+      ;; empty list) or a list of properties that can include any of
+      ;; the following (for WEIGHT read further below):
+      ;;
+      ;; `matches'   :: `underline', `italic', `WEIGHT'
+      ;; `selection' :: `underline', `italic', `WEIGHT'
+      modus-themes-completions
+      '((matches . (semibold))
+        (selection . (extrabold accented)))
+
+      modus-themes-org-blocks 'tinted-background ; {nil,'gray-background,'tinted-background}
+
+      ;; The `modus-themes-headings' is an alist: read the manual's
+      ;; node about it or its doc string.  Basically, it supports
+      ;; per-level configurations for the optional use of
+      ;; `variable-pitch' typography, a height value as a multiple of
+      ;; the base font size (e.g. 1.5), and a `WEIGHT'.
+      modus-themes-headings
+      '((1 . (variable-pitch 1.5))
+        (2 . (1.3))
+        (agenda-date . (1.3))
+        (agenda-structure . (variable-pitch light 1.8))
+        (t . (1.1))))
+
+(load-theme 'modus-operandi-tinted t)
+(setq modus-themes-to-toggle '(modus-operandi-tinted modus-vivendi-tinted))
+(my/general-global-Toggle
+  "t" '(modus-themes-toggle :wk "theme"))
 #+end_src
 
 ** Indent guides
@@ -920,20 +932,33 @@ Do something in other window
 (use-package popper
   :unless noninteractive
   :demand t
-  :bind (("C-`"   . popper-toggle-latest)
+  :bind (:map popper-mode-map
+         ("C-`"   . my/popper-toggle-latest)
          ("M-`"   . popper-cycle)
          ("C-M-`" . popper-toggle-type))
   :general (my/general-global-menu! "Popper" "`"
-                                    "`" '(popper-toggle-latest :wk "Toggle latest")
-                                    "c" '(popper-cycle :wk "Cycle")
-                                    "T" '(popper-toggle-type :wk "Toggle type"))
+             "`" '(my/popper-toggle-latest :wk "Toggle latest")
+             "c" '(popper-cycle :wk "Cycle")
+             "T" '(popper-toggle-type :wk "Toggle type"))
   :init
+  (defun my/popper-toggle-latest ()
+    "Toggle popper latest."
+    (interactive)
+    (if popper-open-popup-alist
+	(progn
+	  (let ((buffer (cdr (car popper-open-popup-alist)))
+		(window (car (car popper-open-popup-alist))))
+	    (kill-buffer buffer)
+	    (delete-window window))))
+    (popper-toggle-latest))
+
   (setq popper-reference-buffers
         '("\\*Messages\\*"
           "Output\\*$"
           "\\*Async Shell Command\\*"
           "\\*helpful .*\\*"
           "\\*.*:repl\\*"
+          "\\*scratch\\*"
           help-mode
           compilation-mode))
 
@@ -945,11 +970,23 @@ Do something in other window
 	     (append! popper-reference-buffers ,@rules)
 	     (popper--set-reference-vars)))
   :config
-  (popper-mode +1))
+  (popper-mode +1)
+  (popper-echo-mode +1)
+  ;; Hook to auto close a window when a popup buffer in that window is killed
+  (defun my/kill-buffer-advice (orig-fn &rest args)
+    "Advice function to close the window after killing the buffer."
+    (let ((buf (current-buffer)))
+      (when (popper-popup-p buf)
+        (delete-window (get-buffer-window buf)))
+      (apply orig-fn args)))
+  (add-hook 'after-hook-hook (lambda () (advice-add 'kill-buffer :around #'my/kill-buffer-advice)))
+
+  )
 (when noninteractive
   (defmacro add-popup! (&rest _)))
 #+end_src
-* Evil Marks
+* Bookmarks
+** Evil
 #+begin_src emacs-lisp
 (use-package evil-fringe-mark
   :unless noninteractive
@@ -1004,7 +1041,13 @@ Do something in other window
   (projectile-mode +1)
   (my/general-global-menu! "Projects" "p"
     "" '(:keymap projectile-command-map :wk "projectile"))
-  (setq projectile-switch-project-action #'projectile-dired))
+  (setq projectile-switch-project-action #'projectile-dired)
+  (defvar my/projectile-ignore-projects '("^/sudo:" "^/docker:" "^/nix/store"))
+  (defun my/projectile-ignore-projects (project-root)
+    "Ignore matching regexes in `my/projectile-ignore-projects'."
+    (cl-some (lambda (regex) (string-match-p regex project-root))
+	     my/projectile-ignore-projects))
+  (setq projectile-ignored-project-function #'my/projectile-ignore-projects))
 #+end_src
 ** Bufler
 #+begin_src emacs-lisp
@@ -1017,8 +1060,30 @@ Do something in other window
   :config)
   
 #+end_src
-* Dired
+* Workgroups
 #+begin_src emacs-lisp
+(use-package workgroups2
+  :unless noninteractive
+  :general (my/general-global-menu! "Workgroups" "w"
+             "w" '(wg-switch-to-workgroup :wk "Switch")
+             "n" '(wg-create-workgroup :wk "New")
+             "r" '(wg-rename-workgroup :wk "Rename")
+             "d" '(wg-delete-workgroup :wk "Delete")
+             "s" '(wg-save-session :wk "Save")
+             "l" '(wg-load-session :wk "Load"))
+  :init
+  (setq wg-session-file (concat my/cache-dir "workgroups")
+        wg-prefix-key (kbd "C-c w")
+        wg-mode-line-display-on t
+        wg-flag-modified t
+        wg-use-default-session-file nil
+        wg-emacs-exit-save-behavior 'save
+        wg-workgroups-mode-exit-save-behavior 'save)
+  :config
+  (workgroups-mode 1))
+#+end_src
+* Dired
+#+begin_src emacs-lisp :tangle no
 (use-package dired
   :unless noninteractive
   :ensure nil
@@ -1032,9 +1097,54 @@ Do something in other window
 	dired-hide-details-hide-information-lines nil
 	insert-directory-program (if IS-MAC (executable-find "gls") insert-directory-program)
 	dired-use-ls-dired t
-	dired-auto-revert-buffer t)
+	dired-auto-revert-buffer t
+      dired-kill-when-opening-new-dired-buffer t)
   (add-hook 'dired-mode-hook #'hl-line-mode)
   (add-hook 'dired-mode-hook #'dired-omit-mode))
+#+end_src
+* Dirvish
+#+begin_src emacs-lisp
+(use-package dirvish
+  :unless noninteractive
+  :general (my/general-global-Open "d" '(dirvish :wk "dirvish"))
+  :init
+  (dirvish-override-dired-mode)
+  :custom
+  (dirvish-quick-access-entries ; It's a custom option, `setq' won't work
+   '(("h" "~/"                          "Home")
+     ("d" "~/Downloads/"                "Downloads")
+     ("m" "/mnt/"                       "Drives")
+     ("t" "~/.local/share/Trash/files/" "TrashCan")))
+  :config
+  ;; (dirvish-peek-mode) ; Preview files in minibuffer
+  ;; (dirvish-side-follow-mode) ; similar to `treemacs-follow-mode'
+  (setq dirvish-mode-line-format
+        '(:left (sort symlink) :right (omit yank index)))
+  (setq dirvish-attributes
+        '(all-the-icons file-time file-size collapse subtree-state vc-state git-msg))
+  (setq delete-by-moving-to-trash t)
+  (setq dired-listing-switches
+        "-l --almost-all --human-readable --group-directories-first --no-group")
+  :bind ; Bind `dirvish|dirvish-side|dirvish-dwim' as you see fit
+  (("C-c f" . dirvish-fd)
+   :map dirvish-mode-map ; Dirvish inherits `dired-mode-map'
+   ("a"   . dirvish-quick-access)
+   ("f"   . dirvish-file-info-menu)
+   ("y"   . dirvish-yank-menu)
+   ("N"   . dirvish-narrow)
+   ("^"   . dirvish-history-last)
+   ("h"   . dirvish-history-jump) ; remapped `describe-mode'
+   ("s"   . dirvish-quicksort)    ; remapped `dired-sort-toggle-or-edit'
+   ("v"   . dirvish-vc-menu)      ; remapped `dired-view-file'
+   ("TAB" . dirvish-subtree-toggle)
+   ("M-f" . dirvish-history-go-forward)
+   ("M-b" . dirvish-history-go-backward)
+   ("M-l" . dirvish-ls-switches-menu)
+   ("M-m" . dirvish-mark-menu)
+   ("M-t" . dirvish-layout-toggle)
+   ("M-s" . dirvish-setup-menu)
+   ("M-e" . dirvish-emerge-menu)
+   ("M-j" . dirvish-fd-jump)))
 #+end_src
 * Tree Sitter
 #+begin_src emacs-lisp
@@ -1209,7 +1319,10 @@ Do something in other window
   ([remap describe-variable] . helpful-variable)
   ([remap describe-key] . helpful-key)
   ([remap describe-symbol] . helpful-symbol)
-  ([remap describe-command] . helpful-command))
+  ([remap describe-command] . helpful-command)
+  :config
+  (after! undo-tree
+	  (append! undo-tree-incompatible-major-modes #'helpful-mode)))
 #+end_src
 ** Man & TLDR
 #+begin_src emacs-lisp
@@ -1246,6 +1359,7 @@ Do something in other window
   ;; no need to save history for these modes
   (dolist (m '(read-only-mode
 	       eshell-mode
+	       help-mode
 	       term-mode
 	       vterm-mode
 	       magit-status-mode
@@ -1618,25 +1732,26 @@ is available."
 #+begin_src emacs-lisp
 (use-package apheleia
   :unless noninteractive
-  :init (apheleia-global-mode +1))
+  :config (apheleia-global-mode +1))
 #+end_src
 ** Linting
 #+begin_src emacs-lisp
 (use-package flycheck
   :unless noninteractive
-  :init (global-flycheck-mode)
   :general (my/general-global-menu! "Errors" "c e"
-
-                                   "e" '(consult-flycheck :wk "List errors")
-                                   "n" '(flycheck-next-error :wk "Next error")
-                                   "p" '(flycheck-previous-error :wk "Previous error")
-                                   "d" '(flycheck-describe-checker :wk "Describe checker")
-                                   "v" '(flycheck-verify-setup :wk "Verify setup"))
+             "e" '(flycheck-list-errors :wk "List errors")
+             "n" '(flycheck-next-error :wk "Next error")
+             "p" '(flycheck-previous-error :wk "Previous error")
+             "d" '(flycheck-describe-checker :wk "Describe checker")
+             "v" '(flycheck-verify-setup :wk "Verify setup"))
+  :config
+  (global-flycheck-mode)
+  (add-popup! "^\\*Flycheck.*\\*$" #'flycheck-error-list-mode)
   :custom
-    (flycheck-emacs-lisp-load-path 'inherit)
-    (flycheck-display-errors-delay 0.25)
-    (flycheck-check-syntax-automatically '(save mode-enabled))
-    (flycheck-indication-mode 'right-fringe))
+  (flycheck-emacs-lisp-load-path 'inherit)
+  (flycheck-display-errors-delay 0.25)
+  (flycheck-check-syntax-automatically '(save mode-enabled))
+  (flycheck-indication-mode 'right-fringe))
 #+end_src
 ** Spell Checking (aspell)
 #+begin_src emacs-lisp
@@ -1748,7 +1863,26 @@ is available."
 ** Forge
 #+begin_src emacs-lisp
 (use-package forge
-  :unless noninteractive)
+  :unless noninteractive
+  :after magit
+  :commands (forge-insert-topics
+	     forge-insert-assigned-pullreqs
+	     forge-insert-authored-pullreqs
+	     forge-insert-requested-reviews
+	     forge-insert-assigned-issues
+	     forge-insert-pullreqs
+	     forge-insert-issues
+	     forge-insert-discussions)
+  :init
+  (append! magit-status-sections-hook
+    #'forge-insert-topics
+    #'forge-insert-assigned-pullreqs
+    #'forge-insert-authored-pullreqs
+    #'forge-insert-requested-reviews
+    #'forge-insert-assigned-issues
+    #'forge-insert-pullreqs
+    #'forge-insert-issues
+    #'forge-insert-discussions))
 #+end_src
 * LSP & DAP
 ** LSP
@@ -1774,6 +1908,7 @@ is available."
          (lsp-mode . lsp-headerline-breadcrumb-mode)
          (lsp-mode . lsp-enable-which-key-integration))
   :custom (lsp-keymap-prefix nil)
+  :general (my/general-global-Toggle "l" '(lsp :wk "LSP"))
   :config
   (when my/proxy (setq lsp-http-proxy my/proxy))
 
@@ -1865,7 +2000,6 @@ is available."
   :unless noninteractive
   :config (dap-auto-configure-mode)
   :general (my/general-global-menu! "DAP" "d"
-
                                     "n" '(dap-next :wk "Next")
                                     "i" '(dap-step-in :wk "Step in")
                                     "o" '(dap-step-out :wk "Step out")
@@ -1875,17 +2009,14 @@ is available."
                                     "q"  '(dap-disconnect :wk "Quit")
                                     "d"  '(:keymap dap-mode-map :wk "DAP"))
   :general (my/general-global-menu! "Debug" "dd"
-
                                     "r" '(dap-debug-recent :wk "Recent")
                                     "l" '(dap-debug-last :wk "Last")
                                     "s" '(dap-debug :wk "Debug"))
   :general (my/general-global-menu! "Eval" "de"
-
                                     "e" '(dap-eval :wk "Eval")
                                     "r" '(dap-eval-region :wk "Eval region")
                                     "s" '(dap-eval-thing-at-point :wk "Eval thing at point"))
   :general (my/general-global-menu! "Breakpoint" "db"
-
                                     "b" '(dap-breakpoint-toggle :wk "Toggle")
                                     "B" '(dap-breakpoint-add :wk "Add")
                                     "d" '(dap-breakpoint-delete :wk "Delete")
@@ -1931,17 +2062,7 @@ is available."
   :general (my/local-leader-def python-mode
 				"r" '(run-python :wk "repl/python")
 				"b" '(python-shell-send-buffer :wk "send buffer to repl"))
-  :init (setq python-check-command "pyflakes")
-  :config
-  (defconst my/prettify-symbols-extra-python
-    '(("def" . "ƒ")
-      ("None" . "∅")))
-  (add-hook 'python-mode-hook
-            (lambda ()
-              (setq-local prettify-symbols-alist
-                          (append my/prettify-symbols-extra-python
-                                  prettify-symbols-alist))
-              (setf (alist-get 'python-mode my/repl-alist) #'run-python))))
+  :init (setq python-check-command "pyflakes"))
 
 (use-package ob-python
   :ensure nil
@@ -1990,6 +2111,15 @@ is available."
   :hook (before-save . py-isort-before-save)
   :general (my/local-leader-def python-mode
 	     "i s" '(py-isort-buffer :wk "sort imports")))
+#+end_src
+*** Numpy Docstring
+#+begin_src emacs-lisp
+(use-package numpydoc
+  :init
+  (after! yasnippet
+          (setq numpydoc-insertion-style 'numpydoc))
+  :general (my/local-leader-def python-mode
+                                "d" '(numpydoc-generate :wk "generate docstring")))
 #+end_src
 ** Rust
 #+begin_src emacs-lisp
@@ -2127,6 +2257,14 @@ is available."
   (setq sh-basic-offset 4
         sh-indentation 4))
 #+end_src
+** Docker
+#+begin_src emacs-lisp
+(use-package dockerfile-mode
+  :mode ("Dockerfile.*\\'" . dockerfile-mode))
+
+(use-package docker
+  :general (my/general-global-Open "D" 'docker))
+#+end_src
 * Mail
 ** mu4e
 #+begin_src emacs-lisp :lexical t
@@ -2144,6 +2282,8 @@ is available."
   :init
   (add-to-list 'recentf-exclude my/mail-dir)
   :config
+  (my/local-leader-def mu4e-headers-mode
+		       "u" '(mu4e-update-mail-and-index :wk "Update"))
   ;; Context switching for multiple accounts
   (defun my/create-mu4e-context (name address signature server &optional key)
     (unless key (setq key (substring name 0 1)))
@@ -2188,6 +2328,7 @@ is available."
    mail-user-agent 'mu4e-user-agent
    read-mail-command 'mu4e
    mu4e-maildir my/mail-dir
+   mu4e-confirm-quit nil
    ;; This is set to 't' to avoid mail syncing issues when using mbsync
    mu4e-change-filenames-when-moving t
 
@@ -2460,11 +2601,15 @@ is available."
   :ensure nil ;; Comes with lilypond, installed with nix
   :mode ("\\.ly\\'" . LilyPond-mode)
   :commands (LilyPond-mode)
-  :init (defalias 'lilypond-mode 'LilyPond-mode))
+  :init (defalias 'lilypond-mode 'LilyPond-mode)
+)
 (use-package ob-lilypond
   :ensure nil
   :after org
+  :init
   :config
+  ;; org-babel-lilypond-commands is a list of strings. We set just the first one to lilypond
+  (setf (car org-babel-lilypond-commands) (executable-find "lilypond"))
   (add-to-list 'org-babel-load-languages '(lilypond . t))
   (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages))
 #+end_src
@@ -2488,10 +2633,10 @@ is available."
                             (nospace . "-")
                             (case-fn . downcase)))
   (deft-text-mode 'org-mode)
+  :config
+  (add-popup! "\\*Deft\\*")
   :general (my/general-global-Notes
-            :infix "d"
-            "" '(nil :wk "deft")
-            "d" '(deft :wk "deft")))
+             "d" '(deft :wk "deft")))
 #+end_src
 *** Roam
 #+begin_src emacs-lisp
@@ -2504,25 +2649,24 @@ is available."
   (org-roam-completion-everywhere t)
   (org-roam-capture-templates
    '(
-      <<roam-templates>>
-      ))
+     <<roam-templates>>
+     ))
   :general (my/general-global-Notes
-       :infix "r"
-	     "" '(nil :wk "roam")
-	     "f" '(org-roam-node-find :wk "find")
-	     "i" '(org-roam-node-insert :wk "insert")
-	     "g" '(org-roam-graph :wk "graph")
-	     "t" '(org-roam-dailies-find-today :wk "today")
-	     "y" '(org-roam-dailies-find-yesterday :wk "yesterday")
-	     "r" '(org-roam-dailies-find-tomorrow :wk "tomorrow")
-	     "d" '(org-roam-dailies-find-date :wk "date")
-	     "c" '(org-roam-dailies-capture-today :wk "capture today")
-	     "C" '(org-roam-dailies-capture-tomorrow :wk "capture tomorrow")
-	     "D" '(org-roam-dailies-capture-date :wk "capture date")
-	     "l" '(org-roam-buffer-toggle-display :wk "toggle display")
-	     "L" '(org-roam-buffer-display-dedicated :wk "display dedicated")
-	     "s" '(org-roam-db-sync :wk "sync")
-	     "S" '(org-roam-server-mode :wk "server")))
+	     "r" '(nil :wk "roam")
+	     "rf" '(org-roam-node-find :wk "find")
+	     "ri" '(org-roam-node-insert :wk "insert")
+	     "rg" '(org-roam-graph :wk "graph")
+	     "rt" '(org-roam-dailies-find-today :wk "today")
+	     "ry" '(org-roam-dailies-find-yesterday :wk "yesterday")
+	     "rr" '(org-roam-dailies-find-tomorrow :wk "tomorrow")
+	     "rd" '(org-roam-dailies-find-date :wk "date")
+	     "rc" '(org-roam-dailies-capture-today :wk "capture today")
+	     "rC" '(org-roam-dailies-capture-tomorrow :wk "capture tomorrow")
+	     "rD" '(org-roam-dailies-capture-date :wk "capture date")
+	     "rl" '(org-roam-buffer-toggle-display :wk "toggle display")
+	     "rL" '(org-roam-buffer-display-dedicated :wk "display dedicated")
+	     "rs" '(org-roam-db-sync :wk "sync")
+	     "rS" '(org-roam-server-mode :wk "server")))
 #+end_src
 **** Templates
 :PROPERTIES:
@@ -2647,7 +2791,7 @@ is available."
 ;; I don't use ~/.emacs which is the default value if default.el was loaded.
 (when (and (not noninteractive) (string= user-init-file "~/.emacs")) 
   (after! (org ox default)
-	  (setq org-export-async-init-file (concat my/cache-dir "org-export-async-init-file.el"))
+	  (setq org-export-async-init-file (make-temp-file "org-export-async-init-file" nil ".el"))
 	  (defun my/get-loaded-nix-file (name)
 	    (car (load-history-filename-element
 		  (concat
@@ -2738,13 +2882,14 @@ DOCSTRING and BODY are as in `defun'.
   (evil-org-agenda-set-keys))
 #+end_src
 ** Poly Org
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
 (use-package poly-org
   :unless noninteractive
-  :commands (poly-org-mode)
+  :commands poly-org-mode
+  :after org
   :init
   (my/local-leader-def org-mode
-        "p" '(poly-org-mode :wk "poly-org-mode")))
+                       "p" '(poly-org-mode :wk "poly-org-mode")))
 #+end_src
 * Local Variables
 # Local Variables:
