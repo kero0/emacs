@@ -175,11 +175,6 @@
   (setq save-place-file (expand-file-name "saveplace" my/local-dir))
   (save-place-mode 1))
 #+end_src
-*** bookmarks
-#+begin_src emacs-lisp
-(setq bookmark-default-file (expand-file-name "bookmarks" my/local-dir)
-      bookmark-save-flag 1)
-#+end_src
 ** Custom file
 #+begin_src emacs-lisp
 (setq custom-file (expand-file-name "custom.el" my/etc-dir))
@@ -293,19 +288,6 @@ Do something in other window
 #+end_src
 **** Local Bindings
 #+begin_src emacs-lisp :noweb-ref keybindings :tangle no
-(general-create-definer my/local--def
-  :prefix my/leader-def-prefix
-  :global-prefix my/leader-def-prefix-alt
-  :states ',my/prefix-states
-  :keymaps 'local)
-(defmacro my/local-def (mode &rest args)
-  (declare (indent defun))
-  `(add-hook (intern (concat (symbol-name ,mode) "-hook"))
-	     (lambda ()
-	       (my/local--def ,@args))))
-#+end_src
-
-#+begin_src emacs-lisp :noweb-ref keybindings :tangle no
 (defmacro my/local-leader-def (mode &rest args)
   "Define a local leader key sequence in mode"
   `(progn
@@ -410,9 +392,9 @@ Do something in other window
   "S" '(save-some-buffers :wk "Save some buffers")
   "u" '(bury-buffer :wk "Bury buffer")
   "U" '(unbury-buffer :wk "Unbury buffer")
-  "x" '(scratch :wk "Open scratch buffer"))
+  "x" '(scratch-buffer :wk "Open scratch buffer"))
 (my/leader-def
-  "x" '(scratch :wk "Open scratch buffer"))
+  "x" '(scratch-buffer :wk "Open scratch buffer"))
 #+end_src
 ***** Code
 #+begin_src emacs-lisp
@@ -994,6 +976,23 @@ Do something in other window
   ;; Show Marks in buffer
   (my/general-global-Open "`" '(evil-show-marks :wk "Show marks"))
   :config (setq evil-fringe-mark-show-special t))
+#+end_src
+** Bookmark
+#+begin_src emacs-lisp
+(use-package emacs
+  :ensure nil
+  :unless noninteractive
+  :after evil
+  :config (my/general-global-menu! "Bookmarks" "B"
+             "b" '(bookmark-jump :wk "Jump")
+             "l" '(bookmark-bmenu-list :wk "List")
+             "s" '(bookmark-set :wk "Set")
+             "r" '(bookmark-rename :wk "Rename")
+             "d" '(bookmark-delete :wk "Delete")
+             "a" '(bookmark-set :wk "Add"))
+  :init
+  (setq bookmark-default-file (concat my/cache-dir "bookmarks")
+        bookmark-save-flag 1))
 #+end_src
 * Project management
 ** Projectile
