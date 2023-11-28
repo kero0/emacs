@@ -8,7 +8,7 @@
   };
   inputs = {
     emacs-overlay.url = "github:nix-community/emacs-overlay";
-    nixpkgs.url = "github:NixOS/nixpkgs";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
     packages-copilot = {
       url = "github:zerolfx/copilot.el";
@@ -48,7 +48,8 @@
             inherit system;
             overlays = [ emacs-overlay.overlay ];
           };
-          emacs = pkgs.emacs-pgtk;
+          # emacs = pkgs.emacs-pgtk;
+          emacs = (import nixpkgs { inherit system; }).emacs29-pgtk;
           config = pkgs.runCommand "config" { } ''
             mkdir -p $out/
             cp -r ${./.}/. $out
@@ -66,6 +67,10 @@
             is-personal = true;
           };
         in rec {
+          ${system} = import nixpkgs {
+            inherit system;
+            overlays = [ emacs-overlay.overlay ];
+          };
           packages.${system}.default = (pkgs.emacsWithPackagesFromUsePackage {
             config = ./config.org;
             defaultInitFile = pkgs.writeText "default.el"
@@ -89,7 +94,7 @@
                 engrave-faces
                 ox-chameleon
                 # FIXME: currently broken in nixpkgs. either wait for fix or find workaround
-                treesit-grammars.with-all-grammars
+                # treesit-grammars.with-all-grammars
               ] ++ dependencies;
             override = self: super: {
               copilot = (mkTrivialPkg {

@@ -4,7 +4,8 @@ with pkgs;
   # basics
   bashInteractive
   binutils
-  curlFull
+  # curlFull
+  curl
   fd
   gitFull
   gnutls
@@ -23,6 +24,9 @@ with pkgs;
 
   # copilot
   nodejs
+
+  # Ellama
+  ollama
 
   # latex but mostly for ox-latex
   (with texlive;
