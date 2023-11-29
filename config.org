@@ -1044,42 +1044,6 @@ Do something in other window
     )
   (setopt tab-bar-show nil))
   #+end_src
-** =persp-mode=
-#+begin_src emacs-lisp :tangle no
-(use-package persp-mode
-  :preface (my/general-global-menu! "Perspective" "P")
-  :unless noninteractive
-  :hook (after-init . persp-mode)
-  :general (my/general-global-Perspective
-             "P" '(persp-switch :wk "Switch")
-             "n" '(persp-next :wk "Next")
-             "p" '(persp-prev :wk "Previous")
-             "a" '(persp-add-buffer :wk "Add buffer")
-             "k" '(persp-remove-buffer :wk "Remove buffer")
-             "r" '(persp-rename :wk "Rename")
-             "d" '(persp-kill :wk "Delete")
-             "s" '(persp-state-save :wk "Save")
-             "l" '(persp-state-load :wk "Load"))
-  :config
-  (setq persp-autokill-buffer-on-remove 'kill-weak)
-  (defun my/persp-mode-rename ()
-    "Rename perspective to current project name."
-    (interactive)
-    (let ((project-name (projectile-project-name)))
-      (if (string= project-name "-")
-          (persp-rename (buffer-name))
-        (persp-rename project-name))))
-  (add-hook 'persp-mode-hook #'my/persp-mode-rename)
-
-    ;; see documentation for other possible values
-    (setq persp-add-buffer-on-after-change-major-mode t)
-
-    ;; above setting will not discriminate and bring ephemeral buffers e.g.
-    ;; *magit* which you probably don't want. You can filter them out.
-    (add-hook 'persp-common-buffer-filter-functions
-    ;; there is also `persp-add-buffer-on-after-change-major-mode-filter-functions'
-        #'(lambda (b) (string-prefix-p "*" (buffer-name b)))))
-#+end_src
 * Buffer management
 #+begin_src emacs-lisp
 (use-package ibuffer
@@ -1099,7 +1063,7 @@ Do something in other window
 (setq switch-to-prev-buffer-skip-regexp '("^\\*.*\\*$"))
 #+end_src
 * Dired
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
 (use-package dired
   :unless noninteractive
   :ensure nil
@@ -1324,25 +1288,6 @@ Do something in other window
 	       magit-commit-mode))
     (add-to-list 'undo-tree-incompatible-major-modes m))
   (my/leader-def "o u" 'undo-tree-visualize))
-#+end_src
-* Ellama
-#+begin_src emacs-lisp
-(use-package ellama
-  :general (my/leader-def
-	     :infix "E"
-	     "" '(:ignore t :wk "Ellama")
-	     "E" '(ellama-chat :wk "Chat")
-	     "s" '(ellama-summarize :wk "Summarize")
-	     "c" '(ellama-complete-code))
-  :init
-  (setopt ellama-language "English")
-  (require 'llm-ollama)
-  (setopt ellama-provider
-	  (make-llm-ollama
-	   :chat-model "codellama"
-	   :embedding-model "codellama"
-	   :host "nasy.local"
-	   :port 11435)))
 #+end_src
 * Completion
 ** Corfu
@@ -1606,24 +1551,6 @@ Do something in other window
   (add-popup!
    "^\\*eat.*\\*$"  'eat-mode)
   (eat-eshell-mode))
-#+end_src
-** Vterm
-#+begin_src emacs-lisp :tangle no
-(use-package vterm
-  :unless noninteractive
-  :commands vterm
-  :init
-  (defun my/vterm--auto-close-window (buf event)
-    (when (y-or-n-p (concat event " - kill buffer: " (buffer-name buf) "?"))
-      (kill-buffer-and-window)))
-  (add-hook 'vterm-exit-functions #'my/vterm--auto-close-window)
-  (my/general-global-Open
-    "t" '(vterm :wk "vterm"))
-  (setq vterm-shell (or (getenv "SHELL") (executable-find "fish") (executable-find "bash")))
-  :config
-  (add-popup!
-   "^\\*vterm.*\\*$"  'vterm-mode)
-  (add-hook 'vterm-mode-hook #'my/disable-line-numbers))
 #+end_src
 ** Eshell
 #+begin_src emacs-lisp
