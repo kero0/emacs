@@ -2368,13 +2368,16 @@ Do something in other window
 #+begin_src emacs-lisp
 (use-package lilypond
   :ensure nil ;; Comes with lilypond, installed with nix
+  :preface (defvar my/lilypond (executable-find "lilypond"))
   :mode ("\\.ly\\'" . LilyPond-mode)
   :commands (LilyPond-mode)
-  :init (defalias 'lilypond-mode 'LilyPond-mode)
-)
+  :if my/lilypond
+  :init (defalias 'lilypond-mode 'LilyPond-mode))
 (use-package ob-lilypond
   :ensure nil
   :after org
+  :defer t
+  :if my/lilypond
   :init
   :config
   ;; org-babel-lilypond-commands is a list of strings. We set just the first one to lilypond
