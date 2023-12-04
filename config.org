@@ -646,7 +646,6 @@ Do something in other window
 #+end_src
 * UI
 #+begin_src emacs-lisp
-(defvar my/frame-transparency '(90 . 90))
 (setq inhibit-startup-message t)
 
 (scroll-bar-mode -1)         ; Disable visible scrollbar
@@ -663,9 +662,6 @@ Do something in other window
 (setq display-line-numbers-type 'relative)
 (setq use-dialog-box nil)
 
-;; Set frame transparency
-;; (set-frame-parameter (selected-frame) 'alpha my/frame-transparency)
-;; (add-to-list 'default-frame-alist `(alpha . ,my/frame-transparency))
 (set-frame-parameter (selected-frame) 'fullscreen 'maximized)
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
 #+end_src
