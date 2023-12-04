@@ -48,8 +48,31 @@
             inherit system;
             overlays = [ emacs-overlay.overlay ];
           };
-          # emacs = pkgs.emacs-pgtk;
-          emacs = (import nixpkgs { inherit system; }).emacs29-pgtk;
+          emacs = let emacs = (import nixpkgs { inherit system; }).emacs29-pgtk;
+                  in pkgs.symlinkJoin rec {
+                    name = "emacs";
+                    paths = [ emacs ];
+                    nativeBuildInputs = [ pkgs.makeBinaryWrapper ];
+                    postBuild = ''
+                      wrapProgram "$out/bin/emacs" \
+                                  --set FONTCONFIG_FILE ${
+                                    pkgs.makeFontsConf {
+                                      fontDirectories = with pkgs; [
+                                        freefont_ttf
+                                        julia-mono
+                                        (nerdfonts.override {
+                                          fonts = [
+                                            "FiraCode"
+                                            "FiraMono"
+                                            "JetBrainsMono"
+                                          ];
+                                        })
+                                      ];
+                                    }
+                                  }
+              		 '';
+            inherit (emacs) meta src version;
+          };
           config = pkgs.runCommand "config" { } ''
             mkdir -p $out/
             cp -r ${./.}/. $out
