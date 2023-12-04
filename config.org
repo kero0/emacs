@@ -1275,10 +1275,9 @@ Do something in other window
   :commands (tldr tldr-update-docs)
   :init
   (my/general-global-menu! "Command line help" "h h"
-
-                           "t" '('tldr :wk "tldr")
-                           "h" '('man :wk "man")
-                           "w" '('woman :wk "Woman"))
+                           "t" '(tldr :wk "tldr")
+                           "h" '(man :wk "man")
+                           "w" '(woman :wk "Woman"))
   :config
   (setq tldr-directory-path (concat my/cache-dir "tldr/")))
 #+end_src
