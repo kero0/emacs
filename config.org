@@ -586,17 +586,24 @@ Do something in other window
 (use-package evil-mc
   :after evil
   :general (general-nmap
-            "M-d" 'evil-mc-make-and-goto-next-match
-            "M-S-d" 'evil-mc-make-and-goto-prev-match)
+             "M-d" 'evil-mc-make-and-goto-next-match
+             "M-S-d" 'evil-mc-make-and-goto-prev-match)
   :general (general-vmap
-            "A" 'evil-mc-make-cursor-in-visual-selection-end
-            "I" 'evil-mc-make-cursor-in-visual-selection-beg)
+             "A" 'evil-mc-make-cursor-in-visual-selection-end
+             "I" 'evil-mc-make-cursor-in-visual-selection-beg)
   :general (my/general-global-menu! "Multi-Cursor" "c m"
 
-                                    "a" '(evil-mc-make-all-cursors :wk "Make all cursors")
-                                    "n" '(evil-mc-make-and-goto-next-match :wk "Make and go to next match")
-                                    "N" '(evil-mc-make-and-goto-prev-match :wk "Make and go to previous match")
-                                    "q" '(evil-mc-undo-all-cursors :wk "Undo all cursors"))
+             "a" '(evil-mc-make-all-cursors :wk "Make all cursors")
+             "n" '(evil-mc-make-and-goto-next-match :wk "Make and go to next match")
+             "N" '(evil-mc-make-and-goto-prev-match :wk "Make and go to previous match")
+             "q" '(evil-mc-undo-all-cursors :wk "Undo all cursors"))
+  :init
+  (use-package evil-multiedit
+    :defer t)
+  (use-package iedit
+    :defer t
+    :init
+    (setq iedit-toggle-key-default nil))
   :config
   (global-evil-mc-mode 1))
 #+end_src
