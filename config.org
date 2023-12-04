@@ -904,6 +904,20 @@ Do something in other window
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode))
 #+end_src
+** Highlight todos
+#+begin_src emacs-lisp
+(use-package hl-todo
+  :hook ((org-mode . hl-todo-mode)
+         (prog-mode . hl-todo-mode))
+  :config
+  (setq hl-todo-highlight-punctuation ":"
+        hl-todo-keyword-faces
+        `(("TODO"       warning bold)
+          ("FIXME"      error bold)
+          ("REVIEW"     font-lock-keyword-face bold)
+          ("NOTE"       success bold)
+          ("DEPRECATED" font-lock-doc-face bold))))
+#+end_src
 ** Popper
 #+begin_src emacs-lisp
 (use-package popper
@@ -1243,9 +1257,20 @@ Do something in other window
 (use-package smartparens
   :unless noninteractive
   :general (my/general-global-Toggle "p" #'smartparens-mode)
+  :custom
+  (sp-highlight-pair-overlay nil)
+  (sp-highlight-wrap-overlay nil)
+  (sp-highlight-wrap-tag-overlay nil)
+  (sp-show-pair-from-inside t)
+  (sp-cancel-autoskip-on-backward-movement nil)
+  (sp-pair-overlay-keymap (make-sparse-keymap))
+  (sp-max-prefix-length 25)
+  (sp-max-pair-length 4)
   :hook (prog-mode . smartparens-mode)
   :hook (prog-mode . show-smartparens-mode)
   :config
+  (sp-local-pair '(minibuffer-mode minibuffer-inactive-mode emacs-lisp-mode) "'" nil :actions nil)
+  (sp-local-pair '(minibuffer-mode minibuffer-inactive-mode emacs-lisp-mode) "`" nil :actions nil)
   (show-smartparens-global-mode t))
 (use-package evil-smartparens
   :unless noninteractive
