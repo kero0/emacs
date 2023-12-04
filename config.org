@@ -2049,6 +2049,15 @@ Do something in other window
   (setq sh-basic-offset 4
         sh-indentation 4))
 #+end_src
+*** Org Babel
+#+begin_src emacs-lisp
+(use-package ob-shell
+  :ensure nil
+  :after org
+  :custom
+  (org-babel-shell-results-defaults-to-output t)
+  (org-babel-default-header-args:sh '((:session . nil))))
+#+end_src
 ** Docker
 #+begin_src emacs-lisp
 (use-package dockerfile-mode
