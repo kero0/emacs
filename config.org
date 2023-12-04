@@ -501,6 +501,7 @@ Do something in other window
 ** evil
 #+begin_src emacs-lisp
 (use-package evil
+  :unless noninteractive
   :init
   (setq evil-want-integration t
 	evil-want-keybinding nil
@@ -509,7 +510,7 @@ Do something in other window
 	evil-undo-system 'undo-tree
 	select-enable-clipboard nil)
   :config
-  (evil-mode (not noninteractive))
+  (evil-mode)
   (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
   (define-key evil-insert-state-map (kbd "C-h") 'evil-delete-backward-char-and-join)
 
