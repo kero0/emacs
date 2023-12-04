@@ -933,10 +933,8 @@ Do something in other window
   (cl-defmacro add-popup! (&rest rules)
     "Add popup rules."
     `(after! popper
-	     (let ((x popper-reference-buffers))
-	       (progn
-		 (append! x ,@rules)
-		 (setopt popper-reference-buffers x)))))
+	     (append! popper-reference-buffers ,@rules)
+	     (popper--set-reference-vars)))
   :config
   (popper-mode +1)
   ;;(popper-echo-mode +1)
