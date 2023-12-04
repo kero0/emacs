@@ -1014,8 +1014,28 @@ Do something in other window
 	     my/projectile-ignore-projects))
   (setq projectile-ignored-project-function #'my/projectile-ignore-projects))
 #+end_src
-** Tabs
+** Perspective
 #+begin_src emacs-lisp
+(use-package perspective
+  :custom
+  (persp-mode-prefix-key nil)
+  (persp-suppress-no-prefix-key-warning t)
+  (persp-state-default-file  (concat my/local-dir "perspective"))
+  (persp-sort 'created)
+  :hook (after-init . persp-mode)
+  :config
+  (my/leader-def
+    "TAB" '(:keymap perspective-map :wk "Workspaces"))
+  (general-def :keymaps 'perspective-map
+    "TAB" '(persp-switch :wk "Switch"))
+  :hook (ibuffer . (lambda ()
+		     (persp-ibuffer-set-filter-groups)
+		     (unless (eq ibuffer-sorting-mode 'alphabetic)
+		       (ibuffer-do-sort-by-alphabetic))))
+  :hook (kill-emacs . persp-state-save))
+#+end_src
+** Tabs
+#+begin_src emacs-lisp :tangle no
 (use-package tabspaces
   ;; use this next line only if you also use straight, otherwise ignore it. 
   :hook (after-init . tabspaces-mode) ;; use this only if you want the minor-mode loaded at startup. 
