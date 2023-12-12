@@ -22,6 +22,10 @@
       url = "github:Fuco1/org-pretty-table";
       flake = false;
     };
+    packages-org-src-context = {
+      url = "github:karthink/org-src-context";
+      flake = false;
+    };
     packages-ox-chameleon = {
       url = "github:tecosaur/ox-chameleon";
       flake = false;
@@ -30,13 +34,13 @@
   outputs = inputs@{ self, nixpkgs, emacs-overlay, ... }:
     let
       mkTrivialPkg = { pkgs, name, src ? inputs."packages-${name}"
-        , buildInputs ? [ ], extraFiles ? [ ] }:
-        ((pkgs.trivialBuild {
-          inherit buildInputs;
-          pname = name;
-          ename = name;
-          version = "0.0.0";
-          src = src;
+                     , buildInputs ? [ ], extraFiles ? [ ] }:
+                       ((pkgs.trivialBuild {
+                         inherit buildInputs;
+                         pname = name;
+                         ename = name;
+                         version = "0.0.0";
+                         src = src;
         }).overrideAttrs (old: {
           installPhase = old.installPhase + (builtins.concatStringsSep "\n"
             (map (s: ''cp -r "${s}" "$LISPDIR"'') extraFiles));
@@ -98,13 +102,18 @@
             config = ./config.org;
             defaultInitFile = pkgs.writeText "default.el"
               (let deps = nixpkgs.lib.makeBinPath dependencies;
-              in ''
+               in ''
                 	 (setq my/emacs-dir "${config}/")
+                   (load-file "${config}/init.el")
                    (setenv "PATH" (concat (getenv "PATH") ":${deps}"))
-              '' + nixpkgs.lib.concatStringsSep "\n"
-              (map (s: ''(add-to-list 'exec-path "${s}/bin")'') dependencies)
-              + ''
-                (load-file "${config}/init.el")
+              '' + nixpkgs.lib.concatStringsSep "\n" (map (s: ''
+                (add-to-list 'exec-path "${s}/bin")
+                ${let path = "${s}/share/emacs/site-lisp";
+                  in if builtins.pathExists path then
+                    ''(add-to-list 'load-path "${path}")''
+                     else
+                       ""}
+              '') dependencies) + ''
                 (provide 'default)
               '');
             package = emacs;
@@ -131,6 +140,11 @@
                 name = "org-pretty-table";
                 buildInputs = with self; [ ];
               });
+              org-src-context = (mkTrivialPkg {
+                pkgs = self;
+                name = "org-src-context";
+                buildInputs = with self; [ ];
+              });
               ox-chameleon = (mkTrivialPkg {
                 pkgs = self;
                 name = "ox-chameleon";
@@ -153,5 +167,5 @@
             pkgs.mkShell { buildInputs = [ packages.${system}.default ]; };
         };
     in nixpkgs.lib.foldl nixpkgs.lib.recursiveUpdate { }
-    (map f [ "x86_64-linux" "aarch64-darwin" ]);
+      (map f [ "x86_64-linux" "aarch64-darwin" ]);
 }

@@ -315,7 +315,6 @@ Do something in other window
   "Prefix for general.el local leader keybindings.
    Relative to `my/leader-def-prefix'.")
 (defvar my/prefix-states '(normal visual motion)
-;; (defvar my/prefix-states '(normal visual motion insert)
   "States in which to bind general.el leader keybindings.")
 
 (use-package general
@@ -324,6 +323,7 @@ Do something in other window
   (general-override-mode 1)
   (general-auto-unbind-keys)
   (general-define-key
+   :major-modes t
    :keymaps 'override
    :states my/prefix-states
    :prefix-map 'my/prefix-map
@@ -332,6 +332,7 @@ Do something in other window
 
 
   (general-create-definer my/leader-def
+    :major-modes t
     :wk-full-keys nil
     :keymaps 'my/prefix-map)
   (my/leader-def
@@ -520,8 +521,9 @@ Do something in other window
 
   (evil-set-initial-state 'messages-buffer-mode 'normal)
   (evil-set-initial-state 'dashboard-mode 'normal)
-  (my/general-global-menu! "Window" "w"
-    "" '(:keymap evil-window-map :wk "Window"))
+
+  (my/leader-def
+    "w" '(:keymap evil-window-map :wk "Window"))
   (my/leader-def
     "u"  '(universal-argument :wk "Universal argument")))
 
@@ -651,7 +653,7 @@ Do something in other window
 (scroll-bar-mode -1)         ; Disable visible scrollbar
 (tool-bar-mode -1)           ; Disable the toolbar
 (tooltip-mode -1)            ; Disable tooltips
-(set-fringe-mode '(14 . 10)) ; Give some breathing room
+(set-fringe-mode '(20 . 10)) ; Give some breathing room
 
 (menu-bar-mode -1)           ; Disable the menu bar
 
@@ -1018,8 +1020,8 @@ Do something in other window
   :unless noninteractive
   :config
   (projectile-mode +1)
-  (my/general-global-menu! "Projects" "p"
-    "" '(:keymap projectile-command-map :wk "projectile"))
+  (my/leader-def
+    "p" '(:keymap projectile-command-map :wk "projectile"))
   (setq projectile-switch-project-action #'projectile-dired)
   (defvar my/projectile-ignore-projects '("^/sudo:" "^/docker:" "^/nix/store"))
   (defun my/projectile-ignore-projects (project-root)
@@ -1078,8 +1080,7 @@ Do something in other window
     "s" '(tabspaces-switch-or-create-workspace :wk "Switch/Create ws")
     "TAB" '(tabspaces-switch-or-create-workspace :wk "Switch/Create ws")
     "t" '(tabspaces-switch-buffer-and-tab :wk "Switch buffer and tab")
-    "b" '(tabspaces-switch-to-buffer :wk "Switch buffer")
-    )
+    "b" '(tabspaces-switch-to-buffer :wk "Switch buffer"))
   (setopt tab-bar-show nil))
   #+end_src
 * Buffer management
@@ -1138,7 +1139,7 @@ Do something in other window
 **** Tree Sitter
 #+begin_src emacs-lisp
 (use-package evil-textobj-tree-sitter
-  :requires (evil tree-sitter)
+  ;; :requires (evil tree-sitter)
   :config
   (defun meain/fancy-narrow-to-thing (thing)
     (interactive)
@@ -1183,7 +1184,7 @@ Do something in other window
     "l" `(,(evil-textobj-tree-sitter-get-textobj "loop.outer") :wk "loop")
     "c" `(,(evil-textobj-tree-sitter-get-textobj "comment.outer") :wk "comment"))
   (general-def :keymaps '+tree-sitter-goto-previous-map
-    "a" `(,(evil-textobj-tree-sitter-get-textobj ("parameter.outer" "call.outer") t) :wk "call")
+    "A" `(,(evil-textobj-tree-sitter-get-textobj ("parameter.outer" "call.outer") t) :wk "call")
     "f" `(,(evil-textobj-tree-sitter-get-textobj "function.outer" t) :wk "function")
     "F" `(,(evil-textobj-tree-sitter-get-textobj "call.outer" t) :wk "call")
     "C" `(,(evil-textobj-tree-sitter-get-textobj "class.outer" t) :wk "class")
@@ -1191,7 +1192,7 @@ Do something in other window
     "v" `(,(evil-textobj-tree-sitter-get-textobj "conditional.outer" t) :wk "conditional")
     "l" `(,(evil-textobj-tree-sitter-get-textobj "loop.outer" t) :wk "loop"))
   (general-def :keymaps '+tree-sitter-goto-next-map
-    "a" `(,(evil-textobj-tree-sitter-get-textobj ("parameter.outer" "call.outer")) :wk "call")
+    "A" `(,(evil-textobj-tree-sitter-get-textobj ("parameter.outer" "call.outer")) :wk "call")
     "f" `(,(evil-textobj-tree-sitter-get-textobj "function.outer") :wk "function")
     "F" `(,(evil-textobj-tree-sitter-get-textobj "call.outer") :wk "call")
     "C" `(,(evil-textobj-tree-sitter-get-textobj "class.outer") :wk "class")
@@ -1305,6 +1306,12 @@ Do something in other window
                            "w" '(woman :wk "Woman"))
   :config
   (setq tldr-directory-path (concat my/cache-dir "tldr/")))
+#+end_src
+** Devdocs
+#+begin_src emacs-lisp
+(use-package devdocs
+  :general (:keymaps 'help-map
+		     "d" '(devdocs-lookup :wk "Devdocs")))
 #+end_src
 * Undo Tree
 #+begin_src emacs-lisp
@@ -1462,10 +1469,27 @@ Do something in other window
 	      (setq completion-at-point-functions
 		    (cape-super-capf my/completion-at-point-functions)))))
 #+end_src
+** Fussy
+#+begin_src emacs-lisp
+(use-package fussy
+  :unless noninteractive
+  :config
+  (push 'fussy completion-styles)
+  (setq
+   ;; For example, project-find-file uses 'project-files which uses
+   ;; substring completion by default. Set to nil to make sure it's using
+   ;; flx.
+   completion-category-defaults nil
+   completion-category-overrides nil))
+#+end_src
 ** Tempel
 #+begin_src emacs-lisp
 (use-package tempel
   :unless noninteractive
+  :custom
+  (tempel-trigger-prefix "<")
+  :general
+  (:keymaps 'tempel-map "TAB" 'tempel-next) ;; progress through fields via `TAB'
   :init
   ;; Setup completion at point
   (defun tempel-setup-capf ()
@@ -1475,18 +1499,16 @@ Do something in other window
     ;; often when you don't expect it.
     ;; NOTE: We add `tempel-expand' *before* the main programming mode Capf,
     ;; such that it will be tried first.
-    ;; (setq-local completion-at-point-functions
-    ;;             (cons #'tempel-expand
-    ;;                   completion-at-point-functions))
-    (after! cape
-	    (append! my/completion-at-point-functions #'tempel-expand)))
-
+    (setq-local completion-at-point-functions
+                (cons #'tempel-expand
+                      completion-at-point-functions)))
   :hook (prog-mode . tempel-setup-capf)
   :hook (text-mode . tempel-setup-capf)
   :defer 1)
 (use-package tempel-collection
   :after tempel
-  :config)
+  :config
+  (tempel-collection))
 #+end_src
 ** Marginalia
 #+begin_src emacs-lisp
@@ -1600,6 +1622,24 @@ Do something in other window
    "^\\*eat.*\\*$"  'eat-mode)
   (eat-eshell-mode))
 #+end_src
+** Vterm
+#+begin_src emacs-lisp :tangle no
+(use-package vterm
+  :unless noninteractive
+  :commands vterm
+  :init
+  (defun my/vterm--auto-close-window (buf event)
+    (when (y-or-n-p (concat event " - kill buffer: " (buffer-name buf) "?"))
+      (kill-buffer-and-window)))
+  (add-hook 'vterm-exit-functions #'my/vterm--auto-close-window)
+  (my/general-global-Open
+    "t" '(vterm :wk "vterm"))
+  (setq vterm-shell (or (getenv "SHELL") (executable-find "fish") (executable-find "bash")))
+  :config
+  (add-popup!
+   "^\\*vterm.*\\*$"  'vterm-mode)
+  (add-hook 'vterm-mode-hook #'my/disable-line-numbers))
+#+end_src
 ** Eshell
 #+begin_src emacs-lisp
 (use-package eshell
@@ -1631,8 +1671,7 @@ Do something in other window
 #+begin_src emacs-lisp
 (use-package apheleia
   :unless noninteractive
-  ;;:config (apheleia-global-mode +1)
-)
+  :config (apheleia-global-mode +1))
 #+end_src
 ** Linting
 #+begin_src emacs-lisp
@@ -1660,7 +1699,6 @@ Do something in other window
   :hook ((text-mode . flyspell-mode)
          (prog-mode . flyspell-prog-mode))
   :general (my/general-global-menu! "Spell" "e s"
-
                                    "s" '(flyspell-buffer :wk "Spell buffer")
                                    "n" '(flyspell-goto-next-error :wk "Next error")
                                    "p" '(flyspell-goto-previous-error :wk "Previous error"))
@@ -1793,6 +1831,7 @@ Do something in other window
   (use-package markdown-mode) ;; Better formatting eldoc
   (setq eglot-events-buffer-size 0) ;; don't log events
   :config
+  (add-hook 'eglot-managed-mode-hook #'my/eglot-define-keys)
   (my/general-global-menu! "LSP" "cl"
     "a" #'eglot-code-actions
     "d" #'eglot-help-at-point
@@ -1859,6 +1898,32 @@ Do something in other window
   :hook (eglot--managed-mode . eldoc-box-hover-mode))
 #+end_src
 
+** dape
+#+begin_src emacs-lisp
+(use-package dape
+  ;; To use window configuration like gud (gdb-mi)
+  :custom
+  (dape-buffer-window-arrangment 'gud)
+  (dape-buffer-window-arrangment 'right)
+  :config
+
+  (my/leader-def
+    "d" '(dape-global-map :wk "Debug"))
+  ;; By default dape uses gdb keybinding prefix
+  (setq dape-key-prefix "\C-x\C-a")
+
+  ;; Kill compile buffer on build success
+  ;; (add-hook 'dape-compile-compile-hooks 'kill-buffer)
+
+  ;; Save buffers on startup, useful for interpreted languages
+  (add-hook 'dape-on-start-hooks
+            (defun dape--save-on-start ()
+              (save-some-buffers t t)))
+
+  ;; Projectile users
+  (after! projectile
+	  (setq dape-cwd-fn 'projectile-project-root)))
+#+end_src
 * Languages
 ** Nix
 #+begin_src emacs-lisp
@@ -2217,6 +2282,8 @@ Do something in other window
     (setq my-org-base-dir "~/org")
     (concat (file-name-as-directory my-org-base-dir) dir))
   :config
+  (use-package org-modern
+    :hook (org-mode . org-modern-mode))
   (setq org-src-preserve-indentation nil
         org-edit-src-content-indentation 0
         org-directory (my/relative-org "general/")
@@ -2224,22 +2291,8 @@ Do something in other window
         org-export-in-background t
         org-export-with-sub-superscripts '{}
         org-list-allow-alphabetical t
-        org-auto-align-tags t
-        org-tags-column 0
         org-catch-invisible-edits 'smart
-        org-special-ctrl-a/e t
-        org-fontify-quote-and-verse-blocks t
-        org-fontify-whole-heading-line t
-        org-fontify-done-headline t
-        org-fontify-emphasized-text t
-
-	org-ellipsis " ↷ "
-	org-hide-emphasis-markers t
-	org-pretty-entities t
-	org-hide-leading-stars nil
-
-	org-startup-indented t
-	org-use-property-inheritance t))
+        org-special-ctrl-a/e t))
 #+end_src
 ** Keybindings
 #+begin_src emacs-lisp
@@ -2333,80 +2386,10 @@ Do something in other window
     "sN" 'widen
     "sS" 'org-sort))
 #+end_src
-** Appearance
-*** Prettify Symbols
+** Agenda
 #+begin_src emacs-lisp
-(use-package org
-  :config
-  (defmacro my/prettify-symbols-org-mode (&rest pairs)
-    "In org mode, keywords can be capital or lowercase. This macro
-   will repeat the same prettify symbol for both cases."
-    `(my/prettify-symbols-extend-mode 'org-mode
-       ,@(delete-dups `(,@(mapcar (lambda (pair)
-				    (cons (downcase (car pair))
-					  (cdr pair)))
-				  pairs)
-			,@(mapcar (lambda (pair)
-				    (cons (upcase (car pair))
-					  (cdr pair)))
-				  pairs)))))
-  (my/prettify-symbols-org-mode
-   ("#+title" . "")
-   ("#+author" . "")
-   ("#+date" . "")
-   ("#+email" . "")
-   ("#+options:" . "⚙")
-   ("#+begin_example" . "")
-   ("#+end_example" . "")
-   ("#+begin_quote" . "")
-   ("#+end_quote" . "")
-   ("#+results:" . "")
-   (":results" . "")
-   (":dir" . "")
-   ("#+begin_src" . "λ")
-   ("#+end_src" . "λ")
-   ("#+begin_export" . "⇒")
-   ("#+end_export" . "⇐")
-   ("#+results:" . "⇒")
-   (":results" . "⇒")
-   (":session" . "@")
-   (":properties:" . "")
-   (":logbook:" . "")
-   )
-  (my/prettify-symbols-extend-mode 'org-mode
-    ("[ ]" . "☐")
-    ("[X]" . "✔")
-    ("[-]" . "✘")
-    ("TODO" . "☐")
-    ("DONE" . "✔")
-    ("WAITING" . "☕")
-    ("HOLD" . "❢")
-    ("CANCELLED" . "✘")))
-#+end_src
-*** Org Tempo
-#+begin_src emacs-lisp
-(use-package org-tempo
-  :unless noninteractive
-  :ensure nil
-  :after org)
-#+end_src
-*** Org Bullets
-#+begin_src emacs-lisp
-(use-package org-bullets
-  :hook (org-mode . org-bullets-mode)
-  :custom
-  (org-bullets-bullet-list '("◉" "○" "✸" "✿" "✜" "◆" "◇")))
-#+end_src
-*** Org Tables
-#+begin_src emacs-lisp
-(use-package org-pretty-table
-        :hook (org-mode . org-pretty-table-mode))
-#+end_src
-*** Org Num
-#+begin_src emacs-lisp
-(use-package org
-  :config
-  (add-hook 'org-mode-hook #'org-num-mode))
+(after! org
+	(setopt org-agenda-files (my/relative-org "agenda.org")))
 #+end_src
 ** Presenting
 #+begin_src emacs-lisp
@@ -2423,7 +2406,7 @@ Do something in other window
 #+end_src
 ** LilyPond
 #+begin_src emacs-lisp
-(use-package lilypond
+(use-package lilypond-mode
   :ensure nil ;; Comes with lilypond, installed with nix
   :preface (defvar my/lilypond (executable-find "lilypond"))
   :mode ("\\.ly\\'" . LilyPond-mode)
@@ -2432,10 +2415,9 @@ Do something in other window
   :init (defalias 'lilypond-mode 'LilyPond-mode))
 (use-package ob-lilypond
   :ensure nil
-  :after org
-  :defer t
+  :after (org lilypond-mode)
+  :commands (org-babel-lilypond-tangle org-babel-execute:lilypond)
   :if my/lilypond
-  :init
   :config
   ;; org-babel-lilypond-commands is a list of strings. We set just the first one to lilypond
   (setf (car org-babel-lilypond-commands) (executable-find "lilypond"))
@@ -2573,6 +2555,7 @@ Do something in other window
 #+begin_src emacs-lisp
 (use-package org-auto-tangle
   :defer t
+  :custom (org-auto-tangle-default t)
   :hook (org-mode . org-auto-tangle-mode))
 #+end_src
 ** Export
@@ -2715,6 +2698,14 @@ DOCSTRING and BODY are as in `defun'.
 	      (evil-org-set-key-theme)))
   (require 'evil-org-agenda)
   (evil-org-agenda-set-keys))
+#+end_src
+** Org Src
+#+begin_src emacs-lisp
+(use-package org-src-context
+  :after org
+  :general
+  (my/local-leader-def org-mode
+     "S" '(org-src-context-mode :wk "src LSP")))
 #+end_src
 ** Poly Org
 #+begin_src emacs-lisp

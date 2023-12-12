@@ -25,9 +25,6 @@ with pkgs;
   # copilot
   nodejs
 
-  # Ellama
-  ollama
-
   # latex but mostly for ox-latex
   (with texlive;
     texlive.combine {
@@ -55,17 +52,10 @@ with pkgs;
       pandas
     ]))
   poetry
-
-  # rust
-  rustup
-  rust-analyzer
-  cargo
-
-  # haskell; not installed by default because it takes a long time
 ] ++ lib.optionals (!stdenv.isLinux) [ coreutils-prefixed gnused ]
 ++ (if stdenv.isDarwin then [ terminal-notifier ] else [ libnotify ])
 
 # mu4e
 # Both of these are configured outside this repo
 # Personally, I configure them using home-manager
-++ lib.optionals is-personal [ mu msmtp ]
+++ lib.optionals is-personal [ lilypond mu msmtp ]
