@@ -47,10 +47,6 @@
 (setq user-full-name "Kirols Bakheat"
       user-mail-address "kbakheat@gmail.com")
 #+end_src
-** Disable package.el
-#+begin_src emacs-lisp :tangle early-init.el
-(setq package-enable-at-startup nil)
-#+end_src
 
 ** Macros
 *** ~after!~
@@ -85,15 +81,12 @@
 #+end_src
 ** Startup
 #+begin_src emacs-lisp
-(setq gc-cons-threshold (* 100 1000 1000))
-
 (defun my/display-startup-time ()
   (message "Emacs loaded in %s with %d garbage collections."
            (format "%.2f seconds"
                    (float-time
                     (time-subtract after-init-time before-init-time)))
-           gcs-done)
-  (setq gc-cons-threshold (* 2 1000 1000)))
+           gcs-done))
 
 (add-hook 'emacs-startup-hook #'my/display-startup-time)
 #+end_src
@@ -104,11 +97,6 @@
   :demand
   :hook
   (focus-out-hook . gcmh-idle-garbage-collect)
-
-  :custom
-  (gcmh-idle-delay 10)
-  (gcmh-high-cons-threshold 104857600)
-
   :config
   (gcmh-mode +1))
 #+end_src
@@ -216,9 +204,8 @@
 ** Native Comp
 #+begin_src emacs-lisp
 (setq comp-eln-cache-path (expand-file-name "eln-cache/" my/cache-dir)
-      native-comp-async-report-warnings-errors nil
-      native-comp-deferred-compilation nil
-      native-comp-verbose nil)
+      native-comp-async-report-warnings-errors 'silent
+      native-comp-verbose 0)
 #+end_src
 ** Window management
 I want windows that start with '*' to be opened in the lower 1/3 of the frame. These windows should close when their buffer dies and should not be reused. If they are not in ~my/special-window-no-cursor-manage-alist~ then they should automatically grab the cursor.
@@ -237,6 +224,45 @@ I want windows that start with '*' to be opened in the lower 1/3 of the frame. T
                              ("ssh" . ,my/proxy)))
   (after! lsp-mode
           (setq lsp-http-proxy my/proxy)))
+#+end_src
+** Early init
+:PROPERTIES:
+:header-args: :tangle early-init.el
+:END:
+*** Disable package.el
+#+begin_src emacs-lisp
+(setq package-enable-at-startup nil
+      package-quickstart nil)
+#+end_src
+*** Garbage-collection
+#+begin_src emacs-lisp
+(setq gc-cons-threshold most-positive-fixnum ;; reset by gcmh
+      gc-cons-percentage 0.6)
+#+end_src
+*** UI
+#+begin_src emacs-lisp
+(setq inhibit-startup-message t
+      frame-inhibit-implied-resize t
+      inhibit-splash-screen t
+      use-file-dialog nil
+      use-dialog-box nil
+      display-line-numbers-type 'relative
+      ring-bell-function 'ignore)
+
+(push '(menu-bar-lines . 0) default-frame-alist)
+(push '(tool-bar-lines . 0) default-frame-alist)
+(push '(vertical-scroll-bars) default-frame-alist)
+(scroll-bar-mode -1)         ; Disable visible scrollbar
+(tool-bar-mode -1)           ; Disable the toolbar
+(tooltip-mode -1)            ; Disable tooltips
+(set-fringe-mode '(20 . 10)) ; Give some breathing room
+(menu-bar-mode -1)           ; Disable the menu bar
+
+(column-number-mode)
+(global-display-line-numbers-mode t)
+
+(set-frame-parameter (selected-frame) 'fullscreen 'maximized)
+(add-to-list 'default-frame-alist '(fullscreen . maximized))
 #+end_src
 * Keybindings
 ** Basics
