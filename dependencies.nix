@@ -4,7 +4,6 @@ with pkgs;
   # basics
   bashInteractive
   binutils
-  # curlFull
   curl
   fd
   gitFull
@@ -22,9 +21,6 @@ with pkgs;
   # spell
   (aspellWithDicts (dicts: with dicts; [ en en-computers en-science ]))
 
-  # copilot
-  nodejs
-
   # latex but mostly for ox-latex
   (with texlive;
     texlive.combine {
@@ -32,9 +28,6 @@ with pkgs;
       inherit capt-of environ float fvextra pdfcol siunitx tcolorbox wrapfig
         xcolor;
     })
-
-  # julia
-  julia-bin
 
   # python
   (python3.withPackages (ps:

@@ -10,10 +10,6 @@
     emacs-overlay.url = "github:nix-community/emacs-overlay";
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
-    packages-copilot = {
-      url = "github:zerolfx/copilot.el";
-      flake = false;
-    };
     packages-targets = {
       url = "github:noctuid/targets.el";
       flake = false;
@@ -34,13 +30,13 @@
   outputs = inputs@{ self, nixpkgs, emacs-overlay, ... }:
     let
       mkTrivialPkg = { pkgs, name, src ? inputs."packages-${name}"
-                     , buildInputs ? [ ], extraFiles ? [ ] }:
-                       ((pkgs.trivialBuild {
-                         inherit buildInputs;
-                         pname = name;
-                         ename = name;
-                         version = "0.0.0";
-                         src = src;
+        , buildInputs ? [ ], extraFiles ? [ ] }:
+        ((pkgs.trivialBuild {
+          inherit buildInputs;
+          pname = name;
+          ename = name;
+          version = "0.0.0";
+          src = src;
         }).overrideAttrs (old: {
           installPhase = old.installPhase + (builtins.concatStringsSep "\n"
             (map (s: ''cp -r "${s}" "$LISPDIR"'') extraFiles));
@@ -53,11 +49,11 @@
             overlays = [ emacs-overlay.overlay ];
           };
           emacs = let emacs = (import nixpkgs { inherit system; }).emacs29-pgtk;
-                  in pkgs.symlinkJoin rec {
-                    name = "emacs";
-                    paths = [ emacs ];
-                    nativeBuildInputs = [ pkgs.makeBinaryWrapper ];
-                    postBuild = ''
+          in pkgs.symlinkJoin rec {
+            name = "emacs";
+            paths = [ emacs ];
+            nativeBuildInputs = [ pkgs.makeBinaryWrapper ];
+            postBuild = ''
                       wrapProgram "$out/bin/emacs" \
                                   --set FONTCONFIG_FILE ${
                                     pkgs.makeFontsConf {
@@ -102,17 +98,17 @@
             config = ./config.org;
             defaultInitFile = pkgs.writeText "default.el"
               (let deps = nixpkgs.lib.makeBinPath dependencies;
-               in ''
+              in ''
                 	 (setq my/emacs-dir "${config}/")
                    (load-file "${config}/init.el")
                    (setenv "PATH" (concat (getenv "PATH") ":${deps}"))
               '' + nixpkgs.lib.concatStringsSep "\n" (map (s: ''
                 (add-to-list 'exec-path "${s}/bin")
                 ${let path = "${s}/share/emacs/site-lisp";
-                  in if builtins.pathExists path then
-                    ''(add-to-list 'load-path "${path}")''
-                     else
-                       ""}
+                in if builtins.pathExists path then
+                  ''(add-to-list 'load-path "${path}")''
+                else
+                  ""}
               '') dependencies) + ''
                 (provide 'default)
               '');
@@ -122,19 +118,12 @@
             extraEmacsPackages = epkgs:
               with epkgs;
               [
-                copilot
                 engrave-faces
                 ox-chameleon
                 # FIXME: currently broken in nixpkgs. either wait for fix or find workaround
                 # treesit-grammars.with-all-grammars
               ] ++ dependencies;
             override = self: super: {
-              copilot = (mkTrivialPkg {
-                pkgs = self;
-                name = "copilot";
-                buildInputs = with self; [ dash editorconfig s ];
-                extraFiles = [ "dist/" ];
-              });
               org-pretty-table = (mkTrivialPkg {
                 pkgs = self;
                 name = "org-pretty-table";
@@ -167,5 +156,5 @@
             pkgs.mkShell { buildInputs = [ packages.${system}.default ]; };
         };
     in nixpkgs.lib.foldl nixpkgs.lib.recursiveUpdate { }
-      (map f [ "x86_64-linux" "aarch64-darwin" ]);
+    (map f [ "x86_64-linux" "aarch64-darwin" ]);
 }
