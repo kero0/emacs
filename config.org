@@ -930,7 +930,7 @@ Do something in other window
               ("M-`"   . popper-cycle)
               ("C-M-`" . popper-toggle-type))
   :general (my/general-global-menu! "Popper" "`"
-             "`" '(my/popper-toggle-latest :wk "Toggle latest")
+            "`" '(popper-toggle :wk "Toggle latest")
              "c" '(popper-cycle :wk "Cycle")
              "T" '(popper-toggle-type :wk "Toggle type"))
   :init
