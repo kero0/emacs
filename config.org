@@ -2050,18 +2050,14 @@ Current pattern: %`evil-mc-pattern
 					  (pyvenv-restart-python)))
   :after python
   :hook (python-mode . pyvenv-mode)
-  :general (my/leader-def
-             :keymaps 'python-mode-map
-             :prefix "m"
-             "v" '(pyvenv-workon :which-key "workon")))
+  :general (my/local-leader-def-python-mode
+             "v" '(pyvenv-workon :wk "workon")))
 
 (use-package poetry
   :after python
   :hook (python-mode . poetry-tracking-mode)
-  :general (my/leader-def
-             :keymaps 'python-mode-map
-	     :prefix "m"
-	     "p" '(poetry :which-key "poetry")))
+  :general (my/local-leader-def-python-mode
+	     "p" '(poetry :wk "poetry")))
 
 #+end_src
 *** Imports
