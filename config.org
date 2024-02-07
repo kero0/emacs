@@ -1223,8 +1223,11 @@ Current pattern: %`evil-mc-pattern
   :unless noninteractive
   :after tree-sitter)
 (use-package treesit-auto
+  :custom
+  (treesit-auto-install 'prompt)
   :config
-  (setq treesit-auto-install 'prompt))
+  (treesit-auto-add-to-auto-mode-alist 'all)
+  (global-treesit-auto-mode))
 #+end_src
 **** Tree Sitter
 #+begin_src emacs-lisp
@@ -1969,9 +1972,9 @@ Current pattern: %`evil-mc-pattern
 #+begin_src emacs-lisp
 (use-package dape
   ;; To use window configuration like gud (gdb-mi)
-  :custom
-  (dape-buffer-window-arrangment 'gud)
-  (dape-buffer-window-arrangment 'right)
+  ;; :custom
+  ;; (dape-buffer-window-arrangment 'gud)
+  ;; (dape-buffer-window-arrangment 'right)
   :config
 
   (my/leader-def
@@ -1985,11 +1988,7 @@ Current pattern: %`evil-mc-pattern
   ;; Save buffers on startup, useful for interpreted languages
   (add-hook 'dape-on-start-hooks
             (defun dape--save-on-start ()
-              (save-some-buffers t t)))
-
-  ;; Projectile users
-  (after! projectile
-	  (setq dape-cwd-fn 'projectile-project-root)))
+              (save-some-buffers t t))))
 #+end_src
 * Languages
 ** Nix
@@ -2014,29 +2013,38 @@ Current pattern: %`evil-mc-pattern
 #+end_src
 ** Python
 #+begin_src emacs-lisp
+(use-package python
+  :ensure nil
+  :mode ("\\.py\\'" . python-mode)
+  :mode ("[./]flake8\\'" . conf-mode)
+  :mode ("/Pipfile\\'" . conf-mode)
+  :interpreter ("python" . python-mode)
+  :init
+  (setq python-check-command "pyflakes")
+  :config
   (after! treesit-auto
-	  (setq python-ts-mode-hook python-mode-hook)) 
+	  (add-to-list 'major-mode-remap-alist '(python-mode . python-ts-mode)))
 
-  (use-package python
-    :mode ("\\.py\\'" . python-mode)
-    :mode ("[./]flake8\\'" . conf-mode)
-    :mode ("/Pipfile\\'" . conf-mode)
-    ;; :interpreter ("python" . python-mode)
-    :init
-    (setq python-check-command "pyflakes")
-    :config
-    (my/local-leader-def python-mode
-	"r" '(run-python :which-key "repl/python")
-	"b" '(python-shell-send-buffer :which-key "send buffer to repl"))
-    (add-hook 'python-mode-hook 'eglot-ensure))
+  (add-hook 'python-ts-mode-hook (defun my/python-ts-base-hook () (run-hooks 'python-mode-hook))) 
 
-  (use-package ob-python
-    :ensure nil
-    :after org
-    :commands org-babel-execute:python
-    :init
-    (add-to-list 'org-babel-load-languages '(python . t))
-    (setq org-babel-python-command "python3"))
+  (my/local-leader-def python-mode
+      "r" '(run-python :which-key "repl/python")
+      "b" '(python-shell-send-buffer :which-key "send buffer to repl"))
+  (after! dape
+	  ;; for some reason "python" doesn't find the module "debugpy". It seems that dape
+	  ;; uses a strange way to lookup in path. This lets it find the installed debugger
+	  ;; when I'm using my global python env and can be reset in dir locals or direnv
+	  ;; otherwise
+	  (plist-put (alist-get 'debugpy dape-configs) 'command (executable-find "python3")))
+  (add-hook 'python-mode-hook 'eglot-ensure))
+
+(use-package ob-python
+  :ensure nil
+  :after org
+  :commands org-babel-execute:python
+  :init
+  (add-to-list 'org-babel-load-languages '(python . t))
+  (setq org-babel-python-command "python3"))
 #+end_src
 *** Virtual Environments
 #+begin_src emacs-lisp

@@ -49,23 +49,27 @@
             overlays = [ emacs-overlay.overlay ];
           };
           emacs = let emacs = (import nixpkgs { inherit system; }).emacs29-pgtk;
-          in pkgs.symlinkJoin rec {
-            name = "emacs";
-            paths = [ emacs ];
-            nativeBuildInputs = [ pkgs.makeBinaryWrapper ];
-            postBuild = ''
+                  in pkgs.symlinkJoin rec {
+                    name = "emacs";
+                    paths = [ emacs ];
+                    nativeBuildInputs = [ pkgs.makeBinaryWrapper ];
+                    postInstall = ''
                       wrapProgram "$out/bin/emacs" \
+                        --prefix PATH : ${
+                          nixpkgs.lib.makeBinPath dependencies
+                        } \
+                                  --prefix EMACSLOADPATH : ${
+                                    nixpkgs.lib.concatStringsSep ":"
+                                      (builtins.filter builtins.pathExists
+                                        (map (s: "${s}/share/emacs/site-lisp")
+                                          dependencies))
+                                  } \
                                   --set FONTCONFIG_FILE ${
                                     pkgs.makeFontsConf {
                                       fontDirectories = with pkgs; [
-                                        freefont_ttf
                                         julia-mono
                                         (nerdfonts.override {
-                                          fonts = [
-                                            "FiraCode"
-                                            "FiraMono"
-                                            "JetBrainsMono"
-                                          ];
+                                          fonts = [ "JetBrainsMono" ];
                                         })
                                       ];
                                     }
@@ -96,22 +100,11 @@
           };
           packages.${system}.default = (pkgs.emacsWithPackagesFromUsePackage {
             config = ./config.org;
-            defaultInitFile = pkgs.writeText "default.el"
-              (let deps = nixpkgs.lib.makeBinPath dependencies;
-              in ''
-                	 (setq my/emacs-dir "${config}/")
-                   (load-file "${config}/init.el")
-                   (setenv "PATH" (concat (getenv "PATH") ":${deps}"))
-              '' + nixpkgs.lib.concatStringsSep "\n" (map (s: ''
-                (add-to-list 'exec-path "${s}/bin")
-                ${let path = "${s}/share/emacs/site-lisp";
-                in if builtins.pathExists path then
-                  ''(add-to-list 'load-path "${path}")''
-                else
-                  ""}
-              '') dependencies) + ''
-                (provide 'default)
-              '');
+            defaultInitFile = pkgs.writeText "default.el" (''
+              	 (setq my/emacs-dir "${config}/")
+                 (load-file "${config}/init.el")
+                 (provide 'default)
+            '');
             package = emacs;
             alwaysEnsure = true;
             alwaysTangle = true;
@@ -121,7 +114,7 @@
                 engrave-faces
                 ox-chameleon
                 # FIXME: currently broken in nixpkgs. either wait for fix or find workaround
-                # treesit-grammars.with-all-grammars
+                treesit-grammars.with-all-grammars
               ] ++ dependencies;
             override = self: super: {
               org-pretty-table = (mkTrivialPkg {

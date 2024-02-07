@@ -34,10 +34,12 @@ with pkgs;
     with ps; [
       # default for python
       black
+      debugpy
       isort
       pipx
       pyflakes
       python-lsp-server
+
       # handy for org-mode src blocks
       ipython
       matplotlib
@@ -47,8 +49,4 @@ with pkgs;
   poetry
 ] ++ lib.optionals (!stdenv.isLinux) [ coreutils-prefixed gnused ]
 ++ (if stdenv.isDarwin then [ terminal-notifier ] else [ libnotify ])
-
-# mu4e
-# Both of these are configured outside this repo
-# Personally, I configure them using home-manager
 ++ lib.optionals is-personal [ lilypond mu msmtp ]
