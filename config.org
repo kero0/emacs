@@ -202,7 +202,7 @@
 (setq auth-sources (list (expand-file-name "authinfo.gpg" my/local-dir)))
 #+end_src
 ** Native Comp
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :early-init.el
 (setq comp-eln-cache-path (expand-file-name "eln-cache/" my/cache-dir)
       native-comp-async-report-warnings-errors 'silent
       native-comp-verbose 0)
@@ -558,19 +558,6 @@ Do something in other window
 			 (which-key--get-keymap-bindings evil-window-map t))
 	       ("q" nil "quit"))))
 
-  ;; (defun repeated-prefix-help-command ()
-  ;;   (interactive)
-  ;;   (when-let* ((keys (this-command-keys-vector))
-  ;; 		(prefix (seq-take keys (1- (length keys))))
-  ;; 		(orig-keymap (key-binding prefix 'accept-default))
-  ;; 		(keymap (copy-keymap orig-keymap))
-  ;; 		(exit-func (set-transient-map keymap t #'which-key-abort)))
-  ;;     (define-key keymap [remap keyboard-quit]
-  ;; 		  (lambda () (interactive) (funcall exit-func)))
-  ;;     (which-key--create-buffer-and-show nil keymap)))
-
-  ;; (setq prefix-help-command #'repeated-prefix-help-command)
-
   (defhydra my/zoom-hydra ()
     ("=" text-scale-increase "zoom in")
     ("k" text-scale-increase "zoom in")
@@ -589,7 +576,6 @@ Do something in other window
 	evil-want-keybinding nil
 	evil-want-C-u-scroll t
 	evil-want-C-i-jump t
-	evil-undo-system 'undo-tree
 	select-enable-clipboard nil)
   :config
   (evil-mode)
@@ -623,8 +609,14 @@ Do something in other window
 #+begin_src emacs-lisp
 (use-package evil-surround
   :after evil
-  :config
-  (global-evil-surround-mode 1))
+  :general
+  (:states 'operator
+	   "s" 'evil-surround-edit
+	   "S" 'evil-Surround-edit)
+  (:states 'visual
+	   "S" 'evil-surround-region
+	   "gS" 'evil-Surround-region)
+  :config (global-evil-surround-mode 1))
 #+end_src
 *** evil-commentary
 #+begin_src emacs-lisp
@@ -668,37 +660,35 @@ Do something in other window
 #+begin_src emacs-lisp
 (use-package evil-mc
   :after evil
-  :general (general-nmap "g>" 'my/mc-hydra/body)
-  :general (general-vmap "g>" 'my/mc-hydra/body)
-  :general (general-nmap
-             "M-d" 'evil-mc-make-and-goto-next-match
-             "M-S-d" 'evil-mc-make-and-goto-prev-match)
-  :general (general-vmap
-             "A" 'evil-mc-make-cursor-in-visual-selection-end
-             "I" 'evil-mc-make-cursor-in-visual-selection-beg)
-  :general (my/general-global-menu! "Multi-Cursor" "c m"
-             "a" '(evil-mc-make-all-cursors :which-key "Make all cursors")
-             "n" '(evil-mc-make-and-goto-next-match :which-key "Make and go to next match")
-             "N" '(evil-mc-make-and-goto-prev-match :which-key "Make and go to previous match")
-             "q" '(evil-mc-undo-all-cursors :which-key "Undo all cursors"))
+  :unless noninteractive
   :init
-  (use-package evil-multiedit
-    :defer t)
-  (use-package iedit
-    :defer t
-    :init
-    (setq iedit-toggle-key-default nil))
+  (use-package evil-multiedit)
+  (use-package evil-iedit-state)
   :config
+  (general-nmap "g>" 'my/mc-hydra/body)
+  (general-vmap "g>" 'my/mc-hydra/body)
+  (general-nmap
+    "gm"  '(:keymap evil-mc-cursors-map :which-key "Multi-cursor") 
+    "M-d" 'evil-mc-make-and-goto-next-match
+    "M-S-d" 'evil-mc-make-and-goto-prev-match)
+  (general-vmap
+    "A" 'evil-mc-make-cursor-in-visual-selection-end
+    "I" 'evil-mc-make-cursor-in-visual-selection-beg)
+  (my/general-global-menu! "Multi-Cursor" "c m"
+    "a" '(evil-mc-make-all-cursors :which-key "Make all cursors")
+    "n" '(evil-mc-make-and-goto-next-match :which-key "Make and go to next match")
+    "N" '(evil-mc-make-and-goto-prev-match :which-key "Make and go to previous match")
+    "q" '(evil-mc-undo-all-cursors :which-key "Undo all cursors"))
   (defhydra my/mc-hydra
     ;; (:color pink :hint nil :pre (evil-mc-pause-cursors))
     (:color pink :hint nil)
     "
 ^Match^            ^Line-wise^           ^Manual^
 ^^^^^^----------------------------------------------------
-_Z_: match all     _J_: make & go down   _z_: toggle here
+_Z_: match all     _J_: make & go down   
 _m_: make & next   _K_: make & go up     _r_: remove last
 _M_: make & prev   ^ ^                   _R_: remove all
-_n_: skip & next   ^ ^                   _p_: pause/resume
+_n_: skip & next   ^ ^                   
 _N_: skip & prev
 
 Current pattern: %`evil-mc-pattern
@@ -711,12 +701,11 @@ Current pattern: %`evil-mc-pattern
     ("M" #'evil-mc-skip-and-goto-prev-match)
     ("J" #'evil-mc-make-cursor-move-next-line)
     ("K" #'evil-mc-make-cursor-move-prev-line)
-    ("z" #'+multiple-cursors/evil-mc-toggle-cursor-here)
-    ("r" #'+multiple-cursors/evil-mc-undo-cursor)
     ("R" #'evil-mc-undo-all-cursors)
-    ("p" #'+multiple-cursors/evil-mc-toggle-cursors)
     ("q" #'evil-mc-resume-cursors "quit" :color blue)
     ("<escape>" #'evil-mc-resume-cursors "quit" :color blue))
+  (my/general-global-Hydras
+    "m" '(my/mc-hydra/body :which-key "Multi Cursor"))
   (global-evil-mc-mode 1))
 #+end_src
 *** Extra Text Objects
@@ -1293,6 +1282,28 @@ Current pattern: %`evil-mc-pattern
     "v" `(,(evil-textobj-tree-sitter-get-textobj "conditional.outer") :which-key "conditional")
     "l" `(,(evil-textobj-tree-sitter-get-textobj "loop.outer") :which-key "loop")))
 #+end_src
+* Eval region
+#+begin_src emacs-lisp
+(after! evil
+	(defun my/elisp-eval-region (beg end)
+	  (interactive "r")
+	  (eval-region beg end t))
+	(defvar my/evil-extra-operator-eval-modes-alist
+	  '((emacs-lisp-mode my/elisp-eval-region)))
+
+	(evil-define-operator my/evil-operator-eval (beg end)
+	  :move-point nil
+	  (interactive "<r>")
+	  (let* ((mode (if (org-in-src-block-p) (intern (car (org-babel-get-src-block-info))) major-mode))
+		 (ele (assoc mode my/evil-extra-operator-eval-modes-alist))
+		 (f-a (cdr-safe ele))
+		 (func (car-safe f-a))
+		 (args (cdr-safe f-a)))
+	    (if (fboundp func)
+		(apply func beg end args)
+	      (eval-region beg end t))))
+	(define-key evil-motion-state-map "gr" 'my/evil-operator-eval))
+#+end_src
 * Aggressive Indent Mode
 #+begin_src emacs-lisp
 (use-package aggressive-indent
@@ -1664,17 +1675,18 @@ Current pattern: %`evil-mc-pattern
                  nil
                  (window-parameters (mode-line-format . none))))
   (setq embark-prompter 'embark-completing-read-prompter)
+  (add-popup! embark-collect-mode)
   :general (my/general-global-menu! "Embark" "e"
 	     "o" '(embark-export :which-key "export")
 	     "e" '(embark-act :which-key "act")
 	     "b" '(embark-bindings :which-key "bindings")
 	     "c" '(embark-collect :which-key "collect"))
   :general (general-define-key
-	     :prefix "C-c e"
-	     "o" '(embark-export :which-key "export")
-	     "e" '(embark-act :which-key "act")
-	     "b" '(embark-bindings :which-key "bindings")
-	     "c" '(embark-collect :which-key "collect")))
+	    :prefix "C-c e"
+	    "o" '(embark-export :which-key "export")
+	    "e" '(embark-act :which-key "act")
+	    "b" '(embark-bindings :which-key "bindings")
+	    "c" '(embark-collect :which-key "collect")))
 (use-package embark-consult
   :if (and (featurep 'embark)
 	   (featurep 'consult))
@@ -1687,26 +1699,24 @@ Current pattern: %`evil-mc-pattern
 (use-package eat
   :unless noninteractive
   :hook (eshell-load . eat-eshell-mode)
-  :general (my/general-global-Open "t" '(eat :which-key "Terminal"))
   :config
   (add-popup!
    "^\\*eat.*\\*$"  'eat-mode)
   (eat-eshell-mode))
 #+end_src
 ** Vterm
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
 (use-package vterm
   :unless noninteractive
   :commands vterm
-  :init
+  :custom
+  (vterm-shell (or (getenv "SHELL") (executable-find "fish") (executable-find "bash")))
+  :general (my/general-global-Open "t" '(vterm :which-key "vterm"))
+  :config
   (defun my/vterm--auto-close-window (buf event)
     (when (y-or-n-p (concat event " - kill buffer: " (buffer-name buf) "?"))
       (kill-buffer-and-window)))
   (add-hook 'vterm-exit-functions #'my/vterm--auto-close-window)
-  (my/general-global-Open
-    "t" '(vterm :which-key "vterm"))
-  (setq vterm-shell (or (getenv "SHELL") (executable-find "fish") (executable-find "bash")))
-  :config
   (add-popup!
    "^\\*vterm.*\\*$"  'vterm-mode)
   (add-hook 'vterm-mode-hook #'my/disable-line-numbers))
@@ -1861,6 +1871,36 @@ Current pattern: %`evil-mc-pattern
 (use-package git-gutter+
   :unless noninteractive
   :config
+  (defhydra hydra-git-gutter (:body-pre (git-gutter-mode 1)
+					:hint nil)
+    "
+Git gutter:
+  _j_: next hunk        _s_tage hunk     _q_uit
+  _k_: previous hunk    _r_evert hunk    _Q_uit and deactivate git-gutter
+  ^ ^                   _p_opup hunk
+  _h_: first hunk
+  _l_: last hunk        _c_ommit staged hunks
+"
+    ("j" git-gutter+-next-hunk)
+    ("k" git-gutter+-previous-hunk)
+    ("h" (progn (goto-char (point-min))
+		(git-gutter+-next-hunk 1)))
+    ("l" (progn (goto-char (point-min))
+		(git-gutter+-previous-hunk 1)))
+    ("s" git-gutter+-stage-hunks)
+    ("r" git-gutter+-revert-hunk)
+    ("p" git-gutter+-popup-hunk)
+    ;; ("R" git-gutter+-set-start-revision)
+    ("c" git-gutter+-commit)
+    ("q" nil :color blue)
+    ("Q" (progn (git-gutter-mode -1)
+		;; git-gutter-fringe doesn't seem to
+		;; clear the markup right away
+		(sit-for 0.1)
+		(git-gutter+-clear))
+     :color blue))
+  (my/general-global-Hydras
+    "g" '(hydra-git-gutter/body :which-key "Git"))
   (global-git-gutter+-mode t)
   (my/general-global-Git
     "n" '(git-gutter+-next-hunk :which-key "next hunk")
@@ -1972,9 +2012,10 @@ Current pattern: %`evil-mc-pattern
 #+begin_src emacs-lisp
 (use-package dape
   ;; To use window configuration like gud (gdb-mi)
-  ;; :custom
-  ;; (dape-buffer-window-arrangment 'gud)
-  ;; (dape-buffer-window-arrangment 'right)
+  :custom
+  (dape-buffer-window-arrangment 'gud)
+  (dape-buffer-window-arrangment 'right)
+  (dape-adapter-dir (concat my/local-dir "dape-adapters/"))
   :config
 
   (my/leader-def
