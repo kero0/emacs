@@ -687,8 +687,7 @@ Do something in other window
     "N" '(evil-mc-make-and-goto-prev-match :which-key "Make and go to previous match")
     "q" '(evil-mc-undo-all-cursors :which-key "Undo all cursors"))
   (defhydra my/mc-hydra
-    ;; (:color pink :hint nil :pre (evil-mc-pause-cursors))
-    (:color pink :hint nil)
+    (:color pink :hint nil :pre (evil-mc-pause-cursors))
     "
 ^Match^            ^Line-wise^           ^Manual^
 ^^^^^^----------------------------------------------------
