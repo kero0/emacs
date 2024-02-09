@@ -596,6 +596,7 @@ Do something in other window
 
 (use-package evil-collection
   :after evil
+  :unless noninteractive
   :custom
   (evil-collection-setup-minibuffer t)
   :config
@@ -609,6 +610,7 @@ Do something in other window
 #+begin_src emacs-lisp
 (use-package evil-surround
   :after evil
+  :unless noninteractive
   :general
   (:states 'operator
 	   "s" 'evil-surround-edit
@@ -622,6 +624,7 @@ Do something in other window
 #+begin_src emacs-lisp
 (use-package evil-commentary
   :after evil
+  :unless noninteractive
   :config
   (evil-commentary-mode))
 #+end_src
@@ -629,6 +632,7 @@ Do something in other window
 #+begin_src emacs-lisp
 (use-package evil-nerd-commenter
   :after evil
+  :unless noninteractive
   :config
   (evilnc-default-hotkeys))
 #+end_src
@@ -636,6 +640,7 @@ Do something in other window
 #+begin_src emacs-lisp
 (use-package evil-goggles
   :after evil
+  :unless noninteractive
   :init
   (setq evil-goggles-duration 0.05)
   :config
@@ -652,6 +657,7 @@ Do something in other window
 #+begin_src emacs-lisp
 (use-package evil-snipe
   :after evil
+  :unless noninteractive
   :config
   (evil-snipe-mode +1)
   (evil-snipe-override-mode +1))
@@ -954,6 +960,7 @@ Current pattern: %`evil-mc-pattern
 ** Indent guides
 #+begin_src emacs-lisp
 (use-package highlight-indent-guides
+  :unless noninteractive
   :hook (prog-mode . highlight-indent-guides-mode)
   :hook (conf-mode . highlight-indent-guides-mode)
   :custom
@@ -1221,7 +1228,8 @@ Current pattern: %`evil-mc-pattern
 **** Tree Sitter
 #+begin_src emacs-lisp
 (use-package evil-textobj-tree-sitter
-  ;; :requires (evil tree-sitter)
+  :after (evil tree-sitter)
+  :unless noninteractive
   :config
   (defun meain/fancy-narrow-to-thing (thing)
     (interactive)
@@ -2713,6 +2721,7 @@ Git gutter:
 #+begin_src emacs-lisp
 (use-package ox-latex
   :ensure nil
+  :after org
   :config
   (setq org-latex-compiler "xelatex")
   (add-to-list 'org-latex-logfiles-extensions "tex")
@@ -2751,14 +2760,15 @@ Git gutter:
   :ensure nil
   :after org
   :config
+  (add-to-list 'org-latex-packages-alist '("" "scrextend" nil))
+  (add-to-list 'org-latex-packages-alist '("" "xcolor" nil))
   (after! org-msg
 	  (setq org-msg-options (concat org-msg-options " html-content-class: chameleon "))))
 #+end_src
 *** Async patch
 #+begin_src emacs-lisp
-;; I don't use ~/.emacs which is the default value if default.el was loaded.
-(when (and (not noninteractive) (string= user-init-file "~/.emacs")) 
-  (after! (org ox default)
+(when (not noninteractive) 
+  (after! ox
 	  (setq org-export-async-init-file (make-temp-file "org-export-async-init-file" nil ".el"))
 	  (defun my/get-loaded-nix-file (name)
 	    (car (load-history-filename-element
@@ -2770,10 +2780,16 @@ Git gutter:
 	  (with-temp-file org-export-async-init-file
 	    (mapc (lambda (s)
 		    (insert (format "(load \"%s\")\n" s)))
-		  (list
-		   (my/get-loaded-nix-file "site-start")
-		   (my/get-loaded-nix-file "subdirs")
-		   (my/get-loaded-nix-file "default"))))))
+		  (-select #'identity
+			   (list
+			    (my/get-loaded-nix-file "site-start")
+			    (my/get-loaded-nix-file "subdirs")
+			    (my/get-loaded-nix-file "default")
+			    (my/get-loaded-nix-file "init"))))
+	    (insert (format "(setq engrave-faces-preset-styles '%S)\n" engrave-faces-preset-styles))
+	    (insert (format "(setq engrave-faces-themes '%S)\n" engrave-faces-themes))
+	    (insert (format "(setq load-path '%S)\n" load-path))
+	    (insert (format "(setq exec-path '%S)\n" exec-path)))))
 #+end_src
 *** Syntax Highlighting
 #+name: engrave-faces-init
@@ -2823,13 +2839,13 @@ DOCSTRING and BODY are as in `defun'.
 ;; both installed by engrave-faces
 (use-package engrave-faces-latex
   :ensure engrave-faces
-  ;; :after org
+  :after org
   :config
   <<engrave-faces-init>>
   (setq org-latex-listings 'engraved))
 (use-package engrave-faces-html
   :ensure engrave-faces
-  ;; :after org
+  :after org
   :config
   <<engrave-faces-init>>
   (setq org-latex-listings 'engraved))

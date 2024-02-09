@@ -49,32 +49,30 @@
             overlays = [ emacs-overlay.overlay ];
           };
           emacs = let emacs = (import nixpkgs { inherit system; }).emacs29-pgtk;
-                  in pkgs.symlinkJoin rec {
-                    name = "emacs";
-                    paths = [ emacs ];
-                    nativeBuildInputs = [ pkgs.makeBinaryWrapper ];
-                    postInstall = ''
-                      wrapProgram "$out/bin/emacs" \
-                        --prefix PATH : ${
-                          nixpkgs.lib.makeBinPath dependencies
-                        } \
-                                  --prefix EMACSLOADPATH : ${
-                                    nixpkgs.lib.concatStringsSep ":"
-                                      (builtins.filter builtins.pathExists
-                                        (map (s: "${s}/share/emacs/site-lisp")
-                                          dependencies))
-                                  } \
-                                  --set FONTCONFIG_FILE ${
-                                    pkgs.makeFontsConf {
-                                      fontDirectories = with pkgs; [
-                                        julia-mono
-                                        (nerdfonts.override {
-                                          fonts = [ "JetBrainsMono" ];
-                                        })
-                                      ];
-                                    }
-                                  }
-              		 '';
+          in pkgs.symlinkJoin rec {
+            name = "emacs";
+            paths = [ emacs ];
+            nativeBuildInputs = [ pkgs.makeWrapper ];
+            postBuild = ''
+              wrapProgram "$out/bin/emacs" \
+                --prefix PATH : ${nixpkgs.lib.makeBinPath dependencies} \
+                          --prefix EMACSLOADPATH : ${
+                            nixpkgs.lib.concatStringsSep ":"
+                            (builtins.filter builtins.pathExists
+                              (map (s: "${s}/share/emacs/site-lisp")
+                                dependencies))
+                          }:${emacs}/share/emacs/${version}/lisp \
+                          --set FONTCONFIG_FILE ${
+                            pkgs.makeFontsConf {
+                              fontDirectories = with pkgs; [
+                                julia-mono
+                                (nerdfonts.override {
+                                  fonts = [ "JetBrainsMono" ];
+                                })
+                              ];
+                            }
+                          }
+            '';
             inherit (emacs) meta src version;
           };
           config = pkgs.runCommand "config" { } ''
