@@ -549,6 +549,7 @@ Do something in other window
 (use-package hydra
   :demand
   :unless noninteractive
+  :after (general evil)
   :config
   (after! which-key
 	  (defmacro my/hydra-prefix-bind (map)
@@ -692,7 +693,7 @@ Do something in other window
 ^Match^            ^Line-wise^           ^Manual^
 ^^^^^^----------------------------------------------------
 _Z_: match all     _J_: make & go down   
-_m_: make & next   _K_: make & go up     _r_: remove last
+_m_: make & next   _K_: make & go up     
 _M_: make & prev   ^ ^                   _R_: remove all
 _n_: skip & next   ^ ^                   
 _N_: skip & prev
