@@ -128,9 +128,9 @@
 		 "/var/folders/.*"
 		 "/private/tmp/.*"
 		 "/private/var/.*"
-		 ,my/etc-dir
-		 ,my/local-dir
-		 ,my/cache-dir))
+		 ,(concat my/etc-dir ".*")
+		 ,(concat my/local-dir ".*")
+		 ,(concat my/cache-dir ".*")))
     (add-to-list 'recentf-exclude dir))
   (when-let ((dir (getenv "XDG_DATA_HOME")))
     (add-to-list 'recentf-exclude (concat dir "/.*")))
