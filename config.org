@@ -2300,6 +2300,21 @@ Git gutter:
 (use-package docker
   :general (my/general-global-Open "D" 'docker))
 #+end_src
+** Latex
+Mostly only used for double checking after org export.
+#+begin_src emacs-lisp
+(use-package auctex
+  :config
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((latex . t))))
+
+(use-package reftex
+  :after auctex
+  :ensure nil
+  :config
+  (add-hook 'LaTeX-mode-hook 'turn-on-reftex))
+#+end_src
 * Mail
 ** mu4e
 #+begin_src emacs-lisp :lexical t
