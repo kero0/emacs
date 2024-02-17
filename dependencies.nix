@@ -19,6 +19,7 @@ with pkgs;
   languagetool
 
   # spell
+  enchant
   (aspellWithDicts (dicts: with dicts; [ en en-computers en-science ]))
 
   # latex but mostly for ox-latex

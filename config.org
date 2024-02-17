@@ -1781,51 +1781,21 @@ Current pattern: %`evil-mc-pattern
   (flycheck-check-syntax-automatically '(save mode-enabled))
   (flycheck-indication-mode 'right-fringe))
 #+end_src
-** Spell Checking (aspell)
+** Jinx
 #+begin_src emacs-lisp
-(use-package flycheck-aspell
-  :unless noninteractive
-  :hook ((text-mode . flyspell-mode)
-         (prog-mode . flyspell-prog-mode))
-  :general (my/general-global-menu! "Spell" "e s"
-                                   "s" '(flyspell-buffer :which-key "Spell buffer")
-                                   "n" '(flyspell-goto-next-error :which-key "Next error")
-                                   "p" '(flyspell-goto-previous-error :which-key "Previous error"))
+(use-package jinx
+  :hook (emacs-startup . global-jinx-mode)
   :config
-  ;; If you want to check TeX/LaTeX/ConTeXt buffers
-  (add-to-list 'flycheck-checkers 'tex-aspell-dynamic)
-  ;; If you want to check Markdown/GFM buffers
-  (add-to-list 'flycheck-checkers 'markdown-aspell-dynamic)
-  ;; If you want to check HTML buffers
-  (add-to-list 'flycheck-checkers 'html-aspell-dynamic)
-  ;; If you want to check XML/SGML buffers
-  (add-to-list 'flycheck-checkers 'xml-aspell-dynamic)
-  ;; If you want to check Nroff/Troff/Groff buffers
-  (add-to-list 'flycheck-checkers 'nroff-aspell-dynamic)
-  ;; If you want to check Texinfo buffers
-  (add-to-list 'flycheck-checkers 'texinfo-aspell-dynamic)
-  ;; If you want to check comments and strings for C-like languages
-  (add-to-list 'flycheck-checkers 'c-aspell-dynamic)
-  ;; If you want to check message buffers
-  (add-to-list 'flycheck-checkers 'mail-aspell-dynamic)
-  ;; Because Aspell does not support Org syntax, the user has
-  ;; to define a checker with the desired flags themselves.
-  (flycheck-aspell-define-checker "org"
-                                  "Org" ("--add-filter" "url")
-                                  (org-mode))
-  (add-to-list 'flycheck-checkers 'org-aspell-dynamic)
-
-
-  (advice-add #'ispell-pdict-save :after #'flycheck-maybe-recheck)
-  (defun flycheck-maybe-recheck (_)
-    (when (bound-and-true-p flycheck-mode)
-      (flycheck-buffer)))
-
-  (evil-define-key 'normal flyspell-mode-map (kbd "z =") 'flyspell-correct-word-before-point)
-  (evil-define-key 'normal flyspell-mode-map (kbd "z g") 'flyspell-auto-correct-word)
-  :custom
-  (ispell-program-name "aspell")
-  (ispell-extra-args '("--sug-mode=ultra")))
+  (general-nmap
+    "]s" '("Spelling error" . jinx-next)
+    "[s" '("Spelling error" . jinx-previous)
+    "z=" 'jinx-correct)
+  (after! vertico
+	  (require 'vertico-grid)
+	  (require 'vertico-multiform)
+	  (add-to-list 'vertico-multiform-categories
+		       '(jinx grid (vertico-grid-annotate . 20)))
+	  (vertico-multiform-mode 1)))
 #+end_src
 * Env
 ** Inherit ENV

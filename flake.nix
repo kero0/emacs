@@ -71,7 +71,11 @@
                                 })
                               ];
                             }
-                          }
+                          } \
+                          --set ASPELL_CONF "dict-dir ${
+                            builtins.head (builtins.filter builtins.pathExists
+                              (map (s: "${s}/lib/aspell") dependencies))
+                          }"
             '';
             inherit (emacs) meta src version;
           };
