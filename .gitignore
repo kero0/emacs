@@ -1,5 +1,12 @@
 .DS_STORE
 result
 
+eln-cache
+elpa
+etc
+tree-sitter
+var
+.local
+
 **.el
 !lisp/*.el
