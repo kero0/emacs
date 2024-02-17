@@ -1209,16 +1209,8 @@ Current pattern: %`evil-mc-pattern
 #+end_src
 * Tree Sitter
 #+begin_src emacs-lisp
-(use-package tree-sitter
-  :ensure nil
-  :config
-  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
-  (global-tree-sitter-mode))
-(use-package tree-sitter-langs
-  :requires tree-sitter
-  :unless noninteractive
-  :after tree-sitter)
 (use-package treesit-auto
+  :unless noninteractive
   :custom
   (treesit-auto-install 'prompt)
   :config
@@ -1784,6 +1776,7 @@ Current pattern: %`evil-mc-pattern
 ** Jinx
 #+begin_src emacs-lisp
 (use-package jinx
+  :unless noninteractive
   :hook (emacs-startup . global-jinx-mode)
   :config
   (general-nmap
