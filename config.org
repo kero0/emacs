@@ -1891,8 +1891,7 @@ Git gutter:
 (use-package forge
   :unless noninteractive
   :after magit
-  :commands (forge-insert-topics
-	     forge-insert-assigned-pullreqs
+  :commands (forge-insert-assigned-pullreqs
 	     forge-insert-authored-pullreqs
 	     forge-insert-requested-reviews
 	     forge-insert-assigned-issues
@@ -1901,7 +1900,6 @@ Git gutter:
 	     forge-insert-discussions)
   :init
   (append! magit-status-sections-hook
-    #'forge-insert-topics
     #'forge-insert-assigned-pullreqs
     #'forge-insert-authored-pullreqs
     #'forge-insert-requested-reviews
