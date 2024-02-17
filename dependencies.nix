@@ -25,7 +25,7 @@ with pkgs;
   # latex but mostly for ox-latex
   (with texlive;
     texlive.combine {
-      inherit scheme-small biblatex latexmk;
+      inherit scheme-small biblatex dvisvgm latexmk;
       inherit capt-of environ float fvextra pdfcol siunitx standalone tcolorbox
         wrapfig xcolor;
     })

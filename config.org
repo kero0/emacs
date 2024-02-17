@@ -363,8 +363,8 @@ Do something in other window
    :keymaps 'override
    :states '(insert normal hybrid motion visual operator emacs)
    :prefix-map 'my/prefix-map
-   :prefix "SPC"
-   :global-prefix "M-SPC")
+   :prefix my/leader-def-prefix
+   :global-prefix my/leader-def-prefix-alt)
 
   (general-create-definer my/leader-def
     :wk-full-keys nil
@@ -372,8 +372,8 @@ Do something in other window
   (general-create-definer global-leader
     :keymaps 'override
     :states '(insert normal hybrid motion visual operator)
-    :prefix "SPC m"
-    :non-normal-prefix "M-SPC m"
+    :prefix (concat my/leader-def-prefix " " my/local-leader-def-prefix)
+    :non-normal-prefix (concat my/leader-def-prefix-alt " " my/local-leader-def-prefix)
     "" '(:ignore t :which-key "<localleader>"))
   (my/leader-def
     "SPC" '(project-find-file :which-key "Find file")
@@ -2282,8 +2282,11 @@ Mostly only used for double checking after org export.
 (use-package reftex
   :after auctex
   :ensure nil
-  :config
-  (add-hook 'LaTeX-mode-hook 'turn-on-reftex))
+  :hook (LaTeX-mode , turn-on-reftex))
+
+(use-package cdlatex
+  :hook (org-mode . org-cdlatex-mode)
+  :hook (LaTeX-mod . turn-on-cdlatex))
 #+end_src
 * Mail
 ** mu4e
@@ -2410,18 +2413,34 @@ Mostly only used for double checking after org export.
     "Makes a sting representing a directory relative to my org base directory"
     (setq my-org-base-dir "~/org")
     (concat (file-name-as-directory my-org-base-dir) dir))
-  :config
-  (use-package org-modern
-    :hook (org-mode . org-modern-mode))
   (setq org-src-preserve-indentation nil
         org-edit-src-content-indentation 0
         org-directory (my/relative-org "general/")
         org-insert-heading-respect-content t
         org-export-in-background t
         org-export-with-sub-superscripts '{}
+	org-pretty-entities t
+	org-pretty-entities-include-sub-superscripts t
         org-list-allow-alphabetical t
         org-catch-invisible-edits 'smart
         org-special-ctrl-a/e t))
+#+end_src
+** Smartparens
+#+begin_src emacs-lisp
+(after! (org smartparens)
+	(add-hook 'org-mode-hook #'smartparens-mode)
+	(sp-local-pair 'org-mode "\\[" "\\]")
+	(sp-local-pair 'org-mode "\\(" "\\)")
+	(sp-local-pair 'org-mode "$" "$")
+	(sp-local-pair 'org-mode "~" "~")
+	(sp-local-pair 'org-mode "=" "=")
+	(sp-local-pair 'org-mode "*" "*" :unless '(sp-point-at-bol-p))
+	(sp-local-pair 'org-mode "_" "_"))
+#+end_src
+** Org Modern
+#+begin_src emacs-lisp
+(use-package org-modern
+  :hook (org-mode . org-modern-mode))
 #+end_src
 ** Keybindings
 #+begin_src emacs-lisp
@@ -2567,6 +2586,16 @@ Mostly only used for double checking after org export.
   (setopt org-babel-lilypond-commands org-babel-lilypond-commands)
   (add-to-list 'org-babel-load-languages '(lilypond . t))
   (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages))
+#+end_src
+** Org Previews
+#+begin_src emacs-lisp
+(after! org
+	;; Latex fragments
+	(add-hook 'org-mode-hook #'org-latex-preview)
+
+	;; Images
+	(add-hook 'org-mode-hook #'org-display-inline-images)
+	(add-hook 'org-babel-after-execute-hook #'org-redisplay-inline-images))
 #+end_src
 ** Notes
 #+begin_src emacs-lisp
