@@ -1063,17 +1063,7 @@ Current pattern: %`evil-mc-pattern
   :init
   ;; Persist global marks
   (after! savehist
-	  (add-to-list 'savehist-additional-variables 'evil-markers-alist)
-	  (add-hook 'savehist-save-hook (lambda ()
-					  (kill-local-variable 'evil-markers-alist)
-					  (dolist (entry evil-markers-alist)
-					    (when (markerp (cdr entry))
-					      (setcdr entry (cons (file-truename (buffer-file-name (marker-buffer (cdr entry))))
-								  (marker-position (cdr entry))))))))
-	  (add-hook 'savehist-mode-hook (lambda ()
-					  (setq-default evil-markers-alist evil-markers-alist)
-					  (kill-local-variable 'evil-markers-alist)
-					  (make-local-variable 'evil-markers-alist))))
+	  (add-to-list 'savehist-additional-variables 'evil-markers-alist))
   ;; Persist local marks
   (append! desktop-locals-to-save evil-markers-alist)
   ;; Show Marks in buffer
@@ -1889,8 +1879,7 @@ Git gutter:
 	     forge-insert-requested-reviews
 	     forge-insert-assigned-issues
 	     forge-insert-pullreqs
-	     forge-insert-issues
-	     forge-insert-discussions)
+	     forge-insert-issues)
   :init
   (append! magit-status-sections-hook
     #'forge-insert-assigned-pullreqs
@@ -1898,8 +1887,7 @@ Git gutter:
     #'forge-insert-requested-reviews
     #'forge-insert-assigned-issues
     #'forge-insert-pullreqs
-    #'forge-insert-issues
-    #'forge-insert-discussions))
+    #'forge-insert-issues))
 #+end_src
 * Eglot
 #+begin_src emacs-lisp
@@ -1931,6 +1919,12 @@ Git gutter:
 (use-package eglot-tempel
   :unless noninteractive
   :after (eglot tempel))
+#+end_src
+** Booster
+#+begin_src emacs-lisp
+(use-package eglot-booster
+  :after eglot
+  :config (eglot-booster-mode))
 #+end_src
 ** Flycheck Eglot
 #+begin_src emacs-lisp

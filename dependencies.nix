@@ -10,10 +10,14 @@ with pkgs;
   gnutls
   imagemagick
   pinentry-emacs
+  nodePackages.prettier
   (ripgrep.override { withPCRE2 = true; })
   wget
   zstd.bin
   zstd
+
+  # lsp
+  emacs-lsp-booster
 
   # grammar
   languagetool

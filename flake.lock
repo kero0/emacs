@@ -86,6 +86,22 @@
         "type": "github"
       }
     },
+    "packages-eglot-booster": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1708108972,
+        "narHash": "sha256-ybNqMHCGjzT2+4OfywS7hNw551kIzwI3QqC8tU/GsQI=",
+        "owner": "jdtsmith",
+        "repo": "eglot-booster",
+        "rev": "e79dea640356eb4a8ed9df3808fe73c7c6db4cc4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "jdtsmith",
+        "repo": "eglot-booster",
+        "type": "github"
+      }
+    },
     "packages-org-pretty-table": {
       "flake": false,
       "locked": {
@@ -154,6 +170,7 @@
       "inputs": {
         "emacs-overlay": "emacs-overlay",
         "nixpkgs": "nixpkgs_2",
+        "packages-eglot-booster": "packages-eglot-booster",
         "packages-org-pretty-table": "packages-org-pretty-table",
         "packages-org-src-context": "packages-org-src-context",
         "packages-ox-chameleon": "packages-ox-chameleon",

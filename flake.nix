@@ -10,6 +10,10 @@
     emacs-overlay.url = "github:nix-community/emacs-overlay";
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
+    packages-eglot-booster = {
+      url = "github:jdtsmith/eglot-booster";
+      flake = false;
+    };
     packages-targets = {
       url = "github:noctuid/targets.el";
       flake = false;
@@ -53,29 +57,30 @@
             name = "emacs";
             paths = [ emacs ];
             nativeBuildInputs = [ pkgs.makeWrapper ];
-            postBuild = ''
+            postBuild = let
+              mkSearchPath = subDir: paths:
+                nixpkgs.lib.concatStringsSep ":" (filter pathExists
+                  (map (path: "${path}/${subDir}")
+                    (filter (x: x != null) paths)));
+              inherit (builtins) filter head pathExists;
+            in ''
               wrapProgram "$out/bin/emacs" \
-                --prefix PATH : ${nixpkgs.lib.makeBinPath dependencies} \
-                          --prefix EMACSLOADPATH : ${
-                            nixpkgs.lib.concatStringsSep ":"
-                            (builtins.filter builtins.pathExists
-                              (map (s: "${s}/share/emacs/site-lisp")
-                                dependencies))
-                          }:${emacs}/share/emacs/${version}/lisp \
-                          --set FONTCONFIG_FILE ${
-                            pkgs.makeFontsConf {
-                              fontDirectories = with pkgs; [
-                                julia-mono
-                                (nerdfonts.override {
-                                  fonts = [ "JetBrainsMono" ];
-                                })
-                              ];
-                            }
-                          } \
-                          --set ASPELL_CONF "dict-dir ${
-                            builtins.head (builtins.filter builtins.pathExists
-                              (map (s: "${s}/lib/aspell") dependencies))
-                          }"
+                --prefix PATH : '${mkSearchPath "bin" dependencies}' \
+                --prefix EMACSLOADPATH : '${
+                  mkSearchPath "share/emacs/site-lisp" dependencies
+                }:${emacs}/share/emacs/${version}/lisp' \
+                --set FONTCONFIG_FILE ${
+                  pkgs.makeFontsConf {
+                    fontDirectories = with pkgs; [
+                      julia-mono
+                      (nerdfonts.override { fonts = [ "JetBrainsMono" ]; })
+                    ];
+                  }
+                } \
+                --set ASPELL_CONF 'dict-dir ${
+                  head
+                  (filter pathExists (map (s: "${s}/lib/aspell") dependencies))
+                }'
             '';
             inherit (emacs) meta src version;
           };
@@ -119,6 +124,11 @@
                 treesit-grammars.with-all-grammars
               ] ++ dependencies;
             override = self: super: {
+              eglot-booster = (mkTrivialPkg {
+                pkgs = self;
+                name = "eglot-booster";
+                buildInputs = with self; [ ];
+              });
               org-pretty-table = (mkTrivialPkg {
                 pkgs = self;
                 name = "org-pretty-table";
