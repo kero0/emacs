@@ -1385,6 +1385,8 @@ Current pattern: %`evil-mc-pattern
   ([remap describe-symbol] . helpful-symbol)
   ([remap describe-command] . helpful-command)
   :config
+  (general-nmap
+    "K" #'helpful-at-point)
   (after! undo-tree
 	  (append! undo-tree-incompatible-major-modes #'helpful-mode)))
 #+end_src
