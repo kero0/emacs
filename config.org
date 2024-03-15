@@ -128,13 +128,15 @@
 		 "/var/folders/.*"
 		 "/private/tmp/.*"
 		 "/private/var/.*"
+		 "~/\\.cache.*"
 		 ,(concat my/etc-dir ".*")
 		 ,(concat my/local-dir ".*")
 		 ,(concat my/cache-dir ".*")))
     (add-to-list 'recentf-exclude dir))
   (when-let ((dir (getenv "XDG_DATA_HOME")))
     (add-to-list 'recentf-exclude (concat dir "/.*")))
-  (setq recentf-max-menu-items 25
+  (setq recentf-max-menu-items 100
+	recentf-max-saved-items 100
 	recentf-save-file (expand-file-name "recentf" my/local-dir))
   (recentf-mode 1))
 #+end_src
@@ -541,24 +543,11 @@ Do something in other window
 
 ** Hydra
 #+begin_src emacs-lisp
-(use-package repeat-help
-  :custom
-  (repeat-help-auto t)
-  :hook (repeat-mode . repeat-help-mode)
-  :init (add-hook 'after-init-hook (lambda () (repeat-mode 1))))
 (use-package hydra
   :demand
   :unless noninteractive
   :after (general evil)
   :config
-  (after! which-key
-	  (defmacro my/hydra-prefix-bind (map)
-	    `(defhydra hydra-evil-window-map (:columns 2)
-	       ,@(mapcar (lambda (x)
-			   (list (car x) (intern (cdr x)) (cdr x)))
-			 (which-key--get-keymap-bindings evil-window-map t))
-	       ("q" nil "quit"))))
-
   (defhydra my/zoom-hydra ()
     ("=" text-scale-increase "zoom in")
     ("k" text-scale-increase "zoom in")
