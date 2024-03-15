@@ -1956,30 +1956,45 @@ Git gutter:
 ** Sideline
 #+begin_src emacs-lisp
 (use-package sideline
-  :hook ((flycheck-mode . sideline-mode)   ; for `sideline-flycheck`
-         (flymake-mode  . sideline-mode))  ; for `sideline-flymake`
+  :unless noninteractive
+  :commands sideline-mode
   :init
-  (setq sideline-backends-left-skip-current-line t   ; don't display on current line (left)
-        sideline-backends-right-skip-current-line t  ; don't display on current line (right)
-        sideline-order-left 'down                    ; or 'up
-        sideline-order-right 'up                     ; or 'down
-        sideline-format-left "%s   "                 ; format for left aligment
-        sideline-format-right "   %s"                ; format for right aligment
-        sideline-priority 100                        ; overlays' priority
-        sideline-display-backend-name t)             ; display the backend name
+  (setq
+   sideline-backends-right (list)
+   sideline-backends-left-skip-current-line t   ; don't display on current line (left)
+   sideline-backends-right-skip-current-line t  ; don't display on current line (right)
+   sideline-order-left 'down                    ; or 'up
+   sideline-order-right 'up                     ; or 'down
+   sideline-format-left "%s   "                 ; format for left aligment
+   sideline-format-right "   %s"                ; format for right aligment
+   sideline-priority 100                        ; overlays' priority
+   sideline-display-backend-name t)             ; display the backend name
   )
 (use-package sideline-flycheck
-  :requires (sideline flycheck)
+  :unless noninteractive
   :hook (flycheck-mode . sideline-flycheck-setup)
+  :hook (flycheck-mode . sideline-mode)
   :commands sideline-flycheck
-  :init
-  (setq sideline-backends-left '(sideline-flycheck)))
+  :custom (sideline-flycheck-max-lines 5)
+  :init (append! sideline-backends-right #'sideline-flycheck))
+
+
+(use-package sideline-flymake
+  :unless noninteractive
+  :hook (flymake-mode . sideline-mode)
+  :commands sideline-flymake
+  :custom (sideline-flymake-max-lines 5)
+  :init (append! sideline-backends-right #'sideline-flymake))
+  
 #+end_src
 ** eldoc
 #+begin_src emacs-lisp
 (use-package eldoc
   :ensure nil
+  :unless noninteractive
   :diminish
+  :config
+  (add-popup! "\\*eldoc\\*")
   :custom
   (eldoc-echo-area-use-multiline-p nil)
   (eldoc-echo-area-prefer-doc-buffer t))
@@ -1987,8 +2002,8 @@ Git gutter:
 *** eldoc-box
 #+begin_src emacs-lisp
 (use-package eldoc-box
-  :hook (emacs-lisp-mode . eldoc-box-hover-mode)
-  :hook (eglot--managed-mode . eldoc-box-hover-mode))
+  :hook (emacs-lisp-mode . eldoc-box-hover-at-point-mode)
+  :hook (eglot--managed-mode . eldoc-box-hover-at-point-mode))
 #+end_src
 
 ** dape
@@ -2046,6 +2061,9 @@ Git gutter:
   :init
   (setq python-check-command "pyflakes")
   :config
+  (after! apheleia
+	  (add-hook 'python-mode-hook (lambda ()
+					(setq-local apheleia-formatter '(ruff ruff-isort)))))
   (after! treesit-auto
 	  (add-to-list 'major-mode-remap-alist '(python-mode . python-ts-mode)))
 
@@ -2061,6 +2079,11 @@ Git gutter:
 	  ;; otherwise
 	  (plist-put (alist-get 'debugpy dape-configs) 'command (executable-find "python3")))
   (add-hook 'python-mode-hook 'eglot-ensure))
+
+(use-package flymake-ruff
+  :ensure t
+  :unless noninteractive
+  :hook (eglot-managed-mode . flymake-ruff-load))
 
 (use-package ob-python
   :ensure nil
@@ -2091,20 +2114,6 @@ Git gutter:
   :general (my/local-leader-def-python-mode
 	     "p" '(poetry :wk "poetry")))
 
-#+end_src
-*** Imports
-#+begin_src emacs-lisp
-(use-package pyimport
-  :after python
-  :general (my/local-leader-def-python-mode
-	     "i" '(nil :which-key "import")
-	     "i i" '(pyimport-insert-missing :which-key "insert missing imports")
-	     "i r" '(pyimport-remove-unused :which-key "remove unused imports")))
-
-(use-package py-isort
-  :hook (before-save . py-isort-before-save)
-  :general (my/local-leader-def-python-mode
-	     "i s" '(py-isort-buffer :which-key "sort imports")))
 #+end_src
 *** Numpy Docstring
 #+begin_src emacs-lisp
