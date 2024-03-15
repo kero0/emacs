@@ -35,16 +35,16 @@ with pkgs;
     })
   ghostscript
 
+  # nix
+  nil
+  nixpkgs-fmt
+
   # python
   (python3.withPackages (ps:
     with ps; [
       # default for python
-      black
       debugpy
-      isort
       pipx
-      pyflakes
-      python-lsp-server
 
       # handy for org-mode src blocks
       ipython
@@ -53,6 +53,10 @@ with pkgs;
       pandas
     ]))
   poetry
+
+  pyright
+  ruff
+
 ] ++ lib.optionals (!stdenv.isLinux) [ coreutils-prefixed gnused ]
 ++ (if stdenv.isDarwin then [ terminal-notifier ] else [ libnotify ])
 ++ lib.optionals is-personal [ lilypond mu msmtp ]
