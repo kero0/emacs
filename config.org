@@ -1398,12 +1398,40 @@ Current pattern: %`evil-mc-pattern
   :general (:keymaps 'help-map
 		     "d" '(devdocs-lookup :which-key "Devdocs")))
 #+end_src
-* Vundo
+* Undo
+** Undo Fu
+#+begin_src emacs-lisp
+(unless noninteractive
+  (use-package undo-fu
+    :demand t
+    :custom
+    (undo-limit         (* 512 1024 1024))
+    (undo-strong-limit  (* 1024 1024 1024))
+    (undo-outer-limit   (* 2 1024 1024 1024))
+    (evil-undo-system 'undo-redo)
+    :bind
+    ([remap undo] . undo-fu-only-undo)
+    ([remap redo] . undo-fu-only-redo)
+    ("C-_"        . undo-fu-only-undo)
+    ("M-_"        . undo-fu-only-redo)
+    ("C-M-_"      . undo-fu-only-redo-all))
+  (use-package undo-fu-session
+    :after undo-fu
+    :demand t
+    :hook (after-init . global-undo-fu-session-mode)
+    :bind
+    ("C-x r u"    . undo-fu-session-save)
+    ("C-x r U"    . undo-fu-session-recover)
+    :custom
+    (undo-fu-session-directory (concat my/cache-dir "undo-fu-session/"))
+    (undo-fu-session-compression 'zst)))
+#+end_src
+
+** Vundo
 #+begin_src emacs-lisp
 (use-package vundo
   :unless noninteractive
   :custom
-  (evil-undo-system 'undo-redo)
   (vundo-compact-display nil)
   (vundo-glyph-alist vundo-unicode-symbols))
 #+end_src
