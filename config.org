@@ -1353,6 +1353,7 @@ Current pattern: %`evil-mc-pattern
   :hook (prog-mode . smartparens-mode)
   :hook (prog-mode . show-smartparens-mode)
   :config
+  (require 'smartparens-config)
   (sp-local-pair '(minibuffer-mode minibuffer-inactive-mode emacs-lisp-mode) "'" nil :actions nil)
   (sp-local-pair '(minibuffer-mode minibuffer-inactive-mode emacs-lisp-mode) "`" nil :actions nil)
   (show-smartparens-global-mode t))
