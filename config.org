@@ -2163,15 +2163,16 @@ Git gutter:
 #+end_src
 ** Haskell
 #+begin_src emacs-lisp
-(use-package haskell-mode
+(use-package haskell
   :mode ("\\.hs\\'" . haskell-mode)
+  :requires haskell-mode
   :config
   (add-hook 'haskell-mode-hook 'eglot-ensure)
   (my/local-leader-def haskell-mode
-		       "b" 'haskell-process-cabal-build
-		       "c" 'haskell-cabal-visit-file
-		       "h" 'haskell-hide-toggle
-		       "H" 'haskell-hide-toggle-all))
+      "b" 'haskell-process-cabal-build
+      "c" 'haskell-cabal-visit-file
+      "h" 'haskell-hide-toggle
+      "H" 'haskell-hide-toggle-all))
 (use-package ob-haskell
   :ensure nil
   :after org
