@@ -52,10 +52,10 @@
             inherit system;
             overlays = [ emacs-overlay.overlay ];
           };
-          emacs = let emacs = (import nixpkgs { inherit system; }).emacs29-pgtk;
-          in pkgs.symlinkJoin rec {
+          basemacs = (import nixpkgs { inherit system; }).emacs29-pgtk;
+          emacs = pkgs.symlinkJoin rec {
             name = "emacs";
-            paths = [ emacs ];
+            paths = [ basemacs ];
             nativeBuildInputs = [ pkgs.makeWrapper ];
             postBuild = let
               mkSearchPath = subDir: paths:
@@ -68,7 +68,8 @@
                 --prefix PATH : '${mkSearchPath "bin" dependencies}' \
                 --prefix EMACSLOADPATH : '${
                   mkSearchPath "share/emacs/site-lisp" dependencies
-                }:${emacs}/share/emacs/${version}/lisp' \
+                }:${basemacs}/share/emacs/${version}/lisp' \
+                --set LSP_USE_PLISTS true \
                 --set FONTCONFIG_FILE ${
                   pkgs.makeFontsConf {
                     fontDirectories = with pkgs; [
@@ -82,13 +83,13 @@
                   (filter pathExists (map (s: "${s}/lib/aspell") dependencies))
                 }'
             '';
-            inherit (emacs) meta src version;
+            inherit (basemacs) meta src version;
           };
           config = pkgs.runCommand "config" { } ''
             mkdir -p $out/
             cp -r ${./.}/. $out
             cd $out/
-            ${emacs}/bin/emacs -Q --batch                        \
+            ${basemacs}/bin/emacs -Q --batch                        \
               --eval "(require 'org)
                       (setq org-use-property-inheritance t)"     \
               --visit="./config.org"                             \
@@ -161,5 +162,5 @@
             pkgs.mkShell { buildInputs = [ packages.${system}.default ]; };
         };
     in nixpkgs.lib.foldl nixpkgs.lib.recursiveUpdate { }
-    (map f [ "x86_64-linux" "aarch64-darwin" ]);
+      (map f [ "x86_64-linux" "aarch64-darwin" ]);
 }
