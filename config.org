@@ -1199,7 +1199,7 @@ Current pattern: %`evil-mc-pattern
 **** Tree Sitter
 #+begin_src emacs-lisp
 (use-package evil-textobj-tree-sitter
-  :after (evil tree-sitter)
+  :after (evil treesit)
   :unless noninteractive
   :config
   (defun meain/fancy-narrow-to-thing (thing)
@@ -1221,11 +1221,13 @@ Current pattern: %`evil-mc-pattern
   (defvar +tree-sitter-goto-previous-map (make-sparse-keymap))
   (defvar +tree-sitter-goto-next-map (make-sparse-keymap))
 
+  (define-minor-mode my/treesit-mode "My treesit mode. For easily binding keys"
+    :interactive nil)
 
-  (evil-define-key '(visual operator) 'tree-sitter-mode
+  (evil-define-key '(visual operator) 'my/treesit-mode
     "i" +tree-sitter-inner-text-objects-map
     "a" +tree-sitter-outer-text-objects-map)
-  (evil-define-key 'normal 'tree-sitter-mode
+  (evil-define-key 'normal 'my/treesit-mode
     "[g" +tree-sitter-goto-previous-map
     "]g" +tree-sitter-goto-next-map)
   (general-def :keymaps '+tree-sitter-inner-text-objects-map
