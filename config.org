@@ -1687,7 +1687,7 @@ Current pattern: %`evil-mc-pattern
                  nil
                  (window-parameters (mode-line-format . none))))
   (setq embark-prompter 'embark-completing-read-prompter)
-  (add-popup! embark-collect-mode)
+  (add-popup! #'embark-collect-mode)
   :general (my/general-global-menu! "Embark" "e"
 	     "o" '(embark-export :which-key "export")
 	     "e" '(embark-act :which-key "act")
