@@ -2164,32 +2164,12 @@ Git gutter:
 (use-package lua-mode
   :mode "\\.lua$")
 #+end_src
-** Swift
-#+begin_src emacs-lisp
-(use-package swift-mode
-  :mode "\\.swift\\'"
-  :config
-  (after! eglot
-	  (add-to-list 'eglot-server-programs
-		       '(swift-mode . ("xcrun" "sourcekit-lsp"))))
-  (after! apheleia
-	  (add-to-list 'apheleia-mode-alist
-		       '(swift-mode . swift-format))
-
-	  (add-to-list 'apheleia-formatters
-		       '(swift-format "swift-format" (buffer-file-name))))
-  
-  (setq swift-mode:basic-offset 4
-        swift-mode:parenthesized-expression-offset 4
-        swift-mode:multiline-statement-offset 4
-        swift-mode:highlight-anchor t))
-#+end_src
 ** Haskell
 #+begin_src emacs-lisp
-(use-package haskell
+(use-package haskell-mode
   :mode ("\\.hs\\'" . haskell-mode)
-  :requires haskell-mode
   :config
+  (require 'haskell)
   (add-hook 'haskell-mode-hook 'eglot-ensure)
   (my/local-leader-def haskell-mode
       "b" 'haskell-process-cabal-build
@@ -2419,6 +2399,7 @@ Mostly only used for double checking after org export.
 * Org Mode
 #+begin_src emacs-lisp
 (use-package org
+  :defer 1
   :ensure nil ;; included in emacs
   :init
   (defun my/relative-org (dir)
@@ -2543,8 +2524,27 @@ Mostly only used for double checking after org export.
 #+end_src
 ** Agenda
 #+begin_src emacs-lisp
-(after! org
-	(setopt org-agenda-files (my/relative-org "agenda.org")))
+(use-package org-gcal
+  :after org-agenda
+  :unless noninteractive
+  :if (and IS-PERSONAL (executable-find "pass") (file-exists-p (concat (getenv "PASSWORD_STORE_DIR") "/google.com/api/client_secret.gpg")))
+  :commands (org-gcal-sync)
+  :general (my/general-global-Open
+	     "a" '(org-gcal-sync :which-key "agenda"))
+  :custom
+  (org-gcal-client-id (auth-source-pass-get 'secret "google.com/api/client_id"))
+  (org-gcal-client-secret (auth-source-pass-get 'secret "google.com/api/client_secret"))
+  (org-gcal-fetch-file-alist `(("kbakheat@gmail.com" . ,(my/relative-org "/agenda/google.org"))))
+  (org-gcal-notify-p t)
+  (org-gcal-recurring-events-mode 'nested)
+  (oauth2-auto-plstore (concat my/etc-dir "oauth2-auto.plist"))
+  :config
+  (cl-loop for (key . value) in org-gcal-file-alist
+	   do (append! org-agenda-files value))
+  (unless (file-exists-p oauth2-auto-plstore) (f-touch oauth2-auto-plstore))
+  (use-package plstore
+    :ensure nil
+    :config (add-to-list 'plstore-encrypt-to "kbakheat@gmail.com")))
 #+end_src
 ** Presenting
 #+begin_src emacs-lisp
@@ -2709,6 +2709,7 @@ Mostly only used for double checking after org export.
 #+begin_src emacs-lisp
 (use-package org
   :config
+  (add-popup! '("^\\*Org-Babel Error Output\\*$" . hide))
   (setq org-confirm-babel-evaluate nil
 	org-src-fontify-natively t
 	org-src-tab-acts-natively t
