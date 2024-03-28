@@ -1539,11 +1539,8 @@ Current pattern: %`evil-mc-pattern
              "^" '(cape-tex :which-key "Tex")
              "&" '(cape-sgml :which-key "Sgml")
              "r" '(cape-rfc1345 :which-key "Rfc1345"))
-  :init (defvar my/completion-at-point-functions (list))
   :config
-  ;; (setq completion-at-point-functions
-  ;;       (cape-super-capf #'cape-dabbrev #'cape-file #'cape-keyword #'cape-symbol))
-  (append! my/completion-at-point-functions
+  (append! completion-at-point-functions
     #'cape-abbrev
     #'cape-file
     #'cape-elisp-block
@@ -1556,12 +1553,7 @@ Current pattern: %`evil-mc-pattern
     ;;#'cape-line
     #'cape-dict
     #'cape-ispell
-    )
-  ;; update `completion-at-point-functions' if `my/completion-at-point-functions' changed.
-  (add-hook 'after-change-major-mode-hook
-	    (lambda ()
-	      (setq completion-at-point-functions
-		    (cape-super-capf my/completion-at-point-functions)))))
+    ))
 #+end_src
 ** Fussy
 #+begin_src emacs-lisp
@@ -1925,6 +1917,8 @@ Git gutter:
     "a" #'eglot-code-actions
     "d" #'eglot-help-at-point
     "f" #'eglot-format-buffer)
+  (when (featurep 'tempel)
+    (use-package eglot-tempel))
   (after! cape
 	  (add-hook
 	   'eglot-managed-mode-hook
@@ -1932,9 +1926,8 @@ Git gutter:
 	     (append! completion-category-overrides '((eglot (styles orderless))))
 	     (setq completion-category-defaults nil)
 	     (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster)
-             (make-local-variable 'my/completion-at-point-functions)
-	     (append! my/completion-at-point-functions #'eglot-completion-at-point)
-	     (setq-local completion-at-point-functions my/completion-at-point-functions)))))
+             (make-local-variable completion-at-point-functions)
+	     (append! completion-at-point-functions #'eglot-completion-at-point)))))
 #+end_src
 ** Eglot Tempel
 #+begin_src emacs-lisp
@@ -2070,6 +2063,7 @@ Git gutter:
 	  (add-to-list 'major-mode-remap-alist '(python-mode . python-ts-mode)))
 
   (add-hook 'python-ts-mode-hook (defun my/python-ts-base-hook () (run-hooks 'python-mode-hook))) 
+  (add-hook 'python-ts-mode-hook #'my/treesit-mode) 
 
   (my/local-leader-def python-mode
       "r" '(run-python :which-key "repl/python")
