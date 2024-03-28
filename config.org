@@ -283,7 +283,9 @@ I want windows that start with '*' to be opened in the lower 1/3 of the frame. T
         w32-rwindow-modifier 'super)))
 ;; Make ESC quit prompts
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
-(setq use-package-always-demand (daemonp))
+(setq use-package-always-demand (daemonp)
+      use-package-expand-minimally t
+      use-package-verbose nil)
 #+end_src
 ** general.el
 *** Helpers
@@ -349,6 +351,7 @@ Do something in other window
   "States in which to bind general.el leader keybindings.")
 
 (use-package general
+  :demand t
   :config
   (general-evil-setup)
   (general-override-mode 1)
