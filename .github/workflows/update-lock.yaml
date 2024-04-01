@@ -1,0 +1,23 @@
+name: Auto Update
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  lockfile-update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v1
+      - name: Cache nix
+        uses: DeterminateSystems/magic-nix-cache-action@main
+      - name: Update flake.lock
+        id: update
+        uses: DeterminateSystems/update-flake-lock@v21
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Print PR number
+        run: echo Pull request number is ${{ steps.update.outputs.pull-request-number }}.
