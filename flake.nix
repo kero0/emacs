@@ -110,6 +110,7 @@
             config = ./config.org;
             defaultInitFile = pkgs.writeText "default.el" (''
               	 (setq my/emacs-dir "${config}/")
+                 (add-to-list 'treesit-extra-load-path "${pkgs.emacsPackages.treesit-grammars.with-all-grammars}/lib/")
                  (load-file "${config}/init.el")
                  (provide 'default)
             '');
@@ -118,12 +119,7 @@
             alwaysTangle = true;
             extraEmacsPackages = epkgs:
               with epkgs;
-              [
-                engrave-faces
-                ox-chameleon
-                # FIXME: currently broken in nixpkgs. either wait for fix or find workaround
-                treesit-grammars.with-all-grammars
-              ] ++ dependencies;
+              [ engrave-faces ox-chameleon ] ++ dependencies;
             override = self: super: {
               eglot-booster = (mkTrivialPkg {
                 pkgs = self;
@@ -162,5 +158,5 @@
             pkgs.mkShell { buildInputs = [ packages.${system}.default ]; };
         };
     in nixpkgs.lib.foldl nixpkgs.lib.recursiveUpdate { }
-      (map f [ "x86_64-linux" "aarch64-darwin" ]);
+    (map f [ "x86_64-linux" "aarch64-darwin" ]);
 }
