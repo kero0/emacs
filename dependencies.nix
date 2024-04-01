@@ -12,6 +12,7 @@ with pkgs;
   pinentry-emacs
   nodePackages.prettier
   (ripgrep.override { withPCRE2 = true; })
+  unzip
   wget
   zstd.bin
   zstd
