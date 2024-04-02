@@ -10,6 +10,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v1
       - name: Cache nix
@@ -18,6 +20,6 @@ jobs:
         id: update
         uses: DeterminateSystems/update-flake-lock@v21
         with:
-          token: ${{ secrets.TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Print PR number
         run: echo Pull request number is ${{ steps.update.outputs.pull-request-number }}.
