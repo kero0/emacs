@@ -818,8 +818,7 @@ Current pattern: %`evil-mc-pattern
   :config
   (unicode-fonts-setup '(my/font/unicode-name))
   :init
-  (my/leader-def
-    "U" '(unicode-fonts-insert 'interactive "Insert Unicode char (by name)")))
+  (my/leader-def "U" '(insert-char :which-key "Insert Unicode char (by name)")))
 #+end_src
 ** Dashboard
 #+begin_src emacs-lisp
