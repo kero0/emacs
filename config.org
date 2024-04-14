@@ -2027,10 +2027,20 @@ Git gutter:
 * Languages
 ** Nix
 #+begin_src emacs-lisp
-(use-package nix-mode
+(use-package nix-ts-mode
   :mode "\\.nix\\'"
   :config
-  (add-hook 'nix-mode-hook #'eglot-ensure))
+  (define-minor-mode nix-mode "Fake `nix-mode'. Used with `nix-ts-mode'")
+  (add-hook 'nix-ts-mode-hook #'nix-mode)
+  (add-hook 'nix-ts-mode-hook #'my/treesit-mode) 
+  (after! apheleia
+	  (setf (alist-get 'nixpkgs-fmt apheleia-formatters)
+		'("nixpkgs-fmt"))
+	  (setf (alist-get 'nix-ts-mode apheleia-mode-alist)
+		'(nixpkgs-fmt)))
+  (after! eglot
+	  (setf (alist-get 'nix-ts-mode eglot-server-programs) (alist-get 'nix-mode eglot-server-programs))
+	  (add-hook 'nix-mode-hook #'eglot-ensure)))
 
 (use-package nix-drv-mode
   :ensure nix-mode
