@@ -2291,6 +2291,13 @@ Mostly only used for double checking after org export.
   :hook (org-mode . org-cdlatex-mode)
   :hook (LaTeX-mod . turn-on-cdlatex))
 #+end_src
+** Markdown Mode
+#+begin_src emacs-lisp
+(use-package markdown-mode
+  :mode ("README\\.md\\'" . gfm-mode)
+  :mode ("\\.\\(?:md\\|markdown\\|mkd\\|mdown\\|mkdn\\|mdwn\\)\\'" . markdown-mode)
+  :init (setq markdown-enable-math t))
+#+end_src
 * Mail
 ** mu4e
 #+begin_src emacs-lisp :lexical t
