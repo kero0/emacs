@@ -2178,6 +2178,7 @@ Git gutter:
 #+begin_src emacs-lisp
 (use-package haskell-mode
   :mode ("\\.hs\\'" . haskell-mode)
+  :mode ("\\.cabal\\'" . haskell-cabal-mode)
   :config
   (require 'haskell)
   (add-hook 'haskell-mode-hook 'eglot-ensure)
