@@ -2034,10 +2034,10 @@ Git gutter:
   (add-hook 'nix-ts-mode-hook #'nix-mode)
   (add-hook 'nix-ts-mode-hook #'my/treesit-mode) 
   (after! apheleia
-	  (setf (alist-get 'nixpkgs-fmt apheleia-formatters)
-		'("nixpkgs-fmt"))
+	  (setf (alist-get 'nixfmt apheleia-formatters)
+		'("nixfmt"))
 	  (setf (alist-get 'nix-ts-mode apheleia-mode-alist)
-		'(nixpkgs-fmt)))
+		'(nixfmt)))
   (after! eglot
 	  (setf (alist-get 'nix-ts-mode eglot-server-programs) (alist-get 'nix-mode eglot-server-programs))
 	  (add-hook 'nix-mode-hook #'eglot-ensure)))

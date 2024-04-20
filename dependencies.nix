@@ -1,4 +1,8 @@
-{ pkgs, is-work, is-personal }:
+{
+  pkgs,
+  is-work,
+  is-personal,
+}:
 with pkgs;
 [
   # basics
@@ -25,24 +29,47 @@ with pkgs;
 
   # spell
   enchant
-  (aspellWithDicts (dicts: with dicts; [ en en-computers en-science ]))
+  (aspellWithDicts (
+    dicts: with dicts; [
+      en
+      en-computers
+      en-science
+    ]
+  ))
 
   # latex but mostly for ox-latex
-  (with texlive;
+  (
+    with texlive;
     texlive.combine {
-      inherit scheme-small biblatex dvisvgm latexmk;
-      inherit capt-of environ float fvextra pdfcol siunitx standalone tcolorbox
-        wrapfig xcolor;
-    })
+      inherit
+        scheme-small
+        biblatex
+        dvisvgm
+        latexmk
+        ;
+      inherit
+        capt-of
+        environ
+        float
+        fvextra
+        pdfcol
+        siunitx
+        standalone
+        tcolorbox
+        wrapfig
+        xcolor
+        ;
+    }
+  )
   ghostscript
 
   # nix
   nil
-  nixpkgs-fmt
+  nixfmt-rfc-style
 
   # python
-  (python3.withPackages (ps:
-    with ps; [
+  (python3.withPackages (
+    ps: with ps; [
       # default for python
       debugpy
       pipx
@@ -52,12 +79,20 @@ with pkgs;
       matplotlib
       numpy
       pandas
-    ]))
+    ]
+  ))
   poetry
 
   pyright
   ruff
-
-] ++ lib.optionals (!stdenv.isLinux) [ coreutils-prefixed gnused ]
+]
+++ lib.optionals (!stdenv.isLinux) [
+  coreutils-prefixed
+  gnused
+]
 ++ (if stdenv.isDarwin then [ terminal-notifier ] else [ libnotify ])
-++ lib.optionals is-personal [ lilypond mu msmtp ]
+++ lib.optionals is-personal [
+  lilypond
+  mu
+  msmtp
+]

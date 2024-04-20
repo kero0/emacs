@@ -31,22 +31,41 @@
       flake = false;
     };
   };
-  outputs = inputs@{ self, nixpkgs, emacs-overlay, ... }:
+  outputs =
+    inputs@{
+      self,
+      nixpkgs,
+      emacs-overlay,
+      ...
+    }:
     let
-      mkTrivialPkg = { pkgs, name, src ? inputs."packages-${name}"
-        , buildInputs ? [ ], extraFiles ? [ ] }:
-        ((pkgs.trivialBuild {
-          inherit buildInputs;
-          pname = name;
-          ename = name;
-          version = "0.0.0";
-          src = src;
-        }).overrideAttrs (old: {
-          installPhase = old.installPhase + (builtins.concatStringsSep "\n"
-            (map (s: ''cp -r "${s}" "$LISPDIR"'') extraFiles));
-          passthru = (old.passthru or { }) // { treeSitter = true; };
-        }));
-      f = system:
+      mkTrivialPkg =
+        {
+          pkgs,
+          name,
+          src ? inputs."packages-${name}",
+          buildInputs ? [ ],
+          extraFiles ? [ ],
+        }:
+        (
+          (pkgs.trivialBuild {
+            inherit buildInputs;
+            pname = name;
+            ename = name;
+            version = "0.0.0";
+            src = src;
+          }).overrideAttrs
+            (old: {
+              installPhase =
+              old.installPhase
+              + (builtins.concatStringsSep "\n" (map (s: ''cp -r "${s}" "$LISPDIR"'') extraFiles));
+            passthru = (old.passthru or { }) // {
+              treeSitter = true;
+            };
+          })
+        );
+      f =
+        system:
         let
           pkgs = import nixpkgs {
             inherit system;
@@ -57,39 +76,37 @@
             name = "emacs";
             paths = [ basemacs ];
             nativeBuildInputs = [ pkgs.makeWrapper ];
-            postBuild = let
-              mkSearchPath = subDir: paths:
-                nixpkgs.lib.concatStringsSep ":" (filter pathExists
-                  (map (path: "${path}/${subDir}")
-                    (filter (x: x != null) paths)));
-              inherit (builtins) filter head pathExists;
-            in ''
-              wrapProgram "$out/bin/emacs" \
-                --prefix PATH : '${mkSearchPath "bin" dependencies}' \
-                --prefix EMACSLOADPATH : '${
-                  mkSearchPath "share/emacs/site-lisp" dependencies
-                }:${basemacs}/share/emacs/${version}/lisp' \
-                --set LSP_USE_PLISTS true \
-                --set FONTCONFIG_FILE ${
-                  pkgs.makeFontsConf {
-                    fontDirectories = with pkgs; [
-                      julia-mono
-                      (nerdfonts.override { fonts = [ "JetBrainsMono" ]; })
-                    ];
-                  }
-                } \
-                --set ASPELL_CONF 'dict-dir ${
-                  head
-                  (filter pathExists (map (s: "${s}/lib/aspell") dependencies))
-                }'
-            '';
+            postBuild =
+              let
+                mkSearchPath =
+                  subDir: paths:
+                  nixpkgs.lib.concatStringsSep ":" (
+                    filter pathExists (map (path: "${path}/${subDir}") (filter (x: x != null) paths))
+                  );
+                inherit (builtins) filter head pathExists;
+              in
+              ''
+                wrapProgram "$out/bin/emacs" \
+                  --prefix PATH : '${mkSearchPath "bin" dependencies}' \
+                  --prefix EMACSLOADPATH : '${mkSearchPath "share/emacs/site-lisp" dependencies}:${basemacs}/share/emacs/${version}/lisp' \
+                  --set LSP_USE_PLISTS true \
+                  --set FONTCONFIG_FILE ${
+                    pkgs.makeFontsConf {
+                      fontDirectories = with pkgs; [
+                        julia-mono
+                        (nerdfonts.override { fonts = [ "JetBrainsMono" ]; })
+                      ];
+                    }
+                  } \
+                  --set ASPELL_CONF 'dict-dir ${head (filter pathExists (map (s: "${s}/lib/aspell") dependencies))}'
+              '';
             inherit (basemacs) meta src version;
           };
           config = pkgs.runCommand "config" { } ''
             mkdir -p $out/
             cp -r ${./.}/. $out
             cd $out/
-            ${basemacs}/bin/emacs -Q --batch                        \
+            ${basemacs}/bin/emacs -Q --batch                     \
               --eval "(require 'org)
                       (setq org-use-property-inheritance t)"     \
               --visit="./config.org"                             \
@@ -101,62 +118,86 @@
             is-work = false;
             is-personal = true;
           };
-        in rec {
+        in
+        rec {
           ${system} = import nixpkgs {
             inherit system;
             overlays = [ emacs-overlay.overlay ];
           };
-          packages.${system}.default = (pkgs.emacsWithPackagesFromUsePackage {
-            config = ./config.org;
-            defaultInitFile = pkgs.writeText "default.el" (''
-              	 (setq my/emacs-dir "${config}/")
-                 (add-to-list 'treesit-extra-load-path "${pkgs.emacsPackages.treesit-grammars.with-all-grammars}/lib/")
-                 (load-file "${config}/init.el")
-                 (provide 'default)
-            '');
-            package = emacs;
-            alwaysEnsure = true;
-            alwaysTangle = true;
-            extraEmacsPackages = epkgs:
-              with epkgs;
-              [ engrave-faces ox-chameleon ] ++ dependencies;
-            override = self: super: {
-              eglot-booster = (mkTrivialPkg {
-                pkgs = self;
-                name = "eglot-booster";
-                buildInputs = with self; [ ];
+          packages.${system}.default =
+            (pkgs.emacsWithPackagesFromUsePackage {
+              config = ./config.org;
+              defaultInitFile = pkgs.writeText "default.el" (''
+                	 (setq my/emacs-dir "${config}/")
+                   (add-to-list 'treesit-extra-load-path "${pkgs.emacsPackages.treesit-grammars.with-all-grammars}/lib/")
+                   (load-file "${config}/init.el")
+                   (provide 'default)
+              '');
+              package = emacs;
+              alwaysEnsure = true;
+              alwaysTangle = true;
+              extraEmacsPackages =
+                epkgs:
+                with epkgs;
+                [
+                  engrave-faces
+                  ox-chameleon
+                ]
+                ++ dependencies;
+              override = self: super: {
+                eglot-booster = (
+                  mkTrivialPkg {
+                    pkgs = self;
+                    name = "eglot-booster";
+                    buildInputs = with self; [ ];
+                  }
+                );
+                org-pretty-table = (
+                  mkTrivialPkg {
+                    pkgs = self;
+                    name = "org-pretty-table";
+                    buildInputs = with self; [ ];
+                  }
+                );
+                org-src-context = (
+                  mkTrivialPkg {
+                    pkgs = self;
+                    name = "org-src-context";
+                    buildInputs = with self; [ ];
+                  }
+                );
+                ox-chameleon = (
+                  mkTrivialPkg {
+                    pkgs = self;
+                    name = "ox-chameleon";
+                    buildInputs = with self; [ engrave-faces ];
+                  }
+                );
+                targets =
+                  (mkTrivialPkg {
+                    pkgs = self;
+                    name = "targets";
+                    buildInputs = with self; [ evil ];
+                  }).overrideAttrs
+                    (old: {
+                      # fixing a bug in the package when byte compiling
+                      buildPhase = ''
+                        runHook preBuild
+                        runHook postBuild
+                      '';
+                    });
+              };
+            }).overrideAttrs
+              (old: {
+                name = "emacs";
               });
-              org-pretty-table = (mkTrivialPkg {
-                pkgs = self;
-                name = "org-pretty-table";
-                buildInputs = with self; [ ];
-              });
-              org-src-context = (mkTrivialPkg {
-                pkgs = self;
-                name = "org-src-context";
-                buildInputs = with self; [ ];
-              });
-              ox-chameleon = (mkTrivialPkg {
-                pkgs = self;
-                name = "ox-chameleon";
-                buildInputs = with self; [ engrave-faces ];
-              });
-              targets = (mkTrivialPkg {
-                pkgs = self;
-                name = "targets";
-                buildInputs = with self; [ evil ];
-              }).overrideAttrs (old: {
-                # fixing a bug in the package when byte compiling
-                buildPhase = ''
-                  runHook preBuild
-                  runHook postBuild
-                '';
-              });
-            };
-          }).overrideAttrs (old: { name = "emacs"; });
-          devShell.${system} =
-            pkgs.mkShell { buildInputs = [ packages.${system}.default ]; };
+          devShell.${system} = pkgs.mkShell { buildInputs = [ packages.${system}.default ]; };
         };
-    in nixpkgs.lib.foldl nixpkgs.lib.recursiveUpdate { }
-    (map f [ "x86_64-linux" "aarch64-darwin" ]);
+    in
+    nixpkgs.lib.foldl nixpkgs.lib.recursiveUpdate { } (
+      map f [
+        "x86_64-linux"
+        "aarch64-darwin"
+      ]
+    );
 }
