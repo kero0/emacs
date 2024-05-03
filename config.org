@@ -1815,6 +1815,14 @@ Current pattern: %`evil-mc-pattern
   (evil-define-key* '(normal visual) magit-mode-map
     "zz" #'evil-scroll-line-to-center))
 #+end_src
+** ediff
+#+begin_src emacs-lisp
+(after! ediff
+	(setq ediff-diff-options ""
+	      ediff-custom-diff-options "-u"
+	      ediff-window-setup-function 'ediff-setup-windows-plain
+	      ediff-split-window-function 'split-window-vertically))
+#+end_src
 ** Time Machine
 #+begin_src emacs-lisp
 (use-package git-timemachine
