@@ -2439,6 +2439,7 @@ Mostly only used for double checking after org export.
 ** Smartparens
 #+begin_src emacs-lisp
 (after! (org smartparens)
+	(add-hook 'org-mode-hook #'smartparens-mode)
 	(sp-local-pair 'org-mode "\\[" "\\]")
 	(sp-local-pair 'org-mode "\\(" "\\)")
 	(sp-local-pair 'org-mode "$" "$"))
@@ -2446,7 +2447,10 @@ Mostly only used for double checking after org export.
 ** Org Modern
 #+begin_src emacs-lisp
 (use-package org-modern
-  :hook (org-mode . org-modern-mode))
+  :hook (org-mode . org-modern-mode)
+  :custom
+  (org-modern-star 'replace)
+  (org-modern-replace-stars "◉○◈◇✳"))
 #+end_src
 ** Keybindings
 #+begin_src emacs-lisp
