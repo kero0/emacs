@@ -278,9 +278,9 @@ I want windows that start with '*' to be opened in the lower 1/3 of the frame. T
   :init
   (after! my/general
 	  (my/general-global-menu! "Popper" "`"
-	    "`" '(popper-toggle :which-key "Toggle latest")
-	    "c" '(popper-cycle :which-key "Cycle")
-	    "T" '(popper-toggle-type :which-key "Toggle type")))
+	    "`" '("Toggle latest" . popper-toggle)
+	    "c" '("Cycle" . popper-cycle)
+	    "T" '("Toggle type" . popper-toggle-type)))
   (setq popper-reference-buffers
         '("\\*Messages\\*"
           "Output\\*$"
@@ -299,16 +299,7 @@ I want windows that start with '*' to be opened in the lower 1/3 of the frame. T
 	     (append! popper-reference-buffers ,@rules)
 	     (popper--set-reference-vars)))
   :config
-  (popper-mode +1)
-  ;;(popper-echo-mode +1)
-  ;; Hook to auto close a window when a popup buffer in that window is killed
-  (defun my/kill-buffer-advice (orig-fn &rest args)
-    "Advice function to close the window after killing the buffer."
-    (let ((buf (current-buffer)))
-      (when (popper-popup-p buf)
-        (delete-window (get-buffer-window buf)))
-      (apply orig-fn args)))
-  (add-hook 'kill-buffer-hook (lambda () (advice-add 'kill-buffer :around #'my/kill-buffer-advice))))
+  (popper-mode +1))
 (when noninteractive
   (defmacro add-popup! (&rest _)))
 #+end_src
@@ -345,16 +336,12 @@ Macro to define nested keymaps
   (let* ((n (concat "my/general-global-" name))
          (prefix-map (intern (concat n "-map"))))
     `(progn
-       ;; (defvar ,prefix-map (make-sparse-keymap))
+       (defvar ,prefix-map (make-sparse-keymap))
+       (my/leader-def
+	 ,prefix-key (cons ,name ,prefix-map))
        (general-create-definer ,(intern n)
-         :wrapping my/leader-def
-         :prefix-map (quote ,prefix-map)
-         :infix ,prefix-key
-         :wk-full-keys nil
-         "" '(:ignore t :which-key ,name)
-	 )
+	 :keymaps (quote ,prefix-map))
        (,(intern n)
-        "" '(:ignore t :which-key ,name)
 	,@body))))
 #+end_src
 Do something in other window
@@ -373,15 +360,14 @@ Do something in other window
   (declare (indent 2))
   (let* ((n  (symbol-name mode))
          (definer (intern (concat "my/local-leader-def-" n)))
-	 (prefix-map (intern (concat n "-map"))))
+	 (prefix-map (intern (concat (symbol-name mode) "-map"))))
     `(progn
        (general-create-definer ,definer
-	 :wrapping global-leader
-	 :major-modes '(,mode)
-	 :keymaps '(,prefix-map)
-	 )
+	 :states ,'my/prefix-states
+	 :prefix ,(concat my/leader-def-prefix " " my/local-leader-def-prefix)
+	 :non-normal-prefix ,(concat my/leader-def-prefix-alt " " my/local-leader-def-prefix)
+	 :keymaps (quote ,prefix-map))
        (,definer
-	"" '(:ignore t :which-key "<localleader>")
 	,@args))))
 #+end_src
 *** general.el setup
@@ -410,34 +396,20 @@ Do something in other window
    :prefix my/leader-def-prefix
    :global-prefix my/leader-def-prefix-alt)
 
-  (general-define-key
-   :keymaps 'override
-   :states '(insert normal hybrid motion visual operator emacs)
-   :prefix-map 'my/prefix-map
-   :prefix my/leader-def-prefix
-   :global-prefix my/leader-def-prefix-alt)
-
   (general-create-definer my/leader-def
-    :wk-full-keys nil
     :keymaps 'my/prefix-map)
-  (general-create-definer global-leader
-    :keymaps 'override
-    :states '(insert normal hybrid motion visual operator)
-    :prefix (concat my/leader-def-prefix " " my/local-leader-def-prefix)
-    :non-normal-prefix (concat my/leader-def-prefix-alt " " my/local-leader-def-prefix)
-    "" '(:ignore t :which-key "<localleader>"))
+
   (my/leader-def
-    "SPC" '(project-find-file :which-key "Find file")
-    "h"   '(:keymap help-map :which-key "Help")
-    "H"   '(helpful-at-point :which-key "Help at point")
-    ";"   '(execute-extended-command :which-key "M-x")
-    ":"   '(eval-expression :which-key "Eval")
-    "."   '(repeat :which-key "Repeat")
-    "r"   '(async-shell-command :which-key "Run command")
-    "R"   '(shell-command :which-key "Run command synchronously"))
+    "SPC"	'("Find file" . project-find-file)
+    "h"		(cons "Help" help-map)
+    "H"		'("Help at point" . helpful-at-point)
+    ";"		'("M-x" . execute-extended-command)
+    ":"		'("Eval" . eval-expression)
+    "."		'("Repeat" . repeat)
+    "r"		'("Run command" . async-shell-command)
+    "R"		'("Run command synchronously" . shell-command))
   <<keybindings>>
-  (provide 'my/general)
-  )
+  (provide 'my/general))
 #+end_src
 **** Assorted Keybindings
 :PROPERTIES:
@@ -446,14 +418,11 @@ Do something in other window
 ***** Quit
 #+begin_src emacs-lisp
 (my/general-global-menu! "Quit" "q"
-  "q" '(save-buffers-kill-terminal :which-key "Quit Emacs")
-  "Q" '(kill-emacs :which-key "Quit Emacs immediately")
-  "r" '(restart-emacs :which-key "Restart Emacs")
-  "R" '(restart-emacs--daemon :which-key "Restart Emacs daemon")
-  "d" '(restart-emacs-debug-init :which-key "Restart Emacs with debug init"))
-
-
-(message "Loading general-global-menu... Done")
+  "q" '("Quit Emacs" . save-buffers-kill-terminal)
+  "Q" '("Quit Emacs immediately" . kill-emacs)
+  "r" '("Restart Emacs" . restart-emacs)
+  "R" '("Restart Emacs daemon" . restart-emacs--daemon)
+  "d" '("Restart Emacs with debug init" . restart-emacs-debug-init))
 #+end_src
 ***** Buffer
 #+begin_src emacs-lisp
@@ -469,28 +438,28 @@ Do something in other window
         
 
 (my/general-global-menu! "Buffer" "b"
-  "B" '(switch-to-buffer-other-window :which-key "Switch buffer other window")
-  "d" '(kill-current-buffer :which-key "Kill current buffer")
-  "k" '(my/kill-buffer :which-key "Kill buffer")
-  "K" '(my/kill-other-window :which-key "Kill buffer other window")
-  "r" '(revert-buffer :which-key "Revert buffer")
-  "[" '(previous-buffer :which-key "Previous buffer")
-  "]" '(next-buffer :which-key "Next buffer")
-  "n" '(next-buffer :which-key "Next buffer")
-  "p" '(previous-buffer :which-key "Previous buffer")
-  "s" '(save-buffer :which-key "Save buffer")
-  "S" '(save-some-buffers :which-key "Save some buffers")
-  "u" '(bury-buffer :which-key "Bury buffer")
-  "U" '(unbury-buffer :which-key "Unbury buffer")
-  "x" '(scratch-buffer :which-key "Open scratch buffer"))
+  "B" '("Switch buffer other window" . switch-to-buffer-other-window)
+  "d" '("Kill current buffer" . kill-current-buffer)
+  "k" '("Kill buffer" . my/kill-buffer)
+  "K" '("Kill buffer other window" . my/kill-other-window)
+  "r" '("Revert buffer" . revert-buffer)
+  "[" '("Previous buffer" . previous-buffer)
+  "]" '("Next buffer" . next-buffer)
+  "n" '("Next buffer" . next-buffer)
+  "p" '("Previous buffer" . previous-buffer)
+  "s" '("Save buffer" . save-buffer)
+  "S" '("Save some buffers" . save-some-buffers)
+  "u" '("Bury buffer" . bury-buffer)
+  "U" '("Unbury buffer" . unbury-buffer)
+  "x" '("Open scratch buffer" . scratch-buffer))
 (my/leader-def
-  "x" '(scratch-buffer :which-key "Open scratch buffer"))
+  "x" '("Open scratch buffer" . scratch-buffer))
 #+end_src
 ***** Code
 #+begin_src emacs-lisp
 (my/general-global-menu! "Code" "c"
-  "c" '(recompile :which-key "Recompile")
-  "C" '(compile :which-key "Compile"))
+  "c" '("Recompile" . recompile)
+  "C" '("Compile" . compile))
 #+end_src
 ***** File
 #+begin_src emacs-lisp
@@ -507,15 +476,15 @@ Do something in other window
     (find-file (concat "/sudo:root@localhost:" file-name))))
 (my/general-global-menu! "File" "f"
 
-  "f" '(find-file :which-key "Find file")
-  "F" '(find-file-other-window :which-key "Find file other window")
-  "s" '(save-buffer :which-key "Save buffer")
-  "S" '(write-file :which-key "Save file as")
-  "r" '(recentf-open-files :which-key "Recent files")
-  "R" '(rename-file :which-key "Rename file")
-  "d" '(delete-file :which-key "Delete file")
-  "u" '(my/find-file-sudo :which-key "Find file as root")
-  "U" '(my/this-file-sudo :which-key "Open this file as root"))
+  "f" '("Find file" . find-file)
+  "F" '("Find file other window" . find-file-other-window)
+  "s" '("Save buffer" . save-buffer)
+  "S" '("Save file as" . write-file)
+  "r" '("Recent files" . recentf-open-files)
+  "R" '("Rename file" . rename-file)
+  "d" '("Delete file" . delete-file)
+  "u" '("Find file as root" . my/find-file-sudo)
+  "U" '("Open this file as root" . my/this-file-sudo))
 #+end_src
 ***** Git
 #+begin_src emacs-lisp
@@ -531,8 +500,8 @@ Do something in other window
   (start-process my/open-proc nil my/open-proc file))
 
 (my/general-global-menu! "Open" "o"
-                         "o" '((lambda () (interactive) (my/default-open (buffer-file-name))) :which-key "Open file")
-                         "s" '(shell :which-key "Shell"))
+                         "o" '("Open file" . (lambda () (interactive) (my/default-open (buffer-file-name))) )
+                         "s" '("Shell" . shell))
 #+end_src
 ***** REPL
 #+begin_src emacs-lisp
@@ -572,7 +541,7 @@ Do something in other window
   (if arg
       (call-interactively #'my/repl--choose)
     (my/repl--open-or-create)))
-(my/general-global-Open "r" '(my/repl :which-key "REPL"))
+(my/general-global-Open "r" '("REPL" . my/repl))
 #+end_src
 ***** Toggle
 #+begin_src emacs-lisp
@@ -583,8 +552,8 @@ Do something in other window
 		 (list (line-beginning-position) (line-end-position))))
   (comment-or-uncomment-region beg end))
 (my/general-global-menu! "Toggle" "t"
-  "d" '(toggle-debug-on-error :which-key "debug")
-  "/" '(comment-or-uncomment-region :which-key "comment"))
+  "d" '("debug" . toggle-debug-on-error)
+  "/" '("comment" . comment-or-uncomment-region))
 #+end_src
 ***** Search
 #+begin_src emacs-lisp
@@ -604,8 +573,8 @@ Do something in other window
     ("j" text-scale-decrease "zoom out")
     ("-" text-scale-decrease "zoom out"))
   (my/general-global-menu! "Hydras" "H"
-    "=" '(my/zoom-hydra/body :which-key "Zoom")
-    "-" '(my/zoom-hydra/body :which-key "Zoom")))
+    "=" '("Zoom" . my/zoom-hydra/body)
+    "-" '("Zoom" . my/zoom-hydra/body)))
 #+end_src
 ** evil
 #+begin_src emacs-lisp
@@ -630,9 +599,9 @@ Do something in other window
   (evil-set-initial-state 'dashboard-mode 'normal)
 
   (my/leader-def
-    "w" '(:keymap evil-window-map :which-key "Window"))
+    "w" '("Window" . evil-window-map))
   (my/leader-def
-    "u"  '(universal-argument :which-key "Universal argument")))
+    "u" '("Universal argument" . universal-argument)))
 
 (use-package evil-collection
   :after evil
@@ -707,17 +676,17 @@ Do something in other window
   (general-nmap "g>" 'my/mc-hydra/body)
   (general-vmap "g>" 'my/mc-hydra/body)
   (general-nmap
-    "gm"  '(:keymap evil-mc-cursors-map :which-key "Multi-cursor") 
+    "gm"  '("Multi-cursor" . evil-mc-cursors-map) 
     "M-d" 'evil-mc-make-and-goto-next-match
     "M-S-d" 'evil-mc-make-and-goto-prev-match)
   (general-vmap
     "A" 'evil-mc-make-cursor-in-visual-selection-end
     "I" 'evil-mc-make-cursor-in-visual-selection-beg)
   (my/general-global-menu! "Multi-Cursor" "c m"
-    "a" '(evil-mc-make-all-cursors :which-key "Make all cursors")
-    "n" '(evil-mc-make-and-goto-next-match :which-key "Make and go to next match")
-    "N" '(evil-mc-make-and-goto-prev-match :which-key "Make and go to previous match")
-    "q" '(evil-mc-undo-all-cursors :which-key "Undo all cursors"))
+    "a" '("Make all cursors" . evil-mc-make-all-cursors)
+    "n" '("Make and go to next match" . evil-mc-make-and-goto-next-match)
+    "N" '("Make and go to previous match" . evil-mc-make-and-goto-prev-match)
+    "q" '("Undo all cursors" . evil-mc-undo-all-cursors))
   (defhydra my/mc-hydra
     (:color pink :hint nil :pre (evil-mc-pause-cursors))
     "
@@ -743,7 +712,7 @@ Current pattern: %`evil-mc-pattern
     ("q" #'evil-mc-resume-cursors "quit" :color blue)
     ("<escape>" #'evil-mc-resume-cursors "quit" :color blue))
   (my/general-global-Hydras
-    "m" '(my/mc-hydra/body :which-key "Multi Cursor"))
+    "m" '("Multi Cursor" . my/mc-hydra/body))
   (global-evil-mc-mode 1))
 #+end_src
 *** Extra Text Objects
@@ -856,7 +825,7 @@ Current pattern: %`evil-mc-pattern
   :config
   (unicode-fonts-setup '(my/font/unicode-name))
   :init
-  (my/leader-def "U" '(insert-char :which-key "Insert Unicode char (by name)")))
+  (my/leader-def "U" '("Insert Unicode char (by name)" . insert-char)))
 #+end_src
 ** Dashboard
 #+begin_src emacs-lisp
@@ -969,7 +938,7 @@ Current pattern: %`evil-mc-pattern
 (load-theme 'modus-operandi t)
 (setq modus-themes-to-toggle '(modus-operandi modus-vivendi))
 (my/general-global-Toggle
-  "t" '(modus-themes-toggle :which-key "theme"))
+  "t" '("theme" . modus-themes-toggle))
 #+end_src
 
 ** Indent guides
@@ -1000,7 +969,7 @@ Current pattern: %`evil-mc-pattern
 #+begin_src emacs-lisp
 (global-visual-line-mode t)
 (my/general-global-Toggle
- "w" '(visual-line-mode :which-key "Word wrap"))
+ "w" '("Word wrap" . visual-line-mode))
 #+end_src
 ** Rainbow delimeters
 #+begin_src emacs-lisp
@@ -1036,10 +1005,10 @@ Current pattern: %`evil-mc-pattern
   ;; Persist local marks
   (append! desktop-locals-to-save evil-markers-alist)
   ;; Show Marks in buffer
-  (my/general-global-Open "`" '(evil-show-marks :which-key "Show marks"))
+  (my/general-global-Open "`" '("Show marks" . evil-show-marks))
   :config
   (setq evil-fringe-mark-show-special t)
-  (my/general-global-Toggle "f" '(evil-fringe-mark-mode :which-key "Evil Marks")))
+  (my/general-global-Toggle "f" '("Evil Marks" . evil-fringe-mark-mode)))
 #+end_src
 
 ** Bookmark
@@ -1049,12 +1018,12 @@ Current pattern: %`evil-mc-pattern
   :unless noninteractive
   :after evil
   :config (my/general-global-menu! "Bookmarks" "B"
-             "b" '(bookmark-jump :which-key "Jump")
-             "l" '(bookmark-bmenu-list :which-key "List")
-             "s" '(bookmark-set :which-key "Set")
-             "r" '(bookmark-rename :which-key "Rename")
-             "d" '(bookmark-delete :which-key "Delete")
-             "a" '(bookmark-set :which-key "Add"))
+             "b" '("Jump" . bookmark-jump)
+             "l" '("List" . bookmark-bmenu-list)
+             "s" '("Set" . bookmark-set)
+             "r" '("Rename" . bookmark-rename)
+             "d" '("Delete" . bookmark-delete)
+             "a" '("Add" . bookmark-set))
   :init
   (setq bookmark-default-file (concat my/cache-dir "bookmarks")
         bookmark-save-flag 1))
@@ -1068,7 +1037,7 @@ Current pattern: %`evil-mc-pattern
   :config
   (projectile-mode +1)
   (my/leader-def
-    "p" '(:keymap projectile-command-map :which-key "projectile"))
+    "p" '("projectile" . projectile-command-map))
   (setq projectile-switch-project-action #'projectile-dired)
   (defvar my/projectile-ignore-projects '("^/sudo:" "^/docker:" "^/nix/store"))
   (defun my/projectile-ignore-projects (project-root)
@@ -1088,9 +1057,9 @@ Current pattern: %`evil-mc-pattern
   :hook (after-init . persp-mode)
   :config
   (my/leader-def
-    "TAB" '(:keymap perspective-map :which-key "Workspaces"))
+    "TAB" '("Workspaces" . perspective-map))
   (general-def :keymaps 'perspective-map
-    "TAB" '(persp-switch :which-key "Switch"))
+    "TAB" '("Switch" . persp-switch))
   :hook (ibuffer . (lambda ()
 		     (persp-ibuffer-set-filter-groups)
 		     (unless (eq ibuffer-sorting-mode 'alphabetic)
@@ -1118,16 +1087,16 @@ Current pattern: %`evil-mc-pattern
   (tabspaces-keymap-prefix nil)
   :config
   (my/general-global-menu! "Workspaces" "TAB"
-    "C" '(tabspaces-clear-buffers :which-key "Clear buffers")
-    "r" '(tabspaces-remove-current-buffer :which-key "Remove current buffer")
-    "R" '(tabspaces-remove-selected-buffer :which-key "Remove selected buffer")
-    "d" '(tabspaces-close-workspace :which-key "Delete workspace")
-    "D" '(tabspaces-kill-buffers-close-workspace :which-key "Delete workspace and kill buffers")
-    "o" '(tabspaces-open-or-create-project-and-workspace :which-key "Open/Create project ws")
-    "s" '(tabspaces-switch-or-create-workspace :which-key "Switch/Create ws")
-    "TAB" '(tabspaces-switch-or-create-workspace :which-key "Switch/Create ws")
-    "t" '(tabspaces-switch-buffer-and-tab :which-key "Switch buffer and tab")
-    "b" '(tabspaces-switch-to-buffer :which-key "Switch buffer"))
+    "C" '("Clear buffers" . tabspaces-clear-buffers)
+    "r" '("Remove current buffer" . tabspaces-remove-current-buffer)
+    "R" '("Remove selected buffer" . tabspaces-remove-selected-buffer)
+    "d" '("Delete workspace" . tabspaces-close-workspace)
+    "D" '("Delete workspace and kill buffers" . tabspaces-kill-buffers-close-workspace)
+    "o" '("Open/Create project ws" . tabspaces-open-or-create-project-and-workspace)
+    "s" '("Switch/Create ws" . tabspaces-switch-or-create-workspace)
+    "TAB" '("Switch/Create ws" . tabspaces-switch-or-create-workspace)
+    "t" '("Switch buffer and tab" . tabspaces-switch-buffer-and-tab)
+    "b" '("Switch buffer" . tabspaces-switch-to-buffer))
   (setopt tab-bar-show nil))
   #+end_src
 * Buffer management
@@ -1137,7 +1106,7 @@ Current pattern: %`evil-mc-pattern
   :ensure nil
   :commands ibuffer
   :init (my/general-global-Buffer
-	  "i" '(ibuffer :which-key "ibuffer"))
+	  "i" '("ibuffer" . ibuffer))
   :config
   (setq ibuffer-expert t)
   (setq ibuffer-show-empty-filter-groups nil)
@@ -1156,7 +1125,7 @@ Current pattern: %`evil-mc-pattern
   :ensure nil
   :commands dired
   :config
-  (my/general-global-Open "d" '(dired :which-key "dired"))
+  (my/general-global-Open "d" '("dired" . dired))
   (setq dired-listing-switches "-alh --group-directories-first"
 	dired-dwim-target t
 	dired-recursive-copies 'always
@@ -1192,13 +1161,13 @@ Current pattern: %`evil-mc-pattern
     (let ((range (evil-textobj-tree-sitter--range 1 (list (intern thing)))))
       (fancy-narrow-to-region (car range) (cdr range))))
   (my/general-global-menu! "Narrow" "N"
-    "n" `(,(lambda () (interactive) (fancy-widen)) :which-key "widen")
-    "f" `(,(lambda () (interactive) (meain/fancy-narrow-to-thing "function.outer")) :which-key "function")
-    "c" `(,(lambda () (interactive) (meain/fancy-narrow-to-thing "class.outer")) :which-key "class")
-    "C" `(,(lambda () (interactive) (meain/fancy-narrow-to-thing "comment.outer")) :which-key "comment")
-    "o" `(,(lambda () (interactive) (meain/fancy-narrow-to-thing "loop.outer")) :which-key "loop")
-    "i" `(,(lambda () (interactive) (meain/fancy-narrow-to-thing "conditional.outer")) :which-key "conditional")
-    "a" `(,(lambda () (interactive) (meain/fancy-narrow-to-thing "parameter.outer")) :which-key "parameter"))
+    "n" `("widen" . ,(lambda () (interactive) (fancy-widen)))
+    "f" `("function" . ,(lambda () (interactive) (meain/fancy-narrow-to-thing "function.outer")))
+    "c" `("class" . ,(lambda () (interactive) (meain/fancy-narrow-to-thing "class.outer")))
+    "C" `("comment" . ,(lambda () (interactive) (meain/fancy-narrow-to-thing "comment.outer")))
+    "o" `("loop" . ,(lambda () (interactive) (meain/fancy-narrow-to-thing "loop.outer")))
+    "i" `("conditional" . ,(lambda () (interactive) (meain/fancy-narrow-to-thing "conditional.outer")))
+    "a" `("parameter" . ,(lambda () (interactive) (meain/fancy-narrow-to-thing "parameter.outer"))))
   ;; copied from doomemacs
   (defvar +tree-sitter-inner-text-objects-map (make-sparse-keymap))
   (defvar +tree-sitter-outer-text-objects-map (make-sparse-keymap))
@@ -1215,37 +1184,37 @@ Current pattern: %`evil-mc-pattern
     "[g" +tree-sitter-goto-previous-map
     "]g" +tree-sitter-goto-next-map)
   (general-def :keymaps '+tree-sitter-inner-text-objects-map
-    "A" `(,(evil-textobj-tree-sitter-get-textobj ("parameter.inner" "call.inner")) :which-key "call")
-    "f" `(,(evil-textobj-tree-sitter-get-textobj "function.inner") :which-key "function")
-    "F" `(,(evil-textobj-tree-sitter-get-textobj "call.inner") :which-key "call")
-    "C" `(,(evil-textobj-tree-sitter-get-textobj "class.inner") :which-key "class")
-    "v" `(,(evil-textobj-tree-sitter-get-textobj "conditional.inner") :which-key "conditional")
-    "l" `(,(evil-textobj-tree-sitter-get-textobj "loop.inner") :which-key "loop")
-    "c" `(,(evil-textobj-tree-sitter-get-textobj "comment.inner") :which-key "comment"))
+    "A" `("call" . ,(evil-textobj-tree-sitter-get-textobj ("parameter.inner" "call.inner")))
+    "f" `("function" . ,(evil-textobj-tree-sitter-get-textobj "function.inner"))
+    "F" `("call" . ,(evil-textobj-tree-sitter-get-textobj "call.inner"))
+    "C" `("class" . ,(evil-textobj-tree-sitter-get-textobj "class.inner"))
+    "v" `("conditional" . ,(evil-textobj-tree-sitter-get-textobj "conditional.inner"))
+    "l" `("loop" . ,(evil-textobj-tree-sitter-get-textobj "loop.inner"))
+    "c" `("comment" . ,(evil-textobj-tree-sitter-get-textobj "comment.inner")))
   (general-def :keymaps '+tree-sitter-outer-text-objects-map
-    "A" `(,(evil-textobj-tree-sitter-get-textobj ("parameter.outer" "call.outer")) :which-key "call")
-    "f" `(,(evil-textobj-tree-sitter-get-textobj "function.outer") :which-key "function")
-    "F" `(,(evil-textobj-tree-sitter-get-textobj "call.outer") :which-key "call")
-    "C" `(,(evil-textobj-tree-sitter-get-textobj "class.outer") :which-key "class")
-    "v" `(,(evil-textobj-tree-sitter-get-textobj "conditional.outer") :which-key "conditional")
-    "l" `(,(evil-textobj-tree-sitter-get-textobj "loop.outer") :which-key "loop")
-    "c" `(,(evil-textobj-tree-sitter-get-textobj "comment.outer") :which-key "comment"))
+    "A" `("call" . ,(evil-textobj-tree-sitter-get-textobj ("parameter.outer" "call.outer")))
+    "f" `("function" . ,(evil-textobj-tree-sitter-get-textobj "function.outer"))
+    "F" `("call" . ,(evil-textobj-tree-sitter-get-textobj "call.outer"))
+    "C" `("class" . ,(evil-textobj-tree-sitter-get-textobj "class.outer"))
+    "v" `("conditional" . ,(evil-textobj-tree-sitter-get-textobj "conditional.outer"))
+    "l" `("loop" . ,(evil-textobj-tree-sitter-get-textobj "loop.outer"))
+    "c" `("comment" . ,(evil-textobj-tree-sitter-get-textobj "comment.outer")))
   (general-def :keymaps '+tree-sitter-goto-previous-map
-    "A" `(,(evil-textobj-tree-sitter-get-textobj ("parameter.outer" "call.outer") t) :which-key "call")
-    "f" `(,(evil-textobj-tree-sitter-get-textobj "function.outer" t) :which-key "function")
-    "F" `(,(evil-textobj-tree-sitter-get-textobj "call.outer" t) :which-key "call")
-    "C" `(,(evil-textobj-tree-sitter-get-textobj "class.outer" t) :which-key "class")
-    "c" `(,(evil-textobj-tree-sitter-get-textobj "comment.outer" t) :which-key "comment")
-    "v" `(,(evil-textobj-tree-sitter-get-textobj "conditional.outer" t) :which-key "conditional")
-    "l" `(,(evil-textobj-tree-sitter-get-textobj "loop.outer" t) :which-key "loop"))
+    "A" `("call" . ,(evil-textobj-tree-sitter-get-textobj ("parameter.outer" "call.outer") t))
+    "f" `("function" . ,(evil-textobj-tree-sitter-get-textobj "function.outer" t))
+    "F" `("call" . ,(evil-textobj-tree-sitter-get-textobj "call.outer" t))
+    "C" `("class" . ,(evil-textobj-tree-sitter-get-textobj "class.outer" t))
+    "c" `("comment" . ,(evil-textobj-tree-sitter-get-textobj "comment.outer" t))
+    "v" `("conditional" . ,(evil-textobj-tree-sitter-get-textobj "conditional.outer" t))
+    "l" `("loop" . ,(evil-textobj-tree-sitter-get-textobj "loop.outer" t)))
   (general-def :keymaps '+tree-sitter-goto-next-map
-    "A" `(,(evil-textobj-tree-sitter-get-textobj ("parameter.outer" "call.outer")) :which-key "call")
-    "f" `(,(evil-textobj-tree-sitter-get-textobj "function.outer") :which-key "function")
-    "F" `(,(evil-textobj-tree-sitter-get-textobj "call.outer") :which-key "call")
-    "C" `(,(evil-textobj-tree-sitter-get-textobj "class.outer") :which-key "class")
-    "c" `(,(evil-textobj-tree-sitter-get-textobj "comment.outer") :which-key "comment")
-    "v" `(,(evil-textobj-tree-sitter-get-textobj "conditional.outer") :which-key "conditional")
-    "l" `(,(evil-textobj-tree-sitter-get-textobj "loop.outer") :which-key "loop")))
+    "A" `("call" . ,(evil-textobj-tree-sitter-get-textobj ("parameter.outer" "call.outer")))
+    "f" `("function" . ,(evil-textobj-tree-sitter-get-textobj "function.outer"))
+    "F" `("call" . ,(evil-textobj-tree-sitter-get-textobj "call.outer"))
+    "C" `("class" . ,(evil-textobj-tree-sitter-get-textobj "class.outer"))
+    "c" `("comment" . ,(evil-textobj-tree-sitter-get-textobj "comment.outer"))
+    "v" `("conditional" . ,(evil-textobj-tree-sitter-get-textobj "conditional.outer"))
+    "l" `("loop" . ,(evil-textobj-tree-sitter-get-textobj "loop.outer"))))
 #+end_src
 * Eval region
 #+begin_src emacs-lisp
@@ -1283,8 +1252,8 @@ Current pattern: %`evil-mc-pattern
   :ensure nil ;; built-in
   :commands (calc full-calc)
   :init (my/general-global-Open
-	     "c" '(calc :which-key "calc")
-	     "C" '(full-calc :which-key "full-calc"))
+	     "c" '("calc" . calc)
+	     "C" '("full-calc" . full-calc))
   :config
   (setq calc-angle-mode 'rad
 	calc-algebraic-mode t
@@ -1305,14 +1274,14 @@ Current pattern: %`evil-mc-pattern
   :after evil
   :config
   (my/general-global-menu! "naming convention" "c ~"
-    "~" '(string-inflection-all-cycle :which-key "cycle")
-    "t" '(string-inflection-toggle :which-key "toggle")
-    "c" '(string-inflection-camelcase :which-key "CamelCase")
-    "d" '(string-inflection-lower-camelcase :which-key "downCase")
-    "k" '(string-inflection-kebab-case :which-key "kebab-case")
-    "_" '(string-inflection-underscore :which-key "under_score")
-    "u" '(string-inflection-capital-underscore :which-key "Upper_Score")
-    "U" '(string-inflection-upcase :which-key "UP_CASE"))
+    "~" '("cycle" . string-inflection-all-cycle)
+    "t" '("toggle" . string-inflection-toggle)
+    "c" '("CamelCase" . string-inflection-camelcase)
+    "d" '("downCase" . string-inflection-lower-camelcase)
+    "k" '("kebab-case" . string-inflection-kebab-case)
+    "_" '("under_score" . string-inflection-underscore)
+    "u" '("Upper_Score" . string-inflection-capital-underscore)
+    "U" '("UP_CASE" . string-inflection-upcase))
   (evil-define-operator evil-operator-string-inflection (beg end _type)
     "Define a new evil operator that cycles symbol casing."
     :move-point nil
@@ -1338,7 +1307,7 @@ Current pattern: %`evil-mc-pattern
   :hook (prog-mode . show-smartparens-mode)
   :config
   (my/general-global-Toggle "p" #'smartparens-mode)
-  (require 'smartparens-config)
+  (use-package smartparens-config :ensure nil)
   (sp-local-pair '(minibuffer-mode minibuffer-inactive-mode emacs-lisp-mode) "'" nil :actions nil)
   (sp-local-pair '(minibuffer-mode minibuffer-inactive-mode emacs-lisp-mode) "`" nil :actions nil)
   (show-smartparens-global-mode t))
@@ -1370,11 +1339,10 @@ Current pattern: %`evil-mc-pattern
 (use-package tldr
   :unless noninteractive
   :commands (tldr tldr-update-docs)
-  :init
-  (my/general-global-menu! "Command line help" "h h"
-                           "t" '(tldr :which-key "tldr")
-                           "h" '(man :which-key "man")
-                           "w" '(woman :which-key "Woman"))
+  :bind (:map help-map
+	      ("t" . tldr)
+	      ("h" . man)
+	      ("w" . woman))
   :config
   (setq tldr-directory-path (concat my/cache-dir "tldr/")))
 #+end_src
@@ -1383,7 +1351,7 @@ Current pattern: %`evil-mc-pattern
 (use-package devdocs
   :commands devdocs-lookup
   :init (general-def 'help-map
-	  "d" '(devdocs-lookup :which-key "Devdocs")))
+	  "d" '("Devdocs" . devdocs-lookup)))
 #+end_src
 * Undo
 ** Undo Fu
@@ -1509,21 +1477,21 @@ Current pattern: %`evil-mc-pattern
   :unless noninteractive
   :config
   (my/general-global-menu! "Completions" "c p"
-    "p" '(completion-at-point :which-key "Complete at point")
-    "t" '(complete-tag :which-key "Complete tag")
-    "d" '(cape-dabbrev :which-key "Dabbrev")
-    "f" '(cape-file :which-key "File")
-    "k" '(cape-keyword :which-key "Keyword")
-    "s" '(cape-symbol :which-key "Symbol")
-    "a" '(cape-abbrev :which-key "Abbrev")
-    "i" '(cape-ispell :which-key "Ispell")
-    "l" '(cape-line :which-key "Line")
-    "w" '(cape-dict :which-key "Dict")
-    "\\" '(cape-tex :which-key "Tex")
-    "_" '(cape-tex :which-key "Tex")
-    "^" '(cape-tex :which-key "Tex")
-    "&" '(cape-sgml :which-key "Sgml")
-    "r" '(cape-rfc1345 :which-key "Rfc1345"))
+    "p" '("Complete at point" . completion-at-point)
+    "t" '("Complete tag" . complete-tag)
+    "d" '("Dabbrev" . cape-dabbrev)
+    "f" '("File" . cape-file)
+    "k" '("Keyword" . cape-keyword)
+    "s" '("Symbol" . cape-symbol)
+    "a" '("Abbrev" . cape-abbrev)
+    "i" '("Ispell" . cape-ispell)
+    "l" '("Line" . cape-line)
+    "w" '("Dict" . cape-dict)
+    "\\" '("Tex" . cape-tex)
+    "_" '("Tex" . cape-tex)
+    "^" '("Tex" . cape-tex)
+    "&" '("Sgml" . cape-sgml)
+    "r" '("Rfc1345" . cape-rfc1345))
   (append! completion-at-point-functions
     #'cape-abbrev
     #'cape-file
@@ -1640,22 +1608,22 @@ Current pattern: %`evil-mc-pattern
 	     consult-man)
   :init
   (my/leader-def
-    "/" '(consult-ripgrep :which-key "Search project"))
+    "/" '("Search project" . consult-ripgrep))
   (my/general-global-Search
-    "s" '(consult-line :which-key "Search line"))
+    "s" '("Search line" . consult-line))
   (my/general-global-Buffer
-    "b" '(consult-buffer :which-key "Buffer selection"))
+    "b" '("Buffer selection" . consult-buffer))
   (my/general-global-File
-    "r" '(consult-recent-file :which-key "Recent File"))
+    "r" '("Recent File" . consult-recent-file))
   (general-def :keymaps 'help-map
-    "h m" '(consult-man :which-key "Manpage")))
+    "h m" '("Manpage" . consult-man)))
 (use-package consult-flymake
   :ensure consult
   :commands consult-flymake
   :init
   (after! flycheck
 	  (my/general-global-menu! "Errors" "c e"
-	    "f" '(consult-flymake :which-key "Consult Flymake"))))
+	    "f" '("Consult Flymake" . consult-flymake))))
 #+end_src
 ** Embark
 #+begin_src emacs-lisp
@@ -1678,16 +1646,16 @@ Current pattern: %`evil-mc-pattern
   (add-popup! #'embark-collect-mode)
   :init
   (my/general-global-menu! "Embark" "e"
-    "o" '(embark-export :which-key "export")
-    "e" '(embark-act :which-key "act")
-    "b" '(embark-bindings :which-key "bindings")
-    "c" '(embark-collect :which-key "collect"))
+    "o" '("export" . embark-export)
+    "e" '("act" . embark-act)
+    "b" '("bindings" . embark-bindings)
+    "c" '("collect" . embark-collect))
   (general-def
     :prefix "C-c e"
-    "o" '(embark-export :which-key "export")
-    "e" '(embark-act :which-key "act")
-    "b" '(embark-bindings :which-key "bindings")
-    "c" '(embark-collect :which-key "collect")))
+    "o" '("export" . embark-export)
+    "e" '("act" . embark-act)
+    "b" '("bindings" . embark-bindings)
+    "c" '("collect" . embark-collect)))
 (use-package embark-consult
   :if (and (featurep 'embark)
 	   (featurep 'consult))
@@ -1712,7 +1680,7 @@ Current pattern: %`evil-mc-pattern
   :commands vterm
   :custom
   (vterm-shell (or (getenv "SHELL") (executable-find "fish") (executable-find "bash")))
-  :init (my/general-global-Open "t" '(vterm :which-key "vterm"))
+  :init (my/general-global-Open "t" '("vterm" . vterm))
   :config
   (defun my/vterm--auto-close-window (buf event)
     (when (y-or-n-p (concat event " - kill buffer: " (buffer-name buf) "?"))
@@ -1731,7 +1699,7 @@ Current pattern: %`evil-mc-pattern
   :init
   (setq my/repl-fallback #'eshell)
   (my/general-global-Open
-    "e" '(eshell :which-key "eshell"))
+    "e" '("eshell" . eshell))
   (setq eshell-aliases-file (concat my/cache-dir "eshell/alias")
 	eshell-history-file-name (concat my/cache-dir "eshell/history")
 	eshell-buffer-maximum-lines 10000
@@ -1761,11 +1729,11 @@ Current pattern: %`evil-mc-pattern
   :unless noninteractive
   :config
   (my/general-global-Errors
-    "e" '(flycheck-list-errors :which-key "List errors")
-    "n" '(flycheck-next-error :which-key "Next error")
-    "p" '(flycheck-previous-error :which-key "Previous error")
-    "d" '(flycheck-describe-checker :which-key "Describe checker")
-    "v" '(flycheck-verify-setup :which-key "Verify setup"))
+    "e" '("List errors" . flycheck-list-errors)
+    "n" '("Next error" . flycheck-next-error)
+    "p" '("Previous error" . flycheck-previous-error)
+    "d" '("Describe checker" . flycheck-describe-checker)
+    "v" '("Verify setup" . flycheck-verify-setup))
   (global-flycheck-mode)
   (add-popup! "^\\*Flycheck.*\\*$" #'flycheck-error-list-mode)
   :custom
@@ -1785,8 +1753,8 @@ Current pattern: %`evil-mc-pattern
     "[s" '("Spelling error" . jinx-previous)
     "z=" 'jinx-correct)
   (after! vertico
-	  (require 'vertico-grid)
-	  (require 'vertico-multiform)
+	  (use-package vertico-grid :ensure nil)
+	  (use-package vertico-multiform :ensure nil)
 	  (add-to-list 'vertico-multiform-categories
 		       '(jinx grid (vertico-grid-annotate . 20)))
 	  (vertico-multiform-mode 1)))
@@ -1812,12 +1780,12 @@ Current pattern: %`evil-mc-pattern
   (setq git-commit-fill-column 72)
   :config
   (my/general-global-Git
-    "g" '(magit-status :which-key "Status")
-    "b" '(magit-blame :which-key "Blame")
-    "l" '(magit-log :which-key "Log")
-    "G" '(magit-status-here :which-key "Status here")
-    "B" '(magit-blame-here :which-key "Blame here")
-    "S" '(magit-stage-file :which-key "Stage file"))
+    "g" '("Status" . magit-status)
+    "b" '("Blame" . magit-blame)
+    "l" '("Log" . magit-log)
+    "G" '("Status here" . magit-status-here)
+    "B" '("Blame here" . magit-blame-here)
+    "S" '("Stage file" . magit-stage-file))
   (add-popup! "\\*\\*magit-process:.*\\*\\*")
   (setq magit-buffer-name-format (concat "*" magit-buffer-name-format "*"))
   (append! magit-status-sections-hook #'magit-insert-modules)
@@ -1840,7 +1808,7 @@ Current pattern: %`evil-mc-pattern
   :init
   (setq git-timemachine-show-minibuffer-details t)
   (my/general-global-Git
-    "t" '(git-timemachine :which-key "Time machine"))
+    "t" '("Time machine" . git-timemachine))
   :config
   (add-hook 'git-timemachine-mode-hook 'evil-normalize-keymaps)
   (general-def :keymaps 'git-timemachine-mode-map
@@ -1894,13 +1862,13 @@ Git gutter:
 		(git-gutter+-clear))
      :color blue))
   (my/general-global-Hydras
-    "g" '(hydra-git-gutter/body :which-key "Git"))
+    "g" '("Git" . hydra-git-gutter/body))
   (global-git-gutter+-mode t)
   (my/general-global-Git
-    "n" '(git-gutter+-next-hunk :which-key "next hunk")
-    "p" '(git-gutter+-previous-hunk :which-key "previous hunk")
-    "s" '(git-gutter+-stage-hunks :which-key "stage hunk")
-    "r" '(git-gutter+-revert-hunk :which-key "revert hunk")))
+    "n" '("next hunk" . git-gutter+-next-hunk)
+    "p" '("previous hunk" . git-gutter+-previous-hunk)
+    "s" '("stage hunk" . git-gutter+-stage-hunks)
+    "r" '("revert hunk" . git-gutter+-revert-hunk)))
 #+end_src
 ** Forge
 #+begin_src emacs-lisp
@@ -2006,7 +1974,10 @@ Git gutter:
 (use-package eldoc
   :ensure nil
   :unless noninteractive
-  :diminish
+  :disabled t
+  :hook
+  (eglot-mode . eldoc-mode)
+  (emacs-lisp-mode . eldoc-mode)
   :config
   (add-popup! "\\*eldoc\\*")
   :custom
@@ -2031,7 +2002,7 @@ Git gutter:
   :config
 
   (my/leader-def
-    "d" '(:keymap dape-global-map :which-key "Debug"))
+    "d" '("Debug" . dape-global-map))
   ;; By default dape uses gdb keybinding prefix
   (setq dape-key-prefix "\C-x\C-a")
 
@@ -2098,8 +2069,8 @@ Git gutter:
   (add-hook 'python-ts-mode-hook #'my/treesit-mode) 
 
   (my/local-leader-def python-mode
-      "r" '(run-python :which-key "repl/python")
-      "b" '(python-shell-send-buffer :which-key "send buffer to repl"))
+      "r" '("repl/python" . run-python)
+      "b" '("send buffer to repl" . python-shell-send-buffer))
   (after! dape
 	  ;; for some reason "python" doesn't find the module "debugpy". It seems that dape
 	  ;; uses a strange way to lookup in path. This lets it find the installed debugger
@@ -2132,7 +2103,7 @@ Git gutter:
   (add-hook 'pyvenv-post-activate-hooks (lambda ()
 					  (pyvenv-restart-python)))
   (my/local-leader-def-python-mode
-   "v" '(pyvenv-workon :wk "workon"))
+   "v" '("workon" . pyvenv-workon))
   :after python
   :hook (python-mode . pyvenv-mode))
 
@@ -2140,7 +2111,7 @@ Git gutter:
   :after python
   :hook (python-mode . poetry-tracking-mode)
   :config (my/local-leader-def-python-mode
-	     "p" '(poetry :wk "poetry")))
+	     "p" '("poetry" . poetry)))
 
 #+end_src
 *** Numpy Docstring
@@ -2151,7 +2122,7 @@ Git gutter:
   (after! yasnippet
           (setq numpydoc-insertion-style 'numpydoc))
   :config (my/local-leader-def-python-mode
-           "d" '(numpydoc-generate :which-key "generate docstring")))
+           "d" '("generate docstring" . numpydoc-generate)))
 #+end_src
 ** Rust
 #+begin_src emacs-lisp
@@ -2168,21 +2139,21 @@ Git gutter:
   (add-hook 'rustic-mode-hook 'eglot-ensure)
   (setq rustic-indent-method-chain t)
   (my/local-leader-def rustic-mode
-		       "b" '(nil :which-key "build")
-		       "bb" '(rustic-cargo-build :which-key "build")
-		       "br" '(rustic-cargo-run :which-key "run")
-		       "ba" '(rustic-cargo-audit :which-key "audit")
-		       "bt" '(rustic-cargo-test :which-key "test")
-		       "bc" '(rustic-cargo-check :which-key "check")
-		       "bd" '(rustic-cargo-build-doc :which-key "doc")
-		       "bD" '(rustic-cargo-doc :which-key "doc open")
-		       "bn" '(rustic-cargo-new :which-key "new")
-		       "c" '(nil :which-key "cargo")
-		       "co" '(rustic-cargo-outdated :which-key "outdated")
-		       "ca" '(rustic-cargo-add :which-key "add")
-		       "cd" '(rustic-cargo-rm :which-key "rm")
-		       "cA" '(rustic-cargo-add-missing-dependencies :which-key "add missing")
-		       "m" '(rustic-cargo-expand :which-key "macro expand")))
+		       "b" '("build" . nil)
+		       "bb" '("build" . rustic-cargo-build)
+		       "br" '("run" . rustic-cargo-run)
+		       "ba" '("audit" . rustic-cargo-audit)
+		       "bt" '("test" . rustic-cargo-test)
+		       "bc" '("check" . rustic-cargo-check)
+		       "bd" '("doc" . rustic-cargo-build-doc)
+		       "bD" '("doc open" . rustic-cargo-doc)
+		       "bn" '("new" . rustic-cargo-new)
+		       "c" '("cargo" . nil)
+		       "co" '("outdated" . rustic-cargo-outdated)
+		       "ca" '("add" . rustic-cargo-add)
+		       "cd" '("rm" . rustic-cargo-rm)
+		       "cA" '("add missing" . rustic-cargo-add-missing-dependencies)
+		       "m" '("macro expand" . rustic-cargo-expand)))
 (use-package rustic-babel
   :ensure nil
   :after org
@@ -2203,7 +2174,7 @@ Git gutter:
   :mode ("\\.hs\\'" . haskell-mode)
   :mode ("\\.cabal\\'" . haskell-cabal-mode)
   :config
-  (require 'haskell)
+  (use-package haskell :ensure nil)
   (add-hook 'haskell-mode-hook 'eglot-ensure)
   (my/local-leader-def haskell-mode
       "b" 'haskell-process-cabal-build
@@ -2337,10 +2308,10 @@ Mostly only used for double checking after org export.
   :commands mu4e
   :init
   (add-to-list 'recentf-exclude my/mail-dir)
-  (my/general-global-Open "m" '(mu4e :which-key "Email"))
+  (my/general-global-Open "m" '("Email" . mu4e))
   :config
   (my/local-leader-def mu4e-headers-mode
-      "u" '(mu4e-update-mail-and-index :which-key "Update"))
+      "u" '("Update" . mu4e-update-mail-and-index))
   ;; Context switching for multiple accounts
   (defun my/create-mu4e-context (name address signature server &optional key)
     (unless key (setq key (substring name 0 1)))
@@ -2504,7 +2475,7 @@ Mostly only used for double checking after org export.
     "T" #'org-todo-list
     "x" #'org-toggle-checkbox
 
-    "a" '(nil :which-key "attachments")
+    "a" '("attachments" . nil)
     "aa" 'org-attach
     "ad" 'org-attach-delete-one
     "aD" 'org-attach-delete-all
@@ -2519,7 +2490,7 @@ Mostly only used for double checking after org export.
     "as" 'org-attach-set-directory
     "aS" 'org-attach-sync
 
-    "b" '(nil :which-key "tabels")
+    "b" '("tabels" . nil)
     "b-" 'org-table-insert-hline
     "ba" 'org-table-align
     "bb" 'org-table-blank-field
@@ -2531,17 +2502,17 @@ Mostly only used for double checking after org export.
     "br" 'org-table-recalculate
     "bR" 'org-table-recalculate-buffer-tables
 
-    "bd" '(nil :which-key "delete")
+    "bd" '("delete" . nil)
     "bdc" 'org-table-delete-column
     "bdr" 'org-table-kill-row
 
-    "bi" '(nil :which-key "insert")
+    "bi" '("insert" . nil)
     "bic" 'org-table-insert-column
     "bih" 'org-table-insert-hline
     "bir" 'org-table-insert-row
     "biH" 'org-table-hline-and-move
 
-    "l" '(nil :which-key "links")
+    "l" '("links" . nil)
     "lc" 'org-cliplink
     "ld" '+org/remove-link
     "li" 'org-id-store-link
@@ -2553,7 +2524,7 @@ Mostly only used for double checking after org export.
     "lg" '(org-mac-link-get-link :if IS-MAC)
 
 
-    "s" '(nil :which-key "subtree")
+    "s" '("subtree" . nil)
     "sa" 'org-toggle-archive-tag
     "sb" 'org-tree-to-indirect-buffer
     "sc" 'org-clone-subtree-with-time-shift
@@ -2577,7 +2548,7 @@ Mostly only used for double checking after org export.
   :if (and IS-PERSONAL (executable-find "pass") (file-exists-p (concat (getenv "PASSWORD_STORE_DIR") "/google.com/api/client_secret.gpg")))
   :commands (org-gcal-sync)
   :init (my/general-global-Open
-	     "a" '(org-gcal-sync :which-key "agenda"))
+	     "a" '("agenda" . org-gcal-sync))
   :custom
   (org-gcal-client-id (auth-source-pass-get 'secret "google.com/api/client_id"))
   (org-gcal-client-secret (auth-source-pass-get 'secret "google.com/api/client_secret"))
@@ -2674,7 +2645,7 @@ Mostly only used for double checking after org export.
   :config
   (add-popup! "\\*Deft\\*")
   :init (my/general-global-Notes
-             "d" '(deft :which-key "deft")))
+             "d" '("deft" . deft)))
 #+end_src
 *** Roam
 #+begin_src emacs-lisp
@@ -2690,21 +2661,21 @@ Mostly only used for double checking after org export.
      <<roam-templates>>
      ))
   :init (my/general-global-Notes
-	  "r"  '(nil :which-key "roam")
-	  "rf" '(org-roam-node-find :which-key "find")
-	  "ri" '(org-roam-node-insert :which-key "insert")
-	  "rg" '(org-roam-graph :which-key "graph")
-	  "rt" '(org-roam-dailies-find-today :which-key "today")
-	  "ry" '(org-roam-dailies-find-yesterday :which-key "yesterday")
-	  "rr" '(org-roam-dailies-find-tomorrow :which-key "tomorrow")
-	  "rd" '(org-roam-dailies-find-date :which-key "date")
-	  "rc" '(org-roam-dailies-capture-today :which-key "capture today")
-	  "rC" '(org-roam-dailies-capture-tomorrow :which-key "capture tomorrow")
-	  "rD" '(org-roam-dailies-capture-date :which-key "capture date")
-	  "rl" '(org-roam-buffer-toggle-display :which-key "toggle display")
-	  "rL" '(org-roam-buffer-display-dedicated :which-key "display dedicated")
-	  "rs" '(org-roam-db-sync :which-key "sync")
-	  "rS" '(org-roam-server-mode :which-key "server")))
+	  "r" '("roam" . nil)
+	  "rf" '("find" . org-roam-node-find)
+	  "ri" '("insert" . org-roam-node-insert)
+	  "rg" '("graph" . org-roam-graph)
+	  "rt" '("today" . org-roam-dailies-find-today)
+	  "ry" '("yesterday" . org-roam-dailies-find-yesterday)
+	  "rr" '("tomorrow" . org-roam-dailies-find-tomorrow)
+	  "rd" '("date" . org-roam-dailies-find-date)
+	  "rc" '("capture today" . org-roam-dailies-capture-today)
+	  "rC" '("capture tomorrow" . org-roam-dailies-capture-tomorrow)
+	  "rD" '("capture date" . org-roam-dailies-capture-date)
+	  "rl" '("toggle display" . org-roam-buffer-toggle-display)
+	  "rL" '("display dedicated" . org-roam-buffer-display-dedicated)
+	  "rs" '("sync" . org-roam-db-sync)
+	  "rS" '("server" . org-roam-server-mode)))
 #+end_src
 **** Templates
 :PROPERTIES:
@@ -2927,12 +2898,12 @@ DOCSTRING and BODY are as in `defun'.
   :after (evil org)
   :hook (org-mode . evil-org-mode)
   :config
-  (require 'evil-org-agenda)
+  (use-package evil-org-agenda :ensure nil)
   (evil-org-agenda-set-keys)
   (add-hook 'evil-org-mode-hook
 	    (lambda ()
 	      (evil-org-set-key-theme)))
-  (require 'evil-org-agenda)
+  (use-package evil-org-agenda :ensure nil)
   (evil-org-agenda-set-keys))
 #+end_src
 ** Org Src
@@ -2940,7 +2911,7 @@ DOCSTRING and BODY are as in `defun'.
 (use-package org-src-context
   :after org
   :init (my/local-leader-def-org-mode
-	  "S" '(org-src-context-mode :which-key "src LSP")))
+	  "S" '("src LSP" . org-src-context-mode)))
 #+end_src
 ** Poly Org
 #+begin_src emacs-lisp
@@ -2950,7 +2921,7 @@ DOCSTRING and BODY are as in `defun'.
   :after org
   :init
   (my/local-leader-def-org-mode
-    "p" '(poly-org-mode :which-key "poly-org-mode")))
+    "p" '("poly-org-mode" . poly-org-mode)))
 #+end_src
 * Local Variables
 # Local Variables:
