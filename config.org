@@ -1123,10 +1123,17 @@ Current pattern: %`evil-mc-pattern
 (use-package dired
   :unless noninteractive
   :ensure nil
-  :commands dired
+  ;; :commands (dired dired-jump dired-jump-other-window)
+  :init
+  (my/general-global-Open
+    "/" '("dired other dir" . dired)
+    "d" '("dired" . dired-jump)
+    "D" '("dired other window" . dired-jump-other-window))
   :config
-  (my/general-global-Open "d" '("dired" . dired))
-  (setq dired-listing-switches "-alh --group-directories-first"
+  (require 'dired-aux)
+  (require 'dired-x)
+  ;; (setq dired-listing-switches "-lah --group-directories-first"
+  (setq dired-listing-switches "-lahFLHvZD --group-directories-first"
 	dired-dwim-target t
 	dired-recursive-copies 'always
 	dired-recursive-deletes 'always
@@ -1135,9 +1142,67 @@ Current pattern: %`evil-mc-pattern
 	insert-directory-program (if IS-MAC (executable-find "gls") insert-directory-program)
 	dired-use-ls-dired t
 	dired-auto-revert-buffer t
-      dired-kill-when-opening-new-dired-buffer t)
+	dired-kill-when-opening-new-dired-buffer t)
   (add-hook 'dired-mode-hook #'hl-line-mode)
   (add-hook 'dired-mode-hook #'dired-omit-mode))
+#+end_src
+** Writable file tree
+#+begin_src emacs-lisp
+(use-package wdired
+  :ensure nil
+  :custom
+  (wdired-allow-to-change-permissions 'advanced)
+  (wdired-allow-to-redirect-links t)
+  (wdired-confirm-overwrite t)
+  :config
+  (after! evil-collection
+	  (evil-collection-wdired-setup)))
+#+end_src
+** Preview
+#+begin_src emacs-lisp
+(use-package dired-preview
+  :hook  (dired-mode . dired-preview-mode)
+  :custom
+  (dired-preview-delay 0.7)
+  (dired-preview-max-size (* 1024 1024 1024))
+  ;; Default values for demo purposes
+  (dired-preview-ignored-extensions-regexp
+   (concat "\\."
+	   "\\(mkv\\|webm\\|mp4\\|mp3\\|ogg\\|m4a"
+	   "\\|gz\\|zst\\|tar\\|xz\\|rar\\|zip"
+	   "\\|iso\\|epub\\|pdf\\)"))
+  :config
+  (defun dired-preview--find-file-no-select (file)
+    (let ((inhibit-message t)
+	  (enable-local-variables :safe)
+	  (non-essential t)
+	  (delay-mode-hooks t))
+      (cl-letf (((symbol-function 'recentf-push) #'ignore))
+	(find-file-noselect file :nowarn)))))
+#+end_src
+** Icons
+#+begin_src emacs-lisp
+(use-package nerd-icons-dired
+  :hook
+  (dired-mode . nerd-icons-dired-mode))
+#+end_src
+** Colors
+#+begin_src emacs-lisp
+(use-package diredfl
+  :after dired
+  :config (diredfl-global-mode))
+#+end_src
+** Git info
+#+begin_src emacs-lisp
+(use-package dired-git-info
+  :custom
+  (dgi-auto-hide-details-p nil)
+  :hook (dired-after-readin . dired-git-info-auto-enable))
+#+end_src
+** Copy
+#+begin_src emacs-lisp
+(use-package dired-rsync
+  :bind ([remap dired-do-copy] . dired-rsync))
 #+end_src
 * Tree Sitter
 #+begin_src emacs-lisp
@@ -2266,7 +2331,7 @@ Git gutter:
 
 (use-package docker
   :commands docker
-  :init (my/general-global-Open "D" 'docker))
+  :init (my/general-global-Open "!" '("Container" . docker)))
 #+end_src
 ** Latex
 Mostly only used for double checking after org export.
