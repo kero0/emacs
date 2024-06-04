@@ -1127,16 +1127,15 @@ Current pattern: %`evil-mc-pattern
 (use-package dired
   :unless noninteractive
   :ensure nil
-  ;; :commands (dired dired-jump dired-jump-other-window)
-  :init
-  (my/general-global-Open
-    "/" '("dired other dir" . dired)
-    "d" '("dired" . dired-jump)
-    "D" '("dired other window" . dired-jump-other-window))
+  :commands (dired dired-jump dired-jump-other-window)
+  :bind
+  (:map my/general-global-Open-map
+	("/" . dired)
+	("d". dired-jump)
+	("D". dired-jump-other-window))
   :config
   (require 'dired-aux)
   (require 'dired-x)
-  ;; (setq dired-listing-switches "-lah --group-directories-first"
   (setq dired-listing-switches "-lahFLHvZD --group-directories-first"
 	dired-dwim-target t
 	dired-recursive-copies 'always
@@ -1153,14 +1152,17 @@ Current pattern: %`evil-mc-pattern
 ** Writable file tree
 #+begin_src emacs-lisp
 (use-package wdired
-  :ensure nil
-  :custom
-  (wdired-allow-to-change-permissions 'advanced)
-  (wdired-allow-to-redirect-links t)
-  (wdired-confirm-overwrite t)
-  :config
-  (after! evil-collection
-	  (evil-collection-wdired-setup)))
+    :ensure nil
+    :after dired
+    :custom
+    (wdired-allow-to-change-permissions 'advanced)
+    (wdired-allow-to-redirect-links t)
+    (wdired-confirm-overwrite t)
+    :config
+    (my/local-leader-def dired-mode-map
+        "w" '("wdired" . wdired-change-to-wdired-mode))
+    (after! evil-collection
+	    (evil-collection-wdired-setup)))
 #+end_src
 ** Preview
 #+begin_src emacs-lisp
@@ -1195,13 +1197,6 @@ Current pattern: %`evil-mc-pattern
 (use-package diredfl
   :after dired
   :config (diredfl-global-mode))
-#+end_src
-** Git info
-#+begin_src emacs-lisp
-(use-package dired-git-info
-  :custom
-  (dgi-auto-hide-details-p nil)
-  :hook (dired-after-readin . dired-git-info-auto-enable))
 #+end_src
 ** Copy
 #+begin_src emacs-lisp
