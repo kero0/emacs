@@ -1136,6 +1136,7 @@ Current pattern: %`evil-mc-pattern
   :config
   (require 'dired-aux)
   (require 'dired-x)
+  (use-package dired-single)
   (setq dired-listing-switches "-lahFLHvZD --group-directories-first"
 	dired-dwim-target t
 	dired-recursive-copies 'always
@@ -1146,6 +1147,9 @@ Current pattern: %`evil-mc-pattern
 	dired-use-ls-dired t
 	dired-auto-revert-buffer t
 	dired-kill-when-opening-new-dired-buffer t)
+  (evil-collection-define-key 'normal 'dired-mode-map
+    "h" 'dired-single-up-directory
+    "l" 'dired-single-buffer)
   (add-hook 'dired-mode-hook #'hl-line-mode)
   (add-hook 'dired-mode-hook #'dired-omit-mode))
 #+end_src
