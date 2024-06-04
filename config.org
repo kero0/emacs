@@ -173,7 +173,11 @@
       auto-save-file-name-transforms `((".*" ,(expand-file-name "auto-save/" my/local-dir) t)))
 (use-package tramp
   :ensure nil
-  :custom (tramp-backup-directory-alist nil))
+  :custom
+  (tramp-backup-directory-alist nil)
+  (tramp-verbose 0)
+  (tramp-chunksize 2000)
+  (tramp-use-ssh-controlmaster-options nil))
 #+end_src
 ** Lockfiles
 #+begin_src emacs-lisp
