@@ -30,12 +30,6 @@
       url = "github:tecosaur/ox-chameleon";
       flake = false;
     };
-
-    # temporary override
-    packages-smartparens = {
-      url = "github:Fuco1/smartparens";
-      flake = false;
-    };
   };
   outputs =
     inputs@{
@@ -61,8 +55,8 @@
             version = "0.0.0";
             src = src;
           }).overrideAttrs
-            (old: {
-              installPhase =
+          (old: {
+            installPhase =
               old.installPhase
               + (builtins.concatStringsSep "\n" (map (s: ''cp -r "${s}" "$LISPDIR"'') extraFiles));
             passthru = (old.passthru or { }) // {
@@ -192,9 +186,6 @@
                         runHook postBuild
                       '';
                     });
-                    smartparens = super.melpaPackages.smartparens.overrideAttrs(old: {
-                      src = inputs.packages-smartparens;
-                });
               };
             }).overrideAttrs
               (old: {

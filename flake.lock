@@ -150,22 +150,6 @@
         "type": "github"
       }
     },
-    "packages-smartparens": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1713443508,
-        "narHash": "sha256-fCS8n4zPTaX8IYJ1JI39MOQ0xlqgkN9didXj4LAz368=",
-        "owner": "Fuco1",
-        "repo": "smartparens",
-        "rev": "a5c68cac1bea737b482a37aa92de4f6efbf7580b",
-        "type": "github"
-      },
-      "original": {
-        "owner": "Fuco1",
-        "repo": "smartparens",
-        "type": "github"
-      }
-    },
     "packages-targets": {
       "flake": false,
       "locked": {
@@ -190,7 +174,6 @@
         "packages-org-pretty-table": "packages-org-pretty-table",
         "packages-org-src-context": "packages-org-src-context",
         "packages-ox-chameleon": "packages-ox-chameleon",
-        "packages-smartparens": "packages-smartparens",
         "packages-targets": "packages-targets"
       }
     },
