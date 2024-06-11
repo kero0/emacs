@@ -30,6 +30,12 @@
       url = "github:tecosaur/ox-chameleon";
       flake = false;
     };
+
+    # temporary until fix is merged upstream
+    packages-org-msg = {
+      url = "github:danielfleischer/org-msg/1.12";
+      flake = false;
+    };
   };
   outputs =
     inputs@{
@@ -186,6 +192,9 @@
                         runHook postBuild
                       '';
                     });
+                org-msg = super.melpaPackages.org-msg.overrideAttrs (old: {
+                  src = inputs.packages-org-msg;
+                });
               };
             }).overrideAttrs
               (old: {

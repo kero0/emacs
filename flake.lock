@@ -102,6 +102,23 @@
         "type": "github"
       }
     },
+    "packages-org-msg": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1713103663,
+        "narHash": "sha256-cYgjj7iNa2Z+dWMsmqsc8iHMYg/tAvgyPJDjj8SDCzQ=",
+        "owner": "danielfleischer",
+        "repo": "org-msg",
+        "rev": "4dcd70f14c0046e316dcab54dde0eb7b082ce632",
+        "type": "github"
+      },
+      "original": {
+        "owner": "danielfleischer",
+        "ref": "1.12",
+        "repo": "org-msg",
+        "type": "github"
+      }
+    },
     "packages-org-pretty-table": {
       "flake": false,
       "locked": {
@@ -171,6 +188,7 @@
         "emacs-overlay": "emacs-overlay",
         "nixpkgs": "nixpkgs_2",
         "packages-eglot-booster": "packages-eglot-booster",
+        "packages-org-msg": "packages-org-msg",
         "packages-org-pretty-table": "packages-org-pretty-table",
         "packages-org-src-context": "packages-org-src-context",
         "packages-ox-chameleon": "packages-ox-chameleon",
