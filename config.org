@@ -2449,6 +2449,8 @@ Mostly only used for double checking after org export.
 (use-package org
   :defer 1
   :ensure nil ;; included in emacs
+  :config
+  (require 'org-tempo)
   :init
   (defun my/relative-org (dir)
     "Makes a sting representing a directory relative to my org base directory"
