@@ -1035,20 +1035,24 @@ Current pattern: %`evil-mc-pattern
 * Project management
 ** Projectile
 #+begin_src emacs-lisp
+(defvar my/projectile-ignore-projects '("^/sudo:" "^/docker:" "^/nix/store"))
 (use-package projectile
   :diminish
   :unless noninteractive
+  :custom
+  (projectile-switch-project-action #'projectile-dired)
+  (projectile-ignored-project-function #'(defun my/projectile-ignore-projects (project-root)
+					   "Ignore matching regexes in `my/projectile-ignore-projects'."
+					   (cl-some (lambda (regex) (string-match-p regex project-root))
+						    my/projectile-ignore-projects)))
+  (projectile-sort-order 'recently-active)
+  (projectile-file-exists-remote-cache-expire (* 10 60))
+  (projectile-require-project-root t)
+  (projectile-per-project-compilation-buffer t)
   :config
   (projectile-mode +1)
   (my/leader-def
-    "p" '("projectile" . projectile-command-map))
-  (setq projectile-switch-project-action #'projectile-dired)
-  (defvar my/projectile-ignore-projects '("^/sudo:" "^/docker:" "^/nix/store"))
-  (defun my/projectile-ignore-projects (project-root)
-    "Ignore matching regexes in `my/projectile-ignore-projects'."
-    (cl-some (lambda (regex) (string-match-p regex project-root))
-	     my/projectile-ignore-projects))
-  (setq projectile-ignored-project-function #'my/projectile-ignore-projects))
+    "p" '("projectile" . projectile-command-map)))
 #+end_src
 ** Perspective
 #+begin_src emacs-lisp
@@ -1064,45 +1068,16 @@ Current pattern: %`evil-mc-pattern
     "TAB" '("Workspaces" . perspective-map))
   (general-def :keymaps 'perspective-map
     "TAB" '("Switch" . persp-switch))
+  (if (package-installed-p 'projectile)
+      (after! projectile
+	      (use-package persp-projectile
+		:bind ([remap projectile-switch-project] . projectile-persp-switch-project))))
   :hook (ibuffer . (lambda ()
 		     (persp-ibuffer-set-filter-groups)
 		     (unless (eq ibuffer-sorting-mode 'alphabetic)
 		       (ibuffer-do-sort-by-alphabetic))))
   :hook (kill-emacs . persp-state-save))
 #+end_src
-** Tabs
-#+begin_src emacs-lisp :tangle no
-(use-package tabspaces
-  ;; use this next line only if you also use straight, otherwise ignore it. 
-  :hook (after-init . tabspaces-mode) ;; use this only if you want the minor-mode loaded at startup. 
-  ;; :commands (tabspaces-switch-or-create-workspace
-  ;;            tabspaces-open-or-create-project-and-workspace)
-  :custom
-  (tabspaces-use-filtered-buffers-as-default t)
-  (tabspaces-default-tab "Default")
-  (tabspaces-remove-to-default t)
-  (tabspaces-include-buffers '("*scratch*"))
-  (tabspaces-initialize-project-with-todo t)
-  (tabspaces-todo-file-name "project-todo.org")
-  ;; sessions
-  (tabspaces-session t)
-  (tabspaces-session-auto-restore t)
-  (tabspaces-session-file (concat my/cache-dir "tabspaces.el"))
-  (tabspaces-keymap-prefix nil)
-  :config
-  (my/general-global-menu! "Workspaces" "TAB"
-    "C" '("Clear buffers" . tabspaces-clear-buffers)
-    "r" '("Remove current buffer" . tabspaces-remove-current-buffer)
-    "R" '("Remove selected buffer" . tabspaces-remove-selected-buffer)
-    "d" '("Delete workspace" . tabspaces-close-workspace)
-    "D" '("Delete workspace and kill buffers" . tabspaces-kill-buffers-close-workspace)
-    "o" '("Open/Create project ws" . tabspaces-open-or-create-project-and-workspace)
-    "s" '("Switch/Create ws" . tabspaces-switch-or-create-workspace)
-    "TAB" '("Switch/Create ws" . tabspaces-switch-or-create-workspace)
-    "t" '("Switch buffer and tab" . tabspaces-switch-buffer-and-tab)
-    "b" '("Switch buffer" . tabspaces-switch-to-buffer))
-  (setopt tab-bar-show nil))
-  #+end_src
 * Buffer management
 #+begin_src emacs-lisp
 (use-package ibuffer
