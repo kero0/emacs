@@ -79,12 +79,19 @@ with pkgs;
       matplotlib
       numpy
       pandas
+
+      # jupyter notebooks
+      jupyter
+      jupyter
     ]
   ))
   poetry
 
   pyright
   ruff
+
+  # jupyter notebooks
+  pandoc
 ]
 ++ lib.optionals (!stdenv.isLinux) [
   coreutils-prefixed

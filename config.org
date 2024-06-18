@@ -2158,6 +2158,37 @@ Git gutter:
   :config (my/local-leader-def-python-mode
            "d" '("generate docstring" . numpydoc-generate)))
 #+end_src
+** Jupyter
+#+begin_src emacs-lisp
+(use-package code-cells
+  :mode ("\\.ipynb\\'" . code-cells-convert-ipynb)
+  :bind (:map code-cells-mode-map
+	      ("M-k"   . code-cells-backward-cell)
+	      ("M-j"   . code-cells-forward-cell)
+	      ("C-M-`" . code-cells-eval))
+  :custom
+  (code-cells-convert-ipynb-style '(("pandoc" "--to" "ipynb" "--from" "org")
+				    ("pandoc" "--to" "org" "--from" "ipynb")
+				    (lambda () #'org-mode)))
+  :hook (python-mode . code-cells-mode-maybe)
+  :config
+  (use-package ob-ipython)
+  (use-package jupyter
+    :config
+    (append! org-babel-load-languages
+      '(python . t)
+      '(jupyter . t))
+    (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages))
+  (let ((map code-cells-mode-map))
+    (define-key map [remap evil-search-next] (code-cells-speed-key 'code-cells-forward-cell)) ;; n
+    (define-key map [remap evil-paste-after] (code-cells-speed-key 'code-cells-backward-cell)) ;; p
+    (define-key map [remap evil-backward-word-begin] (code-cells-speed-key 'code-cells-eval-above)) ;; b
+    (define-key map [remap evil-forward-word-end] (code-cells-speed-key 'code-cells-eval)) ;; e
+    (define-key map [remap evil-jump-forward] (code-cells-speed-key 'outline-cycle))) ;; TAB
+  (add-to-list 'code-cells-eval-region-commands
+	       '(python-ts-mode . python-shell-send-region) t))
+
+#+end_src
 ** Rust
 #+begin_src emacs-lisp
 (use-package rustic
