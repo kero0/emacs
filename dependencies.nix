@@ -82,7 +82,6 @@ with pkgs;
 
       # jupyter notebooks
       jupyter
-      jupyter
     ]
   ))
   poetry

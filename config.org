@@ -286,7 +286,7 @@ I want windows that start with '*' to be opened in the lower 1/3 of the frame. T
 	    "c" '("Cycle" . popper-cycle)
 	    "T" '("Toggle type" . popper-toggle-type)))
   (setq popper-reference-buffers
-        '("\\*Messages\\*"
+	'("\\*Messages\\*"
           "Output\\*$"
           "\\*Async Shell Command\\*"
           "\\*helpful .*\\*"
@@ -296,7 +296,7 @@ I want windows that start with '*' to be opened in the lower 1/3 of the frame. T
           compilation-mode))
 
   (setq popper-group-function #'popper-group-by-directory
-	popper-display-function #'display-buffer-at-bottom)
+	popper-display-function #'popper-select-popup-at-bottom)
   (cl-defmacro add-popup! (&rest rules)
     "Add popup rules."
     `(after! popper
@@ -2152,7 +2152,6 @@ Git gutter:
   (add-hook 'python-mode-hook 'eglot-ensure))
 
 (use-package flymake-ruff
-  :ensure t
   :unless noninteractive
   :hook (eglot-managed-mode . flymake-ruff-load))
 
