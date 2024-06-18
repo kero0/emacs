@@ -1052,7 +1052,9 @@ Current pattern: %`evil-mc-pattern
   :config
   (projectile-mode +1)
   (my/leader-def
-    "p" '("projectile" . projectile-command-map)))
+    "p" '("projectile" . projectile-command-map))
+  (after! rg
+	  (add-to-list 'my/rg-project-funcs #'projectile-project-root)))
 #+end_src
 ** Perspective
 #+begin_src emacs-lisp
@@ -1181,6 +1183,42 @@ Current pattern: %`evil-mc-pattern
 #+begin_src emacs-lisp
 (use-package dired-rsync
   :bind ([remap dired-do-copy] . dired-rsync))
+#+end_src
+* Ripgrep
+#+begin_src emacs-lisp
+(use-package rg
+  :unless noninteractive
+  :hook (rg-mode . (lambda ()
+                     (wgrep-rg-setup)
+                     (define-key rg-mode-map (kbd "n") 'evil-search-next)
+                     (define-key rg-mode-map (kbd "N") 'evil-search-previous)))
+  :hook (after-init . rg-enable-default-bindings)
+  :custom
+  (rg-custom-type-aliases nil)
+  (rg-default-alias-fallback "everything")
+  (rg-group-result t)
+  (rg-hide-command t)
+  (rg-show-header t)
+  (rg-show-columns nil)
+  :init
+  (use-package wgrep)
+  (defvar my/rg-project-funcs (list #'vc-root-dir))
+  (defun my/rg-project-func-fallback ()
+    default-directory)
+  :config
+  (setq rg-executable (executable-find "rg"))
+  (add-popup! "^\\*eshell.*\\*$" 'rg-mode)
+  (rg-define-search my/grep-project
+    :query ask
+    :format regexp
+    :files "everything"
+    :dir (or (-first #'identity (-map #'funcall my/rg-project-funcs)) (my/rg-project-func-fallback))
+    :confirm prefix
+    :flags ("--hidden -g !.git")
+    :menu ("Search" "p" "Project"))
+  (my/general-global-Search
+    "p" '("Project Search" . my/grep-project)
+    "S" '("Ripgrep menu" . rg-menu)))
 #+end_src
 * Tree Sitter
 #+begin_src emacs-lisp
