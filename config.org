@@ -2395,6 +2395,14 @@ Mostly only used for double checking after org export.
   :mode ("\\.\\(?:md\\|markdown\\|mkd\\|mdown\\|mkdn\\|mdwn\\)\\'" . markdown-mode)
   :init (setq markdown-enable-math t))
 #+end_src
+*** Poly mode
+#+begin_src emacs-lisp
+(use-package poly-markdown
+  :unless noninteractive
+  :commands poly-org-mode
+  :after markdown
+  :hook (markdown-mode-hook . poly-markdown-mode))
+#+end_src
 * Mail
 ** mu4e
 #+begin_src emacs-lisp :lexical t
