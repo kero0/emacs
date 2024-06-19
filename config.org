@@ -3051,6 +3051,11 @@ DOCSTRING and BODY are as in `defun'.
   <<engrave-faces-init>>
   (setq org-latex-listings 'engraved))
 #+end_src
+** Nix Shell
+#+begin_src emacs-lisp
+(use-package org-nix-shell
+  :hook (org-mode . org-nix-shell-mode))
+#+end_src
 ** Evil Org
 #+begin_src emacs-lisp
 (use-package evil-org
