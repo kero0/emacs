@@ -206,6 +206,12 @@
 ** Authsources
 #+begin_src emacs-lisp
 (setq auth-sources (list (expand-file-name "authinfo.gpg" my/local-dir)))
+(use-package auth-source-pass
+  :ensure nil
+  :unless noninteractive
+  :defer t
+  :config
+  (auth-source-pass-enable))
 #+end_src
 ** Native Comp
 #+begin_src emacs-lisp :early-init.el
@@ -1946,21 +1952,7 @@ Git gutter:
 #+begin_src emacs-lisp
 (use-package forge
   :unless noninteractive
-  :after magit
-  :commands (forge-insert-assigned-pullreqs
-	     forge-insert-authored-pullreqs
-	     forge-insert-requested-reviews
-	     forge-insert-assigned-issues
-	     forge-insert-pullreqs
-	     forge-insert-issues)
-  :init
-  (append! magit-status-sections-hook
-    #'forge-insert-assigned-pullreqs
-    #'forge-insert-authored-pullreqs
-    #'forge-insert-requested-reviews
-    #'forge-insert-assigned-issues
-    #'forge-insert-pullreqs
-    #'forge-insert-issues))
+  :after magit)
 #+end_src
 * Eglot
 #+begin_src emacs-lisp
