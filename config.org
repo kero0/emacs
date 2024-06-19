@@ -2329,6 +2329,54 @@ Git gutter:
   :init
   (add-to-list 'org-babel-load-languages '(julia-vterm . t)))
 #+end_src
+** Kotlin
+#+begin_src emacs-lisp
+(use-package kotlin-ts-mode
+  :hook (kotlin-ts-mode . eglot-ensure)
+  :mode "\\.kts?\\'"
+  :config
+  (setenv "JAVA_OPTS" "-Xmx8g")
+  (add-hook 'kotlin-ts-mode-hook
+	    (defun my/kotlin-ts-setup ()
+	      (setq-local
+	       read-process-output-max (* 16 1024 1024)
+	       eglot-autoshutdown t
+	       eglot-connect-timeout 300
+	       eglot-ignored-server-capabilities '(:documentFormattingProvider
+						   :documentRangeFormattingProvider
+						   :documentOnTypeFormattingProvider
+						   :documentHighlightProvider))))
+  (after! eglot
+	  (add-to-list 'eglot-server-programs '(kotlin-ts-mode "kotlin-language-server")))
+  (defun my/gradlew-command (command)
+    "Run gradlew in this project."
+    (interactive "Command: ")
+    (let ((default-directory (locate-dominating-file buffer-file-name "gradlew"))
+	  (compilation-read-command nil)
+	  (compile-command (format "sh gradlew %s" command)))
+      (call-interactively #'compile)))
+  (my/local-leader-def kotlin-ts-mode
+      "tt"  '("go to test" . kotlin-ts-mode-goto-test-file)
+      "tr"  '("run test function" . kotlin-ts-mode-run-current-test-function)
+      "tR"  '("run test class" . kotlin-ts-mode-run-current-test-class)
+      "ta" '("gradlew test" . (lambda () (interactive) (my/gradlew-command "test")))
+
+      "a" '("gradlew assemble" . (lambda () (interactive) (my/gradlew-command "assemble")))
+      "b" '("gradlew build" . (lambda () (interactive) (my/gradlew-command "build")))
+      "r" '("gradlew run" . (lambda () (interactive) (my/gradlew-command "run"))))
+
+  (use-package flycheck-kotlin
+    :hook (kotlin-ts-mode . flycheck-kotlin-setup))
+
+  (use-package java-imports
+    :hook (kotlin-ts-mode . java-imports-scan-file)
+    :custom
+    (java-imports-find-block-function 'java-imports-find-place-sorted-block))
+  (use-package flymake-ktlint
+    :after kotlin-ts-mode
+    :custom
+    (ktlint-flymake-args '("--android")))
+#+end_src
 ** PDF
 #+begin_src emacs-lisp
 (use-package pdf-tools
