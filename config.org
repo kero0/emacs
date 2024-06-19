@@ -2238,6 +2238,7 @@ Git gutter:
       (push 'rustic-clippy flycheck-checkers)))
   (add-hook 'rustic-mode-hook #'my/startup-rust)
   :config
+  (setq rustic-lsp-client 'eglot)
   (add-hook 'rustic-mode-hook 'eglot-ensure)
   (setq rustic-indent-method-chain t)
   (my/local-leader-def rustic-mode
