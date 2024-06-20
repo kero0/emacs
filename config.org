@@ -214,7 +214,7 @@
   (auth-source-pass-enable))
 #+end_src
 ** Native Comp
-#+begin_src emacs-lisp :early-init.el
+#+begin_src emacs-lisp :tangle early-init.el
 (setq comp-eln-cache-path (expand-file-name "eln-cache/" my/cache-dir)
       native-comp-async-report-warnings-errors 'silent
       native-comp-verbose 0)
