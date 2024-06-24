@@ -33,7 +33,6 @@ with pkgs;
     dicts: with dicts; [
       en
       en-computers
-      en-science
     ]
   ))
 
