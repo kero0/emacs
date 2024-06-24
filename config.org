@@ -1980,6 +1980,13 @@ Git gutter:
              (make-local-variable 'completion-at-point-functions)
 	     (append! completion-at-point-functions #'eglot-completion-at-point)))))
 #+end_src
+** Eglot X
+#+begin_src emacs-lisp
+(use-package eglot-x
+  :unless noninteractive
+  :after eglot
+  :config (eglot-x-setup))
+#+end_src
 ** Eglot Tempel
 #+begin_src emacs-lisp
 (use-package eglot-tempel
