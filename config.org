@@ -2195,13 +2195,16 @@ Git gutter:
 	      ("M-k"   . code-cells-backward-cell)
 	      ("M-j"   . code-cells-forward-cell)
 	      ("C-M-`" . code-cells-eval))
-  :custom
-  (code-cells-convert-ipynb-style '(("pandoc" "--to" "ipynb" "--from" "org")
-				    ("pandoc" "--to" "org" "--from" "ipynb")
-				    (lambda () #'org-mode)))
   :hook (python-mode . code-cells-mode-maybe)
   :config
   (use-package ob-ipython)
+  (use-package simple-httpd)
+  (use-package websocket)
+  ;; pandoc ipynb seems to be broken on my linux machines
+  (if IS-MAC
+      (setq code-cells-convert-ipynb-style '(("pandoc" "--to" "ipynb" "--from" "org")
+					     ("pandoc" "--to" "org" "--from" "ipynb")
+					     (lambda () #'org-mode))))
   (use-package jupyter
     :config
     (append! org-babel-load-languages

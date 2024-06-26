@@ -36,6 +36,14 @@
       url = "github:danielfleischer/org-msg/1.12";
       flake = false;
     };
+    packages-emacs-jupyter = {
+      url = "github:emacs-jupyter/jupyter";
+      flake = false;
+    };
+    packages-zmq = {
+      url = "github:nnicandro/emacs-zmq";
+      flake = false;
+    };
   };
   outputs =
     inputs@{
@@ -187,6 +195,34 @@
                   }).overrideAttrs
                     (old: {
                       # fixing a bug in the package when byte compiling
+                      buildPhase = ''
+                        runHook preBuild
+                        runHook postBuild
+                      '';
+                    });
+                jupyter =
+                  (mkTrivialPkg {
+                    pkgs = self;
+                    name = "emacs-jupyter";
+                    buildInputs = with self; [
+                      simple-httpd
+                      websocket
+                      zmq
+                    ];
+                  }).overrideAttrs
+                    (old: {
+                      buildPhase = ''
+                        runHook preBuild
+                          runHook postBuild
+                      '';
+                    });
+                zmq =
+                  (mkTrivialPkg {
+                    pkgs = self;
+                    name = "zmq";
+                    buildInputs = with self; [ websocket ];
+                  }).overrideAttrs
+                    (old: {
                       buildPhase = ''
                         runHook preBuild
                         runHook postBuild

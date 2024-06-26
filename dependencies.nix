@@ -81,6 +81,8 @@ with pkgs;
 
       # jupyter notebooks
       jupyter
+      jupytext
+      nbformat
     ]
   ))
   poetry

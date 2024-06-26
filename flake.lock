@@ -102,6 +102,22 @@
         "type": "github"
       }
     },
+    "packages-emacs-jupyter": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1717493696,
+        "narHash": "sha256-u+xwzgPF+z/KfbVorOult18iq0ga17mjo2X5b8M3wxs=",
+        "owner": "emacs-jupyter",
+        "repo": "jupyter",
+        "rev": "b279c90295ed7ef89832d655cf8d9077233f1098",
+        "type": "github"
+      },
+      "original": {
+        "owner": "emacs-jupyter",
+        "repo": "jupyter",
+        "type": "github"
+      }
+    },
     "packages-org-msg": {
       "flake": false,
       "locked": {
@@ -183,16 +199,34 @@
         "type": "github"
       }
     },
+    "packages-zmq": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1686250605,
+        "narHash": "sha256-x45rJuqLhYtPOsf8shZN3td0vktM5Ja+8TJY5Ixg5K0=",
+        "owner": "nnicandro",
+        "repo": "emacs-zmq",
+        "rev": "9d5679c54f361f518a426586b51686674fd3b0fa",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nnicandro",
+        "repo": "emacs-zmq",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "emacs-overlay": "emacs-overlay",
         "nixpkgs": "nixpkgs_2",
         "packages-eglot-booster": "packages-eglot-booster",
+        "packages-emacs-jupyter": "packages-emacs-jupyter",
         "packages-org-msg": "packages-org-msg",
         "packages-org-pretty-table": "packages-org-pretty-table",
         "packages-org-src-context": "packages-org-src-context",
         "packages-ox-chameleon": "packages-ox-chameleon",
-        "packages-targets": "packages-targets"
+        "packages-targets": "packages-targets",
+        "packages-zmq": "packages-zmq"
       }
     },
     "systems": {
