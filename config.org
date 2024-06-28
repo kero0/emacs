@@ -1595,37 +1595,16 @@ Do something in other window
     "a" '("Abbrev" . cape-abbrev)
     "l" '("Line" . cape-line)
     "w" '("Dict" . cape-dict)
-    "\\" '("Tex" . cape-tex)
-    "_" '("Tex" . cape-tex)
-    "^" '("Tex" . cape-tex)
-    "&" '("Sgml" . cape-sgml)
-    "r" '("Rfc1345" . cape-rfc1345))
+    "\\" '("Tex" . cape-tex))
   (setopt cape-dict-file (concat (nth 1 (split-string (getenv "ASPELL_CONF") " ")) "/en_US.multi"))
   (append! completion-at-point-functions
     #'cape-abbrev
     #'cape-file
     #'cape-elisp-block
     #'cape-history
-    ;;#'cape-tex
     #'cape-keyword
-    ;;#'cape-sgml
-    ;;#'cape-rfc1345
-    #'cape-elisp-symbol
-    ;;#'cape-line
+    #'cape-line
     #'cape-dict))
-#+end_src
-** Fussy
-#+begin_src emacs-lisp
-(use-package fussy
-  :unless noninteractive
-  :config
-  (push 'fussy completion-styles)
-  (setq
-   ;; For example, project-find-file uses 'project-files which uses
-   ;; substring completion by default. Set to nil to make sure it's using
-   ;; flx.
-   completion-category-defaults nil
-   completion-category-overrides nil))
 #+end_src
 ** Tempel
 #+begin_src emacs-lisp
@@ -1644,9 +1623,9 @@ Do something in other window
     ;; often when you don't expect it.
     ;; NOTE: We add `tempel-expand' *before* the main programming mode Capf,
     ;; such that it will be tried first.
-    (setq-local completion-at-point-functions
-                (cons #'tempel-expand
-                      completion-at-point-functions)))
+    (unless (member #'tempel-expand completion-at-point-functions)
+	(make-local-variable 'completion-at-point-functions)
+      (push #'tempel-expand completion-at-point-functions)))
   :hook (prog-mode . tempel-setup-capf)
   :hook (text-mode . tempel-setup-capf)
   :defer 1)
@@ -1676,9 +1655,13 @@ Do something in other window
   :unless noninteractive
   :after vertico
   :custom
-  (completion-styles '(orderless partial-completion basic))
   (completion-category-defaults nil)
-  (completion-category-overrides '((file (styles . (partial-completion))))))
+  (completion-category-overrides '((file (styles . (partial-completion)))))
+  :config
+  (append! completion-styles
+    'orderless
+    'partial-completion
+    'basic))
 #+end_src
 ** Vertico
 #+begin_src emacs-lisp
