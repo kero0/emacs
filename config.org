@@ -625,6 +625,14 @@ Do something in other window
     :states 'normal
     [escape] 'abort-recursive-edit))
 #+end_src
+*** evil-lion
+#+begin_src emacs-lisp
+(use-package evil-lion
+  :after evil
+  :unless noninteractive
+  :config
+  (evil-lion-mode))
+#+end_src
 *** evil-surround
 #+begin_src emacs-lisp
 (use-package evil-surround
@@ -662,29 +670,42 @@ Do something in other window
           :advice evil-goggles--generic-async-advice)
         evil-goggles--commands)
   (evil-goggles-mode)
-  (evil-goggles-use-diff-faces)
-  )
+  (evil-goggles-use-diff-faces))
 #+end_src
 *** evil-snipe
 #+begin_src emacs-lisp
 (use-package evil-snipe
   :after evil
   :unless noninteractive
+  :custom
+  (evil-snipe-use-vim-sneak-bindings t)
+  (evil-snipe-smart-case t)
   :config
   (evil-snipe-mode +1)
   (evil-snipe-override-mode +1))
+#+end_src
+*** evil-exchange
+#+begin_src emacs-lisp
+(use-package evil-exchange
+  :after evil
+  :unless noninteractive
+  :config
+  (evil-exchange-cx-install))
 #+end_src
 *** evil-mc
 #+begin_src emacs-lisp
 (use-package evil-mc
   :after evil
   :unless noninteractive
+  :hook (after-init . global-evil-mc-mode)
   :init
-  (use-package evil-multiedit)
-  (use-package evil-iedit-state)
+  (use-package evil-multiedit
+    :custom
+    (evil-multiedit-dwim-motion-keys t)
+    (evil-multiedit-ignore-indent-and-trailing t)
+    (evil-multiedit-scope 'buffer)
+    (evil-multiedit-store-in-search-history t))
   :config
-  (general-nmap "g>" 'my/mc-hydra/body)
-  (general-vmap "g>" 'my/mc-hydra/body)
   (general-nmap
     "gm"  '("Multi-cursor" . evil-mc-cursors-map) 
     "M-d" 'evil-mc-make-and-goto-next-match
@@ -697,32 +718,7 @@ Do something in other window
     "n" '("Make and go to next match" . evil-mc-make-and-goto-next-match)
     "N" '("Make and go to previous match" . evil-mc-make-and-goto-prev-match)
     "q" '("Undo all cursors" . evil-mc-undo-all-cursors))
-  (defhydra my/mc-hydra
-    (:color pink :hint nil :pre (evil-mc-pause-cursors))
-    "
-^Match^            ^Line-wise^           ^Manual^
-^^^^^^----------------------------------------------------
-_Z_: match all     _J_: make & go down   
-_m_: make & next   _K_: make & go up     
-_M_: make & prev   ^ ^                   _R_: remove all
-_n_: skip & next   ^ ^                   
-_N_: skip & prev
-
-Current pattern: %`evil-mc-pattern
-
-"
-    ("Z" #'evil-mc-make-all-cursors)
-    ("n" #'evil-mc-make-and-goto-next-match)
-    ("N" #'evil-mc-make-and-goto-prev-match)
-    ("m" #'evil-mc-skip-and-goto-next-match)
-    ("M" #'evil-mc-skip-and-goto-prev-match)
-    ("J" #'evil-mc-make-cursor-move-next-line)
-    ("K" #'evil-mc-make-cursor-move-prev-line)
-    ("R" #'evil-mc-undo-all-cursors)
-    ("q" #'evil-mc-resume-cursors "quit" :color blue)
-    ("<escape>" #'evil-mc-resume-cursors "quit" :color blue))
-  (my/general-global-Hydras
-    "m" '("Multi Cursor" . my/mc-hydra/body))
+  (evil-ex-define-cmd "ie[dit]" 'evil-multiedit-ex-match)
   (global-evil-mc-mode 1))
 #+end_src
 *** Extra Text Objects
@@ -999,6 +995,25 @@ Current pattern: %`evil-mc-pattern
           ("REVIEW"     font-lock-keyword-face bold)
           ("NOTE"       success bold)
           ("DEPRECATED" font-lock-doc-face bold))))
+#+end_src
+** evil-owl
+#+begin_src emacs-lisp
+(use-package evil-owl
+  :after evil
+  :unless noninteractive
+  :config
+  (setq evil-owl-max-string-length 500)
+  (add-to-list 'display-buffer-alist
+               '("*evil-owl*"
+                 (display-buffer-in-side-window)
+                 (side . bottom)
+                 (window-height . 0.3)))
+  (evil-owl-mode))
+#+end_src
+** Whitespace butler
+#+begin_src emacs-lisp
+(use-package ws-butler
+  :hook ((prog-mode text-mode) . ws-butler-mode))
 #+end_src
 * Bookmarks
 ** Evil
