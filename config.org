@@ -1251,7 +1251,15 @@ Do something in other window
   (treesit-auto-add-to-auto-mode-alist 'all)
   (global-treesit-auto-mode))
 #+end_src
-**** Tree Sitter
+** expreg
+#+begin_src emacs-lisp
+  (use-package expreg
+    :bind (("C-<tab>" . expreg-expand)
+	   :repeat-map expreg-repeat-map
+	   ("<tab>" . expreg-expand)
+	   ("<backtab>" . expreg-contract)))
+#+end_src
+** evil text obj
 #+begin_src emacs-lisp
 (use-package evil-textobj-tree-sitter
   :after (evil treesit)
@@ -1501,10 +1509,13 @@ Do something in other window
   :custom
   (corfu-cycle t)
   (corfu-auto t)                 ;; Enable auto completion
+  (corfu-auto-prefix 2)
   ;; (corfu-separator ?\s)          ;; Orderless field separator
   (corfu-preselect 'prompt)      ;; Preselect the prompt
   (corfu-on-exact-match nil)     ;; Configure handling of exact matches
   (corfu-scroll-margin 5)        ;; Use scroll margin
+  (corfu-quit-at-boundary t)
+  :bind (:map corfu-map ("RET" . nil))
   :config
   (global-corfu-mode)
   (general-imap :keymaps 'corfu-map
@@ -1512,8 +1523,12 @@ Do something in other window
     [tab]	'corfu-next
     "S-TAB"	'corfu-previous
     [backtab]	'corfu-previous)
-  (add-hook 'corfu-mode #'corfu-popupinfo-mode)
-  (setq corfu-popupinfo-delay '(0.25 . 0.25)))
+
+  (add-to-list 'completion-styles-alist
+               '(tab completion-basic-try-completion ignore
+		     "Completion style which provides TAB completion only."))
+  (setq completion-styles '(tab orderless basic)))
+
 (use-package emacs
   :ensure nil
   :init
@@ -1553,9 +1568,9 @@ Do something in other window
   :unless noninteractive
   :ensure corfu
   :hook (corfu-mode . corfu-history-mode)
-  :config)
-  ;; (after! savehist
-  ;; 	  (append! savehist-additional-variables corfu-history)))
+  :config
+  (after! savehist
+	  (append! savehist-additional-variables 'corfu-history)))
 #+end_src
 ** Icons
 #+begin_src emacs-lisp
