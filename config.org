@@ -2571,6 +2571,11 @@ Mostly only used for double checking after org export.
   :ensure nil ;; included in emacs
   :config
   (require 'org-tempo)
+  (dolist (scheme '("ftp" "http" "https" "mailto" "news"))
+    (org-link-set-parameters scheme
+			     :follow
+			     `(lambda (url arg)
+				(browse-url (concat ,scheme ":" url) arg))))
   :init
   (defun my/relative-org (dir)
     "Makes a sting representing a directory relative to my org base directory"
@@ -2586,7 +2591,12 @@ Mostly only used for double checking after org export.
 	org-pretty-entities-include-sub-superscripts t
         org-list-allow-alphabetical t
         org-catch-invisible-edits 'smart
-        org-special-ctrl-a/e t))
+        org-special-ctrl-a/e t
+	org-return-follows-link t
+
+	browse-url-browser-function (cond
+				     (IS-MAC #'browse-url-default-macosx-browser)
+				     (IS-LINUX #'browse-url-xdg-open))))
 #+end_src
 ** Smartparens
 #+begin_src emacs-lisp
