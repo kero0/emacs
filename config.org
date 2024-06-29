@@ -11,7 +11,7 @@
 #+end_src
 ** Basic variables
 *** System type
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle early-init.el
 (defconst IS-MAC      (eq system-type 'darwin))
 (defconst IS-LINUX    (memq system-type '(gnu gnu/linux gnu/kfreebsd berkeley-unix)))
 (defconst IS-WINDOWS  (memq system-type '(cygwin windows-nt ms-dos)))
@@ -26,7 +26,7 @@
                               "nproc --all"))))
 #+end_src
 *** Directories
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle early-init.el
 (defvar my/local-dir (expand-file-name ".local/" user-emacs-directory)
   "Default local directory.")
 (if-let ((local-dir (getenv "XDG_DATA_HOME")))
