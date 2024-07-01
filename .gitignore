@@ -9,4 +9,4 @@ var
 .local
 
 **.el
-!lisp/*.el
+!init.el
