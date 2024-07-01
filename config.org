@@ -1,51 +1,59 @@
 * Setup
-#+property: header-args :tangle init.el :results output silent :noweb yes :lexical t :eval never-export
+#+property: header-args :tangle default.el :results output silent :noweb yes :lexical t :eval never-export
 #+startup: fold
 #+auto_tangle: t
 #+begin_src emacs-lisp
 ;; -*- lexical-binding: t; -*-
+<<variables>>
 #+end_src
 ** Requires
 #+begin_src emacs-lisp
 (require 'cl-lib)
 #+end_src
 ** Basic variables
+:PROPERTIES:
+:header-args: :tangle no :noweb-ref variables
+:END:
 *** System type
-#+begin_src emacs-lisp :tangle early-init.el
-(defconst IS-MAC      (eq system-type 'darwin))
-(defconst IS-LINUX    (memq system-type '(gnu gnu/linux gnu/kfreebsd berkeley-unix)))
-(defconst IS-WINDOWS  (memq system-type '(cygwin windows-nt ms-dos)))
-(defconst IS-BSD      (memq system-type '(darwin berkeley-unix gnu/kfreebsd)))
-;; personal or work
-(defconst IS-PERSONAL t)
-(defconst IS-WORK     (not IS-PERSONAL))
-(defconst my/available-cores
-  (string-to-number
-   (shell-command-to-string (if (eq system-type 'darwin)
-                                "sysctl -n hw.ncpu"
-                              "nproc --all"))))
+#+begin_src emacs-lisp
+(eval-and-compile
+  (defconst IS-MAC      (eq system-type 'darwin))
+  (defconst IS-LINUX    (memq system-type '(gnu gnu/linux gnu/kfreebsd berkeley-unix)))
+  (defconst IS-WINDOWS  (memq system-type '(cygwin windows-nt ms-dos)))
+  (defconst IS-BSD      (memq system-type '(darwin berkeley-unix gnu/kfreebsd)))
+  ;; personal or work
+  (defconst IS-PERSONAL t)
+  (defconst IS-WORK     (not IS-PERSONAL))
+  (defconst my/available-cores
+    (string-to-number
+     (shell-command-to-string (if (eq system-type 'darwin)
+				  "sysctl -n hw.ncpu"
+				"nproc --all")))))
 #+end_src
 *** Directories
-#+begin_src emacs-lisp :tangle early-init.el
-(defvar my/local-dir (expand-file-name ".local/" user-emacs-directory)
-  "Default local directory.")
-(if-let ((local-dir (getenv "XDG_DATA_HOME")))
-    (setq my/local-dir (expand-file-name "emacs/" local-dir)))
+#+begin_src emacs-lisp
+(eval-and-compile
+  (defvar my/local-dir (expand-file-name ".local/" user-emacs-directory)
+    "Default local directory.")
+  (if-let ((local-dir (getenv "XDG_DATA_HOME")))
+      (setq my/local-dir (expand-file-name "emacs/" local-dir)))
+  (defvar my/cache-dir (expand-file-name "cache/" my/local-dir)
+    "Default cache directory.")
+  (if-let ((cache-dir (getenv "XDG_CACHE_HOME")))
+      (setq my/cache-dir (expand-file-name "emacs/" cache-dir)))
+  (defvar my/etc-dir (expand-file-name "etc/" my/local-dir)
+    "Default etc directory.")
+  (defvar my/emacs-dir user-emacs-directory
+    "Default emacs directory."))
+
 (make-directory my/local-dir t)
-(defvar my/cache-dir (expand-file-name "cache/" my/local-dir)
-  "Default cache directory.")
-(if-let ((cache-dir (getenv "XDG_CACHE_HOME")))
-    (setq my/cache-dir (expand-file-name "emacs/" cache-dir)))
 (make-directory my/cache-dir t)
-(defvar my/etc-dir (expand-file-name "etc/" my/local-dir)
-  "Default etc directory.")
-(defvar my/emacs-dir user-emacs-directory
-  "Default emacs directory.")
 #+end_src
 *** Personal info
 #+begin_src emacs-lisp
-(setq user-full-name "Kirols Bakheat"
-      user-mail-address "kbakheat@gmail.com")
+(eval-and-compile
+  (setq user-full-name "Kirols Bakheat"
+	user-mail-address "kbakheat@gmail.com"))
 #+end_src
 
 ** Macros
@@ -78,6 +86,15 @@
   `(dolist (value (list ,@values))
      (unless (member value ,var)
        (setf ,var (append ,var (list value))))))
+#+end_src
+*** ~add-popup!~
+#+begin_src emacs-lisp
+(eval-and-compile
+  (cl-defmacro add-popup! (&rest rules)
+    "Add popup rules."
+    `(after! popper
+	     (append! popper-reference-buffers ,@rules)
+	     (popper--set-reference-vars))))
 #+end_src
 ** Startup
 #+begin_src emacs-lisp
@@ -213,12 +230,6 @@
   :config
   (auth-source-pass-enable))
 #+end_src
-** Native Comp
-#+begin_src emacs-lisp :tangle early-init.el
-(setq comp-eln-cache-path (expand-file-name "eln-cache/" my/cache-dir)
-      native-comp-async-report-warnings-errors 'silent
-      native-comp-verbose 0)
-#+end_src
 ** Window management
 I want windows that start with '*' to be opened in the lower 1/3 of the frame. These windows should close when their buffer dies and should not be reused. If they are not in ~my/special-window-no-cursor-manage-alist~ then they should automatically grab the cursor.
 #+begin_src emacs-lisp
@@ -239,8 +250,16 @@ I want windows that start with '*' to be opened in the lower 1/3 of the frame. T
 #+end_src
 ** Early init
 :PROPERTIES:
-:header-args: :tangle early-init.el
+:header-args: :tangle early-init.el :noweb yes :lexical t :eval never-export
 :END:
+#+begin_src emacs-lisp
+
+<<variables>>
+
+(setq comp-eln-cache-path (expand-file-name "eln-cache/" my/cache-dir)
+      native-comp-async-report-warnings-errors 'silent
+      native-comp-verbose 0)
+#+end_src
 *** Disable package.el
 #+begin_src emacs-lisp
 (setq package-enable-at-startup nil
@@ -276,43 +295,6 @@ I want windows that start with '*' to be opened in the lower 1/3 of the frame. T
 (set-frame-parameter (selected-frame) 'fullscreen 'maximized)
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
 #+end_src
-** Popper
-#+begin_src emacs-lisp
-(use-package popper
-  :unless noninteractive
-  :demand t
-  :bind (:map popper-mode-map
-              ("C-`"   . popper-toggle)
-              ("M-`"   . popper-cycle)
-              ("C-M-`" . popper-toggle-type))
-  :init
-  (after! my/general
-	  (my/general-global-menu! "Popper" "`"
-	    "`" '("Toggle latest" . popper-toggle)
-	    "c" '("Cycle" . popper-cycle)
-	    "T" '("Toggle type" . popper-toggle-type)))
-  (setq popper-reference-buffers
-	'("\\*Messages\\*"
-          "Output\\*$"
-          "\\*Async Shell Command\\*"
-          "\\*helpful .*\\*"
-          "\\*.*:repl\\*"
-          "\\*scratch\\*"
-          help-mode
-          compilation-mode))
-
-  (setq popper-group-function #'popper-group-by-directory
-	popper-display-function #'popper-select-popup-at-bottom)
-  (cl-defmacro add-popup! (&rest rules)
-    "Add popup rules."
-    `(after! popper
-	     (append! popper-reference-buffers ,@rules)
-	     (popper--set-reference-vars)))
-  :config
-  (popper-mode +1))
-(when noninteractive
-  (defmacro add-popup! (&rest _)))
-#+end_src
 * Keybindings
 ** Basics
 #+begin_src emacs-lisp
@@ -336,6 +318,9 @@ I want windows that start with '*' to be opened in the lower 1/3 of the frame. T
 #+end_src
 ** general.el
 *** Helpers
+:PROPERTIES:
+:header-args: :tangle no :noweb-ref keybindings
+:END:
 Macro to define nested keymaps
 #+begin_src emacs-lisp
 ;; copied from https://github.com/progfolio/.emacs.d/blob/master/init.org
@@ -345,7 +330,7 @@ Macro to define nested keymaps
   (declare (indent 2))
   (let* ((n (concat "my/general-global-" name))
          (prefix-map (intern (concat n "-map"))))
-    `(progn
+    `(eval-and-compile
        (defvar ,prefix-map (make-sparse-keymap))
        (my/leader-def
 	 ,prefix-key (cons ,name ,prefix-map))
@@ -363,15 +348,18 @@ Do something in other window
         (switch-to-buffer buf)))
 #+end_src
 **** Local Bindings
+:PROPERTIES:
+:header-args: :tangle no :noweb-ref keybindings
+:END:
 #+begin_src emacs-lisp :noweb-ref keybindings :tangle no
 (cl-defmacro my/local-leader-def (mode &rest args)
   "Create a definer named +general-global-NAME wrapping global-definer.
-    Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX-KEY."
+Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX-KEY."
   (declare (indent 2))
   (let* ((n  (symbol-name mode))
-         (definer (intern (concat "my/local-leader-def-" n)))
+	 (definer (intern (concat "my/local-leader-def-" n)))
 	 (prefix-map (intern (concat (symbol-name mode) "-map"))))
-    `(progn
+    `(eval-and-compile
        (general-create-definer ,definer
 	 :states ,'my/prefix-states
 	 :prefix ,(concat my/leader-def-prefix " " my/local-leader-def-prefix)
@@ -382,44 +370,46 @@ Do something in other window
 #+end_src
 *** general.el setup
 #+begin_src emacs-lisp :noweb yes
-(defvar my/leader-def-prefix "SPC"
-  "Prefix for general.el leader keybindings.")
-(defvar my/leader-def-prefix-alt "M-SPC"
-  "Alternative prefix for general.el leader keybindings.")
-(defvar my/local-leader-def-prefix "m"
-  "Prefix for general.el local leader keybindings.
+(eval-and-compile
+  (defvar my/leader-def-prefix "SPC"
+    "Prefix for general.el leader keybindings.")
+  (defvar my/leader-def-prefix-alt "M-SPC"
+    "Alternative prefix for general.el leader keybindings.")
+  (defvar my/local-leader-def-prefix "m"
+    "Prefix for general.el local leader keybindings.
    Relative to `my/leader-def-prefix'.")
-(defvar my/prefix-states '(normal visual motion)
-  "States in which to bind general.el leader keybindings.")
+  (defvar my/prefix-states '(normal visual motion)
+    "States in which to bind general.el leader keybindings."))
 
-(use-package general
-  :demand t
-  :config
-  (general-evil-setup)
-  (general-override-mode 1)
-  (general-auto-unbind-keys)
-  (general-define-key
-   :major-modes t
-   :keymaps 'override
-   :states my/prefix-states
-   :prefix-map 'my/prefix-map
-   :prefix my/leader-def-prefix
-   :global-prefix my/leader-def-prefix-alt)
+(eval-and-compile
+  (use-package general
+    :demand t
+    :config
+    (general-evil-setup)
+    (general-override-mode 1)
+    (general-auto-unbind-keys)
+    (general-define-key
+     :major-modes t
+     :keymaps 'override
+     :states my/prefix-states
+     :prefix-map 'my/prefix-map
+     :prefix my/leader-def-prefix
+     :global-prefix my/leader-def-prefix-alt)
 
-  (general-create-definer my/leader-def
-    :keymaps 'my/prefix-map)
+    (general-create-definer my/leader-def
+      :keymaps 'my/prefix-map)
 
-  (my/leader-def
-    "SPC"	'("Find file" . project-find-file)
-    "h"		(cons "Help" help-map)
-    "H"		'("Help at point" . helpful-at-point)
-    ";"		'("M-x" . execute-extended-command)
-    ":"		'("Eval" . eval-expression)
-    "."		'("Repeat" . repeat)
-    "r"		'("Run command" . async-shell-command)
-    "R"		'("Run command synchronously" . shell-command))
-  <<keybindings>>
-  (provide 'my/general))
+    (my/leader-def
+      "SPC"	'("Find file" . project-find-file)
+      "h"		(cons "Help" help-map)
+      "H"		'("Help at point" . helpful-at-point)
+      ";"		'("M-x" . execute-extended-command)
+      ":"		'("Eval" . eval-expression)
+      "."		'("Repeat" . repeat)
+      "r"		'("Run command" . async-shell-command)
+      "R"		'("Run command synchronously" . shell-command))
+    <<keybindings>>
+    (provide 'my/general)))
 #+end_src
 **** Assorted Keybindings
 :PROPERTIES:
@@ -707,7 +697,7 @@ Do something in other window
     (evil-multiedit-store-in-search-history t))
   :config
   (general-nmap
-    "gm"  '("Multi-cursor" . evil-mc-cursors-map) 
+    "gm"  '("Multi-cursor" . evil-mc-cursors-map)
     "M-d" 'evil-mc-make-and-goto-next-match
     "M-S-d" 'evil-mc-make-and-goto-prev-match)
   (general-vmap
@@ -724,25 +714,34 @@ Do something in other window
 *** Extra Text Objects
 #+begin_src emacs-lisp
 (use-package targets
+  :after evil
+  :unless noninteractive
   :config
-  (setq targets-composite-text-objects
-	'((all-quotes
-	   (("\"" "\"" quote)
-	    ("'" "'" quote)
-	    ("`" "`" quote)
-	    ("‘" "’" quote)
-	    ("“" "”" quote))
-	   :bind t
-	   :keys "q")
-	  (all-brackets
-	   (("[" "]" pair)
-	    ("{" "}" pair)
-	    ("<" ">" pair)
-	    ("</" ">" )
-	    ("(" ")" pair))
-	   :bind t
-	   :keys "b")))
-  (targets-setup t))
+  (targets-setup t
+		 :next-key "n"
+		 :last-key "l"
+		 :remote-key "r")
+  (targets-define-composite-to pair-delimiter
+    (("(" ")" pair)
+     ("[" "]" pair)
+     ("{" "}" pair)
+     ("</" ">" )
+     ("<" ">" pair))
+    :bind t
+    :next-key "n"
+    :last-key "l"
+    :remote-key "r"
+    :keys "b")
+
+  (targets-define-composite-to quote
+    (("\"" "\"" quote)
+     ("'" "'" quote)
+     ("`" "`" quote))
+    :bind t
+    :next-key "n"
+    :last-key "l"
+    :remote-key "r"
+    :keys "q"))
 #+end_src
 ** which-key
 #+begin_src emacs-lisp
@@ -758,6 +757,37 @@ Do something in other window
         which-key-allow-evil-operators t
         which-key-prefix-prefix "+"))
 #+end_src
+* Popper
+#+begin_src emacs-lisp
+(use-package popper
+  :unless noninteractive
+  :demand t
+  :bind (:map popper-mode-map
+              ("C-`"   . popper-toggle)
+              ("M-`"   . popper-cycle)
+              ("C-M-`" . popper-toggle-type))
+  :init
+  (after! my/general
+	  (my/general-global-menu! "Popper" "`"
+	    "`" '("Toggle latest" . popper-toggle)
+	    "c" '("Cycle" . popper-cycle)
+	    "T" '("Toggle type" . popper-toggle-type)))
+  (setq popper-reference-buffers
+	'("\\*Messages\\*"
+          "Output\\*$"
+          "\\*Async Shell Command\\*"
+          "\\*helpful .*\\*"
+          "\\*.*:repl\\*"
+          "\\*scratch\\*"
+          help-mode
+          compilation-mode))
+
+  (setq popper-group-function #'popper-group-by-directory
+	popper-display-function #'popper-select-popup-at-bottom)
+  :config
+  (popper-mode +1))
+#+end_src
+
 * UI
 ** Fancy Compile
 #+begin_src emacs-lisp
@@ -1248,6 +1278,8 @@ Do something in other window
   :custom
   (treesit-auto-install nil)
   :config
+  (if-let ((path (getenv "MY_TREESIT_PATH")))
+      (add-to-list 'treesit-extra-load-path path))
   (treesit-auto-add-to-auto-mode-alist 'all)
   (global-treesit-auto-mode))
 #+end_src
@@ -1347,13 +1379,6 @@ Do something in other window
 		(apply func beg end args)
 	      (eval-region beg end t))))
 	(define-key evil-motion-state-map "gr" 'my/evil-operator-eval))
-#+end_src
-* Aggressive Indent Mode
-#+begin_src emacs-lisp
-(use-package aggressive-indent
-  :unless noninteractive
-  :config
-  (global-aggressive-indent-mode 1))
 #+end_src
 * Calc
 #+begin_src emacs-lisp
@@ -1515,14 +1540,15 @@ Do something in other window
   (corfu-on-exact-match nil)     ;; Configure handling of exact matches
   (corfu-scroll-margin 5)        ;; Use scroll margin
   (corfu-quit-at-boundary t)
-  :bind (:map corfu-map ("RET" . nil))
+  :bind
+  (:map corfu-map ("RET" . nil))
+  (:map corfu-map
+        ("TAB" . corfu-next)
+        ([tab] . corfu-next)
+        ("S-TAB" . corfu-previous)
+        ([backtab] . corfu-previous))
   :config
   (global-corfu-mode)
-  (general-imap :keymaps 'corfu-map
-    "TAB"	'corfu-next
-    [tab]	'corfu-next
-    "S-TAB"	'corfu-previous
-    [backtab]	'corfu-previous)
 
   (add-to-list 'completion-styles-alist
                '(tab completion-basic-try-completion ignore
@@ -1603,7 +1629,6 @@ Do something in other window
     #'cape-elisp-block
     #'cape-history
     #'cape-keyword
-    #'cape-line
     #'cape-dict))
 #+end_src
 ** Tempel
@@ -2044,7 +2069,7 @@ Git gutter:
   :commands sideline-flymake
   :custom (sideline-flymake-max-lines 5)
   :init (append! sideline-backends-right #'sideline-flymake))
-  
+
 #+end_src
 ** eldoc
 #+begin_src emacs-lisp
@@ -2606,6 +2631,7 @@ Mostly only used for double checking after org export.
         org-catch-invisible-edits 'smart
         org-special-ctrl-a/e t
 	org-return-follows-link t
+        org-export-backends '(latex beamer html ascii)
 
 	browse-url-browser-function (cond
 				     (IS-MAC #'browse-url-default-macosx-browser)
@@ -3015,45 +3041,46 @@ Mostly only used for double checking after org export.
 #+name: engrave-faces-init
 #+begin_src emacs-lisp :tangle no
 ;;; Definers
-(defmacro defadvice! (symbol arglist &optional docstring &rest body)
-  "Define an advice called SYMBOL and add it to PLACES.
+(eval-and-compile
+  (defmacro defadvice! (symbol arglist &optional docstring &rest body)
+    "Define an advice called SYMBOL and add it to PLACES.
 
 ARGLIST is as in `defun'. WHERE is a keyword as passed to `advice-add', and
 PLACE is the function to which to add the advice, like in `advice-add'.
 DOCSTRING and BODY are as in `defun'.
 
 \(fn SYMBOL ARGLIST &optional DOCSTRING &rest [WHERE PLACES...] BODY\)"
-  (declare (doc-string 3) (indent defun))
-  (unless (stringp docstring)
-    (push docstring body)
-    (setq docstring nil))
-  (let (where-alist)
-    (while (keywordp (car body))
-      (push `(cons ,(pop body) (ensure-list ,(pop body)))
-            where-alist))
-    `(progn
-       (defun ,symbol ,arglist ,docstring ,@body)
-       (dolist (targets (list ,@(nreverse where-alist)))
-	 (dolist (target (cdr targets))
-	   (advice-add target (car targets) #',symbol))))))
-(defvar-local org-export-has-code-p nil)
+    (declare (doc-string 3) (indent defun))
+    (unless (stringp docstring)
+      (push docstring body)
+      (setq docstring nil))
+    (let (where-alist)
+      (while (keywordp (car body))
+	(push `(cons ,(pop body) (ensure-list ,(pop body)))
+              where-alist))
+      `(progn
+	 (defun ,symbol ,arglist ,docstring ,@body)
+	 (dolist (targets (list ,@(nreverse where-alist)))
+	   (dolist (target (cdr targets))
+	     (advice-add target (car targets) #',symbol))))))
+  (defvar-local org-export-has-code-p nil)
 
-(defadvice! org-export-expect-no-code (&rest _)
-	    :before #'org-export-as
-	    (setq org-export-has-code-p nil))
+  (defadvice! org-export-expect-no-code (&rest _)
+    :before #'org-export-as
+    (setq org-export-has-code-p nil))
 
-(defadvice! org-export-register-code (&rest _)
-	    :after #'org-latex-src-block
-	    :after #'org-latex-inline-src-block-engraved
-	    (setq org-export-has-code-p t))
+  (defadvice! org-export-register-code (&rest _)
+    :after #'org-latex-src-block
+    :after #'org-latex-inline-src-block-engraved
+    (setq org-export-has-code-p t))
 
-(defadvice! org-latex-example-block-engraved (orig-fn example-block contents info)
-	    "Like `org-latex-example-block', but supporting an engraved backend"
-	    :around #'org-latex-example-block
-	    (let ((output-block (funcall orig-fn example-block contents info)))
-	      (if (eq 'engraved (plist-get info :latex-listings))
-		  (format "\\begin{Code}[alt]\n%s\n\\end{Code}" output-block)
-		output-block)))
+  (defadvice! org-latex-example-block-engraved (orig-fn example-block contents info)
+    "Like `org-latex-example-block', but supporting an engraved backend"
+    :around #'org-latex-example-block
+    (let ((output-block (funcall orig-fn example-block contents info)))
+      (if (eq 'engraved (plist-get info :latex-listings))
+	  (format "\\begin{Code}[alt]\n%s\n\\end{Code}" output-block)
+	output-block))))
 #+end_src
 #+begin_src emacs-lisp
 ;; both installed by engrave-faces
@@ -3107,7 +3134,10 @@ DOCSTRING and BODY are as in `defun'.
   (my/local-leader-def-org-mode
     "p" '("poly-org-mode" . poly-org-mode)))
 #+end_src
-* Local Variables
+* Footer
+#+begin_src emacs-lisp
+(provide 'default)
+#+end_src
 # Local Variables:
 # org-use-property-inheritance: t
 # End:

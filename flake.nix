@@ -9,6 +9,12 @@
   inputs = {
     emacs-overlay.url = "github:nix-community/emacs-overlay";
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    pre-commit-hooks = {
+      url = "github:cachix/pre-commit-hooks.nix";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+      };
+    };
 
     packages-eglot-booster = {
       url = "github:jdtsmith/eglot-booster";
@@ -50,6 +56,7 @@
       self,
       nixpkgs,
       emacs-overlay,
+      pre-commit-hooks,
       ...
     }:
     let
@@ -88,22 +95,13 @@
           basemacs = (import nixpkgs { inherit system; }).emacs29-pgtk;
           emacs = pkgs.symlinkJoin rec {
             name = "emacs";
-            paths = [ basemacs ];
+            paths = [ basemacs ] ++ dependencies;
             nativeBuildInputs = [ pkgs.makeWrapper ];
-            postBuild =
-              let
-                mkSearchPath =
-                  subDir: paths:
-                  nixpkgs.lib.concatStringsSep ":" (
-                    filter pathExists (map (path: "${path}/${subDir}") (filter (x: x != null) paths))
-                  );
-                inherit (builtins) filter head pathExists;
-              in
-              ''
-                wrapProgram "$out/bin/emacs" \
-                  --prefix PATH : '${mkSearchPath "bin" dependencies}' \
-                  --prefix EMACSLOADPATH : '${mkSearchPath "share/emacs/site-lisp" dependencies}:${basemacs}/share/emacs/${version}/lisp' \
-                  --set LSP_USE_PLISTS true \
+            postBuild = ''
+              wrapProgram "$out/bin/emacs" \
+                  --prefix PATH : $out/bin \
+                  --set MY_TREESIT_PATH "${basemacs.pkgs.treesit-grammars.with-all-grammars}/lib" \
+                  --prefix EMACSLOADPATH : "$out/share/emacs/site-lisp":$out/share/emacs/${version}/lisp \
                   --set FONTCONFIG_FILE ${
                     pkgs.makeFontsConf {
                       fontDirectories = with pkgs; [
@@ -112,11 +110,16 @@
                       ];
                     }
                   } \
-                  --set ASPELL_CONF 'dict-dir ${head (filter pathExists (map (s: "${s}/lib/aspell") dependencies))}'
-              '';
+                  --set ASPELL_CONF 'dict-dir ${
+                    let
+                      inherit (builtins) filter head pathExists;
+                    in
+                    head (filter pathExists (map (s: "${s}/lib/aspell") dependencies))
+                  }'
+            '';
             inherit (basemacs) meta src version;
           };
-          config = pkgs.runCommand "config" { } ''
+          config' = pkgs.runCommand "config" { } ''
             mkdir -p $out/
             cp -r ${./.}/. $out
             cd $out/
@@ -140,13 +143,8 @@
           };
           packages.${system}.default =
             (pkgs.emacsWithPackagesFromUsePackage {
-              config = ./config.org;
-              defaultInitFile = pkgs.writeText "default.el" (''
-                	 (setq my/emacs-dir "${config}/")
-                   (add-to-list 'treesit-extra-load-path "${pkgs.emacsPackages.treesit-grammars.with-all-grammars}/lib/")
-                   (load-file "${config}/init.el")
-                   (provide 'default)
-              '');
+              config = "${config'}/default.el";
+              defaultInitFile = true;
               package = emacs;
               alwaysEnsure = true;
               alwaysTangle = true;
@@ -197,7 +195,7 @@
                       # fixing a bug in the package when byte compiling
                       buildPhase = ''
                         runHook preBuild
-                        runHook postBuild
+                                                runHook postBuild
                       '';
                     });
                 jupyter =
@@ -213,7 +211,7 @@
                     (old: {
                       buildPhase = ''
                         runHook preBuild
-                          runHook postBuild
+                                                  runHook postBuild
                       '';
                     });
                 zmq =
@@ -225,7 +223,7 @@
                     (old: {
                       buildPhase = ''
                         runHook preBuild
-                        runHook postBuild
+                                                runHook postBuild
                       '';
                     });
                 org-msg = super.melpaPackages.org-msg.overrideAttrs (old: {
@@ -236,7 +234,23 @@
               (old: {
                 name = "emacs";
               });
-          devShell.${system} = pkgs.mkShell { buildInputs = [ packages.${system}.default ]; };
+          devShell.${system} = pkgs.mkShell {
+            inherit (self.checks.${system}.pre-commit-check) shellHook;
+            buildInputs = [
+              packages.${system}.default
+              self.checks.${system}.pre-commit-check.enabledPackages
+            ];
+          };
+          formatter.${system} = nixpkgs.legacyPackages.${system}.nixfmt-rfc-style;
+          checks.${system}.pre-commit-check = pre-commit-hooks.lib.${system}.run {
+            src = ./.;
+            hooks = {
+              nixfmt = {
+                enable = true;
+                package = self.formatter.${system};
+              };
+            };
+          };
         };
     in
     nixpkgs.lib.foldl nixpkgs.lib.recursiveUpdate { } (
