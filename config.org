@@ -779,6 +779,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
           "\\*helpful .*\\*"
           "\\*.*:repl\\*"
           "\\*scratch\\*"
+	  special-mode
           help-mode
           compilation-mode))
 
@@ -2078,7 +2079,6 @@ Git gutter:
 (use-package eldoc
   :ensure nil
   :unless noninteractive
-  :disabled t
   :hook
   (eglot-mode . eldoc-mode)
   (emacs-lisp-mode . eldoc-mode)
