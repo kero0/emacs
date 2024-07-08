@@ -93,15 +93,23 @@
             overlays = [ emacs-overlay.overlay ];
           };
           basemacs = (import nixpkgs { inherit system; }).emacs29-pgtk;
+          dependencies = pkgs.symlinkJoin {
+            name = "dependnecies";
+            paths = import ./dependencies.nix {
+              inherit pkgs;
+              is-work = false;
+              is-personal = true;
+            };
+          };
           emacs = pkgs.symlinkJoin rec {
             name = "emacs";
-            paths = [ basemacs ] ++ dependencies;
+            paths = [ basemacs ];
             nativeBuildInputs = [ pkgs.makeWrapper ];
             postBuild = ''
               wrapProgram "$out/bin/emacs" \
-                  --prefix PATH : $out/bin \
+                  --prefix PATH : $out/bin:${dependencies}/bin \
                   --set MY_TREESIT_PATH "${basemacs.pkgs.treesit-grammars.with-all-grammars}/lib" \
-                  --prefix EMACSLOADPATH : "$out/share/emacs/site-lisp":$out/share/emacs/${version}/lisp \
+                  --prefix EMACSLOADPATH : "${dependencies}/share/emacs/site-lisp":$out/share/emacs/${version}/lisp \
                   --set FONTCONFIG_FILE ${
                     pkgs.makeFontsConf {
                       fontDirectories = with pkgs; [
@@ -110,12 +118,7 @@
                       ];
                     }
                   } \
-                  --set ASPELL_CONF 'dict-dir ${
-                    let
-                      inherit (builtins) filter head pathExists;
-                    in
-                    head (filter pathExists (map (s: "${s}/lib/aspell") dependencies))
-                  }'
+                  --set ASPELL_CONF 'dict-dir ${dependencies}/lib/aspell'
             '';
             inherit (basemacs) meta src version;
           };
@@ -130,11 +133,6 @@
               --funcall org-babel-tangle                         \
               --kill
           '';
-          dependencies = import ./dependencies.nix {
-            inherit pkgs;
-            is-work = false;
-            is-personal = true;
-          };
         in
         rec {
           ${system} = import nixpkgs {
@@ -149,13 +147,11 @@
               alwaysEnsure = true;
               alwaysTangle = true;
               extraEmacsPackages =
-                epkgs:
-                with epkgs;
-                [
+                epkgs: with epkgs; [
                   engrave-faces
                   ox-chameleon
-                ]
-                ++ dependencies;
+                  dependencies
+                ];
               override = self: super: {
                 eglot-booster = (
                   mkTrivialPkg {
@@ -195,7 +191,7 @@
                       # fixing a bug in the package when byte compiling
                       buildPhase = ''
                         runHook preBuild
-                                                runHook postBuild
+                        runHook postBuild
                       '';
                     });
                 jupyter =
@@ -211,7 +207,7 @@
                     (old: {
                       buildPhase = ''
                         runHook preBuild
-                                                  runHook postBuild
+                        runHook postBuild
                       '';
                     });
                 zmq =
@@ -223,7 +219,7 @@
                     (old: {
                       buildPhase = ''
                         runHook preBuild
-                                                runHook postBuild
+                        runHook postBuild
                       '';
                     });
                 org-msg = super.melpaPackages.org-msg.overrideAttrs (old: {
