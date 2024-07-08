@@ -1990,6 +1990,8 @@ Git gutter:
 #+begin_src emacs-lisp
 (use-package forge
   :unless noninteractive
+  :custom
+  (forge-add-default-bindings nil)
   :after magit)
 #+end_src
 * Eglot

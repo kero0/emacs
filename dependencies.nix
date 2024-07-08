@@ -13,7 +13,6 @@ with pkgs;
   gitFull
   gnutls
   imagemagick
-  pinentry-emacs
   nodePackages.prettier
   (ripgrep.override { withPCRE2 = true; })
   unzip
