@@ -56,6 +56,10 @@
 	user-mail-address "kbakheat@gmail.com"))
 #+end_src
 
+*** Indent Tabs
+#+begin_src emacs-lisp
+(setq-default indent-tabs-mode nil)
+#+end_src
 ** Macros
 *** ~after!~
 #+begin_src emacs-lisp
