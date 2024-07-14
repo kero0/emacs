@@ -1943,22 +1943,10 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
 #+end_src
 ** Git Gutter
 #+begin_src emacs-lisp
-(use-package git-gutter+
+(use-package git-gutter
   :unless noninteractive
   :config
-  (defun git-gutter+-remote-default-directory (dir file)
-    (let* ((vec (tramp-dissect-file-name file))
-           (method (tramp-file-name-method vec))
-           (user (tramp-file-name-user vec))
-           (domain (tramp-file-name-domain vec))
-           (host (tramp-file-name-host vec))
-           (port (tramp-file-name-port vec)))
-      (tramp-make-tramp-file-name method user domain host port dir)))
-
-  (defun git-gutter+-remote-file-path (dir file)
-    (let ((file (tramp-file-name-localname (tramp-dissect-file-name file))))
-      (replace-regexp-in-string (concat "\\`" dir) "" file)))
-  (defhydra hydra-git-gutter (:body-pre (git-gutter+-mode 1)
+  (defhydra hydra-git-gutter (:body-pre (git-gutter-mode 1)
 					:hint nil)
     "
 Git gutter:
@@ -1968,32 +1956,32 @@ Git gutter:
   _h_: first hunk
   _l_: last hunk        _c_ommit staged hunks
 "
-    ("j" git-gutter+-next-hunk)
-    ("k" git-gutter+-previous-hunk)
+    ("j" git-gutter:next-hunk)
+    ("k" git-gutter:previous-hunk)
     ("h" (progn (goto-char (point-min))
-		(git-gutter+-next-hunk 1)))
+		(git-gutter:next-hunk 1)))
     ("l" (progn (goto-char (point-min))
-		(git-gutter+-previous-hunk 1)))
-    ("s" git-gutter+-stage-hunks)
-    ("r" git-gutter+-revert-hunk)
-    ("p" git-gutter+-popup-hunk)
-    ;; ("R" git-gutter+-set-start-revision)
-    ("c" git-gutter+-commit)
+		(git-gutter:previous-hunk 1)))
+    ("s" git-gutter:stage-hunks)
+    ("r" git-gutter:revert-hunk)
+    ("p" git-gutter:popup-hunk)
+    ;; ("R" git-gutter-set-start-revision)
+    ("c" magit-commit)
     ("q" nil :color blue)
     ("Q" (progn (git-gutter-mode -1)
 		;; git-gutter-fringe doesn't seem to
 		;; clear the markup right away
 		(sit-for 0.1)
-		(git-gutter+-clear))
+		(git-gutter:clear))
      :color blue))
   (my/general-global-Hydras
     "g" '("Git" . hydra-git-gutter/body))
-  (global-git-gutter+-mode t)
+  (global-git-gutter-mode t)
   (my/general-global-Git
-    "n" '("next hunk" . git-gutter+-next-hunk)
-    "p" '("previous hunk" . git-gutter+-previous-hunk)
-    "s" '("stage hunk" . git-gutter+-stage-hunks)
-    "r" '("revert hunk" . git-gutter+-revert-hunk)))
+    "n" '("next hunk" . git-gutter:next-hunk)
+    "p" '("previous hunk" . git-gutter:previous-hunk)
+    "s" '("stage hunk" . git-gutter:stage-hunks)
+    "r" '("revert hunk" . git-gutter:revert-hunk)))
 #+end_src
 ** Forge
 #+begin_src emacs-lisp
