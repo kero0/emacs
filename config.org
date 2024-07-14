@@ -790,8 +790,6 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
     "C-`"   'popper-toggle
     "M-`"   'popper-cycle
     "C-M-`" 'popper-toggle-type)
-  (general-def :keymaps 'perspective-map
-    "TAB" '("Switch" . persp-switch))
   (popper-mode +1))
 #+end_src
 
