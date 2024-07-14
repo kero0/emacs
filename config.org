@@ -1153,26 +1153,26 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
 ** Perspective
 #+begin_src emacs-lisp
 (use-package perspective
+  :unless noninteractive
   :custom
   (persp-mode-prefix-key nil)
   (persp-suppress-no-prefix-key-warning t)
   (persp-state-default-file  (concat my/local-dir "perspective"))
   (persp-sort 'created)
   :hook (after-init . persp-mode)
+  :hook (ibuffer . (lambda ()
+		     (persp-ibuffer-set-filter-groups)
+		     (unless (eq ibuffer-sorting-mode 'alphabetic)
+		       (ibuffer-do-sort-by-alphabetic))))
+  :hook (kill-emacs . persp-state-save)
   :config
   (my/leader-def
     "TAB" '("Workspaces" . perspective-map))
   (general-def :keymaps 'perspective-map
     "TAB" '("Switch" . persp-switch))
-  (if (package-installed-p 'projectile)
-      (after! projectile
-	      (use-package persp-projectile
-		:bind ([remap projectile-switch-project] . projectile-persp-switch-project))))
-  :hook (ibuffer . (lambda ()
-		     (persp-ibuffer-set-filter-groups)
-		     (unless (eq ibuffer-sorting-mode 'alphabetic)
-		       (ibuffer-do-sort-by-alphabetic))))
-  :hook (kill-emacs . persp-state-save))
+  (after! projectile
+          (use-package persp-projectile
+            :bind ([remap projectile-switch-project] . projectile-persp-switch-project))))
 #+end_src
 * Buffer management
 #+begin_src emacs-lisp
