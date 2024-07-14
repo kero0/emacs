@@ -1962,7 +1962,7 @@ Git gutter:
 		(git-gutter:next-hunk 1)))
     ("l" (progn (goto-char (point-min))
 		(git-gutter:previous-hunk 1)))
-    ("s" git-gutter:stage-hunks)
+    ("s" git-gutter:stage-hunk)
     ("r" git-gutter:revert-hunk)
     ("p" git-gutter:popup-hunk)
     ;; ("R" git-gutter-set-start-revision)
