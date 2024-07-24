@@ -1133,20 +1133,21 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :unless noninteractive
   :custom
   (projectile-switch-project-action #'projectile-dired)
-  (projectile-ignored-project-function #'(defun my/projectile-ignore-projects (project-root)
-					   "Ignore matching regexes in `my/projectile-ignore-projects'."
-					   (cl-some (lambda (regex) (string-match-p regex project-root))
-						    my/projectile-ignore-projects)))
   (projectile-sort-order 'recently-active)
   (projectile-file-exists-remote-cache-expire (* 10 60))
   (projectile-require-project-root t)
   (projectile-per-project-compilation-buffer t)
   :config
   (projectile-mode +1)
+  (eval-and-compile
+    (setq projectile-ignored-project-function #'(defun my/projectile-ignore-projects (project-root)
+                                                  "Ignore matching regexes in `my/projectile-ignore-projects'."
+                                                  (cl-some (lambda (regex) (string-match-p regex project-root))
+                                                           my/projectile-ignore-projects))))
   (my/leader-def
     "p" '("projectile" . projectile-command-map))
   (after! rg
-	  (add-to-list 'my/rg-project-funcs #'projectile-project-root)))
+          (add-to-list 'my/rg-project-funcs #'projectile-project-root)))
 #+end_src
 ** Perspective
 #+begin_src emacs-lisp
