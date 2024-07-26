@@ -319,6 +319,7 @@ I want windows that start with '*' to be opened in the lower 1/3 of the frame. T
 (setq use-package-always-demand (daemonp)
       use-package-expand-minimally t
       use-package-verbose nil)
+(add-hook 'after-init-hook #'repeat-mode)
 #+end_src
 ** general.el
 *** Helpers
@@ -439,7 +440,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
 (defun my/kill-other-window ()
   (interactive)
   (my/do-in-other-window (lambda () (progn (my/kill-buffer) (delete-window)))))
-        
+
 
 (my/general-global-menu! "Buffer" "b"
   "B" '("Switch buffer other window" . switch-to-buffer-other-window)
@@ -584,9 +585,9 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
 #+begin_src emacs-lisp
 (use-package evil
   :unless noninteractive
+  :preface (setq evil-want-integration t)
   :init
-  (setq evil-want-integration t
-	evil-want-keybinding nil
+  (setq evil-want-keybinding nil
 	evil-want-C-u-scroll t
 	evil-want-C-i-jump t
 	select-enable-clipboard nil)
@@ -847,7 +848,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
     `(add-hook (intern (concat (symbol-name ,mode) "-hook"))
 	       (lambda ()
 		 (make-local-variable 'prettify-symbols-alist)
-		 ,(macroexpand 
+		 ,(macroexpand
 		   `(my/prettify-symbols-extend ,@pairs)))))
   :config
   (global-prettify-symbols-mode nil))
@@ -1164,14 +1165,22 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
 		     (unless (eq ibuffer-sorting-mode 'alphabetic)
 		       (ibuffer-do-sort-by-alphabetic))))
   :hook (kill-emacs . persp-state-save)
+  :unless noninteractive
   :config
   (my/leader-def
     "TAB" '("Workspaces" . perspective-map))
   (general-def :keymaps 'perspective-map
     "TAB" '("Switch" . persp-switch))
-  (after! projectile
-          (use-package persp-projectile
-            :bind ([remap projectile-switch-project] . projectile-persp-switch-project))))
+  (if (package-installed-p 'projectile)
+      (after! projectile
+	      (use-package persp-projectile
+                :demand
+		:bind ([remap projectile-switch-project] . projectile-persp-switch-project))))
+  :hook (ibuffer . (lambda ()
+		     (persp-ibuffer-set-filter-groups)
+		     (unless (eq ibuffer-sorting-mode 'alphabetic)
+		       (ibuffer-do-sort-by-alphabetic))))
+  :hook (kill-emacs . persp-state-save))
 #+end_src
 * Buffer management
 #+begin_src emacs-lisp
@@ -1241,7 +1250,8 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
 ** Preview
 #+begin_src emacs-lisp
 (use-package dired-preview
-  :hook  (dired-mode . dired-preview-mode)
+  :bind (:map dired-mode-map
+              ("P" . dired-preview-mode))
   :custom
   (dired-preview-delay 0.7)
   (dired-preview-max-size (* 1024 1024 1024))
@@ -1291,11 +1301,11 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
 #+end_src
 ** expreg
 #+begin_src emacs-lisp
-  (use-package expreg
-    :bind (("C-<tab>" . expreg-expand)
-	   :repeat-map expreg-repeat-map
-	   ("<tab>" . expreg-expand)
-	   ("<backtab>" . expreg-contract)))
+(use-package expreg
+  :bind (("C-<tab>" . expreg-expand)
+         :repeat-map expreg-repeat-map
+         ("<tab>" . expreg-expand)
+         ("<backtab>" . expreg-contract)))
 #+end_src
 ** evil text obj
 #+begin_src emacs-lisp
@@ -1407,6 +1417,11 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
         calc-undo-length 1000
         calc-window-height 15)
   (add-hook 'calc-mode-hook #'my/disable-line-numbers))
+#+end_src
+** Casual calc
+#+begin_src emacs-lisp
+(use-package casual-calc
+  :bind (:map calc-mode-map ("C-o" . #'casual-calc-tmenu)))
 #+end_src
 * String Inflection
 #+begin_src emacs-lisp
@@ -1919,10 +1934,12 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
 ** ediff
 #+begin_src emacs-lisp
 (after! ediff
-	(setq ediff-diff-options ""
-	      ediff-custom-diff-options "-u"
-	      ediff-window-setup-function 'ediff-setup-windows-plain
-	      ediff-split-window-function 'split-window-vertically))
+        (after! org
+                (add-hook 'ediff-prepare-buffer-hook #'org-show-all))
+        (setq ediff-diff-options ""
+              ediff-custom-diff-options "-u"
+              ediff-window-setup-function 'ediff-setup-windows-plain
+              ediff-split-window-function 'split-window-vertically))
 #+end_src
 ** Time Machine
 #+begin_src emacs-lisp
@@ -2121,7 +2138,7 @@ Git gutter:
   :config
   (define-minor-mode nix-mode "Fake `nix-mode'. Used with `nix-ts-mode'")
   (add-hook 'nix-ts-mode-hook #'nix-mode)
-  (add-hook 'nix-ts-mode-hook #'my/treesit-mode) 
+  (add-hook 'nix-ts-mode-hook #'my/treesit-mode)
   (after! apheleia
 	  (setf (alist-get 'nixfmt apheleia-formatters)
 		'("nixfmt"))
@@ -2164,8 +2181,8 @@ Git gutter:
   (after! treesit-auto
 	  (add-to-list 'major-mode-remap-alist '(python-mode . python-ts-mode)))
 
-  (add-hook 'python-ts-mode-hook (defun my/python-ts-base-hook () (run-hooks 'python-mode-hook))) 
-  (add-hook 'python-ts-mode-hook #'my/treesit-mode) 
+  (add-hook 'python-ts-mode-hook (defun my/python-ts-base-hook () (run-hooks 'python-mode-hook)))
+  (add-hook 'python-ts-mode-hook #'my/treesit-mode)
 
   (my/local-leader-def python-mode
       "r" '("repl/python" . run-python)
@@ -2427,7 +2444,7 @@ Git gutter:
   :mode ("\\.zshrc\\'" . (lambda () (sh-mode) (sh-set-shell "zsh")))
   :mode ("\\.sh\\'" . (lambda () (sh-mode) (sh-set-shell "bash")))
   :mode ("\\.bashrc\\'" . (lambda () (sh-mode) (sh-set-shell "bash")))
-  :config 
+  :config
   (setq sh-basic-offset 4
         sh-indentation 4))
 #+end_src
@@ -2515,9 +2532,9 @@ Mostly only used for double checking after org export.
      :vars `((user-mail-address . ,address)
 	     (user-full-name . ,user-full-name)
 	     (mu4e-compose-signature . ,(if (package-installed-p 'org-msg) signature))
-	     (mu4e-sent-folder . ,(format "/%s/Sent" name))
-	     (mu4e-drafts-folder . ,(format "/%s/Drafts" name))
-	     (mu4e-trash-folder . ,(format "/%s/Trash" name))
+	     (mu4e-sent-folder . ,(format (if (s-contains? "gmail" address) "/%s/[Gmail]/Sent Mail" "/%s/Sent") name))
+	     (mu4e-drafts-folder . ,(format "/%s/[Gmail]/Drafts" name))
+	     (mu4e-trash-folder . ,(format "/%s/[Gmail]/Trash" name))
 	     (mu4e-refile-folder . ,(format "/%s/Archive" name))
 	     (smtpmail-smtp-user . ,address)
 	     (smtpmail-smtp-server . ,server)
@@ -3010,7 +3027,7 @@ Mostly only used for double checking after org export.
 #+end_src
 *** Async patch
 #+begin_src emacs-lisp
-(when (not noninteractive) 
+(when (not noninteractive)
   (after! ox
 	  (setq org-export-async-init-file (make-temp-file "org-export-async-init-file" nil ".el"))
 	  (defun my/get-loaded-nix-file (name)
