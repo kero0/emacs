@@ -1820,27 +1820,35 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
 (use-package eat
   :unless noninteractive
   :hook (eshell-load . eat-eshell-mode)
+  :custom
+  (eat-shell-prompt-annotation-delay 0)
+  (eat-very-visible-cursor-type '(nil nil nil))
+  (eat-default-cursor-type '(nil nil nil))
+  (eat-vertical-bar-cursor-type '(nil nil nil))
+  (eat-horizontal-bar-cursor-type '(nil nil nil))
+  (eat-very-visible-horizontal-bar-cursor-type '(nil nil nil))
+  (eat-very-visible-vertical-bar-cursor-type '(nil nil nil))
+  (eat-kill-buffer-on-exit t)
+  :init
+  (if (featurep 'projectile)
+      (defun my/eat ()
+        (interactive)
+        (let ((project (projectile-acquire-root)))
+          (projectile-with-default-dir project
+            (let ((eat-buffer-name (projectile-generate-process-name "eat" project)))
+              (eat)))))
+    (defun my/eat ()
+      (interactive)
+      (eat)))
+  (my/general-global-Open "t" '("Terminal" . my/eat))
   :config
+  (add-hook 'eat-mode-hook
+            (defun my/eat-hook ()
+              (setq-local process-adaptive-read-buffering t)
+              (setq-local read-process-output-max (* 64 1024 1024))))
   (add-popup!
    "^\\*eat.*\\*$"  'eat-mode)
   (eat-eshell-mode))
-#+end_src
-** Vterm
-#+begin_src emacs-lisp
-(use-package vterm
-  :unless noninteractive
-  :commands vterm
-  :custom
-  (vterm-shell (or (getenv "SHELL") (executable-find "fish") (executable-find "bash")))
-  :init (my/general-global-Open "t" '("vterm" . vterm))
-  :config
-  (defun my/vterm--auto-close-window (buf event)
-    (when (y-or-n-p (concat event " - kill buffer: " (buffer-name buf) "?"))
-      (kill-buffer-and-window)))
-  (add-hook 'vterm-exit-functions #'my/vterm--auto-close-window)
-  (add-popup!
-   "^\\*vterm.*\\*$"  'vterm-mode)
-  (add-hook 'vterm-mode-hook #'my/disable-line-numbers))
 #+end_src
 ** Eshell
 #+begin_src emacs-lisp
