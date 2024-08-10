@@ -9,10 +9,11 @@
   inputs = {
     emacs-overlay.url = "github:nix-community/emacs-overlay";
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    pre-commit-hooks = {
-      url = "github:cachix/pre-commit-hooks.nix";
+    git-hooks = {
+      url = "github:cachix/git-hooks.nix";
       inputs = {
         nixpkgs.follows = "nixpkgs";
+        nixpkgs-stable.follows = "nixpkgs";
       };
     };
 
@@ -56,7 +57,7 @@
       self,
       nixpkgs,
       emacs-overlay,
-      pre-commit-hooks,
+      git-hooks,
       ...
     }:
     let
@@ -238,7 +239,7 @@
             ];
           };
           formatter.${system} = nixpkgs.legacyPackages.${system}.nixfmt-rfc-style;
-          checks.${system}.pre-commit-check = pre-commit-hooks.lib.${system}.run {
+          checks.${system}.pre-commit-check = git-hooks.lib.${system}.run {
             src = ./.;
             hooks = {
               nixfmt = {
