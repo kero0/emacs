@@ -230,7 +230,6 @@
 (use-package auth-source-pass
   :ensure nil
   :unless noninteractive
-  :defer t
   :config
   (auth-source-pass-enable))
 #+end_src
