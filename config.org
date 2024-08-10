@@ -590,7 +590,9 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   (setq evil-want-keybinding nil
 	evil-want-C-u-scroll t
 	evil-want-C-i-jump t
-	select-enable-clipboard nil)
+        evil-want-Y-yank-to-eol t
+        evil-want-fine-undo t
+        select-enable-clipboard nil)
   :config
   (evil-mode)
   (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
