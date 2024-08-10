@@ -2016,6 +2016,7 @@ Git gutter:
   :init
   (use-package markdown-mode) ;; Better formatting eldoc
   (setq eglot-events-buffer-size 0) ;; don't log events
+  (setq eglot-extend-to-xref t)
   :config
   (my/general-global-menu! "LSP" "cl"
     "a" #'eglot-code-actions
