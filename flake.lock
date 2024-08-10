@@ -54,10 +54,35 @@
         "type": "github"
       }
     },
+    "git-hooks": {
+      "inputs": {
+        "flake-compat": "flake-compat",
+        "gitignore": "gitignore",
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "nixpkgs-stable": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1723202784,
+        "narHash": "sha256-qbhjc/NEGaDbyy0ucycubq4N3//gDFFH3DOmp1D3u1Q=",
+        "owner": "cachix",
+        "repo": "git-hooks.nix",
+        "rev": "c7012d0c18567c889b948781bc74a501e92275d1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "cachix",
+        "repo": "git-hooks.nix",
+        "type": "github"
+      }
+    },
     "gitignore": {
       "inputs": {
         "nixpkgs": [
-          "pre-commit-hooks",
+          "git-hooks",
           "nixpkgs"
         ]
       },
@@ -98,22 +123,6 @@
         "owner": "NixOS",
         "repo": "nixpkgs",
         "rev": "21cc704b5e918c5fbf4f9fff22b4ac2681706d90",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixos-24.05",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs-stable_2": {
-      "locked": {
-        "lastModified": 1720386169,
-        "narHash": "sha256-NGKVY4PjzwAa4upkGtAMz1npHGoRzWotlSnVlqI40mo=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "194846768975b7ad2c4988bdb82572c00222c0d7",
         "type": "github"
       },
       "original": {
@@ -268,32 +277,10 @@
         "type": "github"
       }
     },
-    "pre-commit-hooks": {
-      "inputs": {
-        "flake-compat": "flake-compat",
-        "gitignore": "gitignore",
-        "nixpkgs": [
-          "nixpkgs"
-        ],
-        "nixpkgs-stable": "nixpkgs-stable_2"
-      },
-      "locked": {
-        "lastModified": 1723202784,
-        "narHash": "sha256-qbhjc/NEGaDbyy0ucycubq4N3//gDFFH3DOmp1D3u1Q=",
-        "owner": "cachix",
-        "repo": "pre-commit-hooks.nix",
-        "rev": "c7012d0c18567c889b948781bc74a501e92275d1",
-        "type": "github"
-      },
-      "original": {
-        "owner": "cachix",
-        "repo": "pre-commit-hooks.nix",
-        "type": "github"
-      }
-    },
     "root": {
       "inputs": {
         "emacs-overlay": "emacs-overlay",
+        "git-hooks": "git-hooks",
         "nixpkgs": "nixpkgs_2",
         "packages-eglot-booster": "packages-eglot-booster",
         "packages-emacs-jupyter": "packages-emacs-jupyter",
@@ -302,8 +289,7 @@
         "packages-org-src-context": "packages-org-src-context",
         "packages-ox-chameleon": "packages-ox-chameleon",
         "packages-targets": "packages-targets",
-        "packages-zmq": "packages-zmq",
-        "pre-commit-hooks": "pre-commit-hooks"
+        "packages-zmq": "packages-zmq"
       }
     },
     "systems": {
