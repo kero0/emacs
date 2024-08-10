@@ -1,3 +1,5 @@
 * Emacs config
 
 This is my personal emacs config. I always run this with =nix run .=. Some language specific dependencies are not in this repo as the expectation is that they are in a separate, per project, nix shell.
+
+I still clone this to =~/.config/emacs/= and tangle, otherwise =early-init.el= doesn't work.
