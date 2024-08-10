@@ -1930,14 +1930,13 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
     "g" '("Status" . magit-status)
     "b" '("Blame" . magit-blame)
     "l" '("Log" . magit-log)
+    "c" '("commit" . magit-commit)
     "G" '("Status here" . magit-status-here)
     "S" '("Stage file" . magit-stage-buffer-file)
     "U" '("Unstage file" . magit-unstage-file))
   (add-popup! "\\*\\*magit-process:.*\\*\\*")
   (setq magit-buffer-name-format (concat "*" magit-buffer-name-format "*"))
-  (append! magit-status-sections-hook #'magit-insert-modules)
-  (evil-define-key* '(normal visual) magit-mode-map
-    "zz" #'evil-scroll-line-to-center))
+  (append! magit-status-sections-hook #'magit-insert-modules))
 #+end_src
 ** ediff
 #+begin_src emacs-lisp
@@ -2004,7 +2003,7 @@ Git gutter:
   (my/general-global-Git
     "n" '("next hunk" . git-gutter:next-hunk)
     "p" '("previous hunk" . git-gutter:previous-hunk)
-    "s" '("stage hunk" . git-gutter:stage-hunks)
+    "s" '("stage hunk" . git-gutter:stage-hunk)
     "r" '("revert hunk" . git-gutter:revert-hunk)))
 #+end_src
 ** Forge
