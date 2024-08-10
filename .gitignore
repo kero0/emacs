@@ -10,3 +10,4 @@ var
 
 **.el
 !init.el
+.pre-commit-config.yaml
