@@ -1145,6 +1145,14 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
                                                   "Ignore matching regexes in `my/projectile-ignore-projects'."
                                                   (cl-some (lambda (regex) (string-match-p regex project-root))
                                                            my/projectile-ignore-projects))))
+  (my/general-global-Buffer
+    "]" '("Next Buffer" . #'projectile-next-project-buffer)
+    "[" '("Previous Buffer" . #'projectile-previous-project-buffer))
+  (after! evil
+          (general-define-key [remap evil-next-buffer] #'projectile-next-project-buffer)
+          (general-define-key [remap evil-previous-buffer] #'projectile-previous-project-buffer)
+          (general-define-key [remap next-buffer] #'projectile-next-project-buffer)
+          (general-define-key [remap previous-buffer] #'projectile-previous-project-buffer))
   (my/leader-def
     "p" '("projectile" . projectile-command-map))
   (after! rg
