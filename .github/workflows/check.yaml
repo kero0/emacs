@@ -17,4 +17,22 @@ jobs:
         uses: DeterminateSystems/nix-installer-action@v1
       - name: Cache nix
         uses: DeterminateSystems/magic-nix-cache-action@main
-      - run: nix build .#
+      - run: nix build --accept-flake-config .#
+      - name: Diff profile
+        id: diff
+        run: |
+          echo "# $RUNNER_OS changes" > message-body
+          nix store diff-closures --accept-flake-config --derivation \
+              "github:${{ github.repository }}/${{ github.event.before }}" \
+              "." | sed 's/\x1b\[[0-9;]*m//g' >> message-body
+
+      - name: Comment PR
+        uses: peter-evans/create-or-update-comment@v4
+        if: github.event_name == 'pull_request'
+        with:
+          body-path: message-body
+      - name: Comment Commit
+        uses: peter-evans/commit-comment@v3
+        if: github.event_name == 'push'
+        with:
+          body-path: message-body
