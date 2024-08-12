@@ -1952,6 +1952,18 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   (setq magit-buffer-name-format (concat "*" magit-buffer-name-format "*"))
   (append! magit-status-sections-hook #'magit-insert-modules))
 #+end_src
+*** Colors
+#+begin_src emacs-lisp
+(after! magit
+        (defun color-buffer (proc &rest args)
+          (interactive)
+          (with-current-buffer (process-buffer proc)
+            (read-only-mode -1)
+            (ansi-color-apply-on-region (point-min) (point-max))
+            (read-only-mode 1)))
+
+        (advice-add 'magit-process-filter :after #'color-buffer))
+#+end_src
 ** ediff
 #+begin_src emacs-lisp
 (after! ediff
