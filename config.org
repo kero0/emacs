@@ -27,8 +27,8 @@
   (defconst my/available-cores
     (string-to-number
      (shell-command-to-string (if (eq system-type 'darwin)
-				  "sysctl -n hw.ncpu"
-				"nproc --all")))))
+                                  "sysctl -n hw.ncpu"
+                                "nproc --all")))))
 #+end_src
 *** Directories
 #+begin_src emacs-lisp
@@ -53,7 +53,7 @@
 #+begin_src emacs-lisp
 (eval-and-compile
   (setq user-full-name "Kirols Bakheat"
-	user-mail-address "kbakheat@gmail.com"))
+        user-mail-address "kbakheat@gmail.com"))
 #+end_src
 
 *** Indent Tabs
@@ -67,10 +67,10 @@
   "A smart wrapper around `with-eval-after-load'"
   (if (listp features)
       (pcase (length features)
-	(0 `(progn ,@body))
-	(1 `(with-eval-after-load (quote ,(car features))
-	      (progn
-		,@body)))
+        (0 `(progn ,@body))
+        (1 `(with-eval-after-load (quote ,(car features))
+              (progn
+                ,@body)))
         (_ (if (eq (car features) 'or)
                `(progn
                   ,@(cl-map 'list
@@ -97,8 +97,8 @@
   (cl-defmacro add-popup! (&rest rules)
     "Add popup rules."
     `(after! popper
-	     (append! popper-reference-buffers ,@rules)
-	     (popper--set-reference-vars))))
+             (append! popper-reference-buffers ,@rules)
+             (popper--set-reference-vars))))
 #+end_src
 ** Startup
 #+begin_src emacs-lisp
@@ -144,22 +144,22 @@
   :ensure nil
   :config
   (dolist (dir `("/nix/store/.*"
-		 "/tmp/.*"
-		 "/var/tmp/.*"
-		 "/var/folders/.*"
-		 "/private/tmp/.*"
-		 "/private/var/.*"
+                 "/tmp/.*"
+                 "/var/tmp/.*"
+                 "/var/folders/.*"
+                 "/private/tmp/.*"
+                 "/private/var/.*"
                  "/Applications/Xcode.app/.*"
-		 "~/\\.cache.*"
-		 ,(concat my/etc-dir ".*")
-		 ,(concat my/local-dir ".*")
-		 ,(concat my/cache-dir ".*")))
+                 "~/\\.cache.*"
+                 ,(concat my/etc-dir ".*")
+                 ,(concat my/local-dir ".*")
+                 ,(concat my/cache-dir ".*")))
     (add-to-list 'recentf-exclude dir))
   (when-let ((dir (getenv "XDG_DATA_HOME")))
     (add-to-list 'recentf-exclude (concat dir "/.*")))
   (setq recentf-max-menu-items 100
-	recentf-max-saved-items 100
-	recentf-save-file (expand-file-name "recentf" my/local-dir))
+        recentf-max-saved-items 100
+        recentf-save-file (expand-file-name "recentf" my/local-dir))
   (recentf-mode 1))
 #+end_src
 *** savehist
@@ -169,11 +169,11 @@
   :ensure nil
   :config
   (setq savehist-file (expand-file-name "savehist" my/local-dir)
-	savehist-save-minibuffer-history t
-	savehist-autosave-interval 60
-	savehist-additional-variables '(kill-ring
-					search-ring
-					regexp-search-ring))
+        savehist-save-minibuffer-history t
+        savehist-autosave-interval 60
+        savehist-additional-variables '(kill-ring
+                                        search-ring
+                                        regexp-search-ring))
   (savehist-mode 1))
 #+end_src
 *** saveplace
@@ -338,11 +338,11 @@ Macro to define nested keymaps
     `(eval-and-compile
        (defvar ,prefix-map (make-sparse-keymap))
        (my/leader-def
-	 ,prefix-key (cons ,name ,prefix-map))
+         ,prefix-key (cons ,name ,prefix-map))
        (general-create-definer ,(intern n)
-	 :keymaps (quote ,prefix-map))
+         :keymaps (quote ,prefix-map))
        (,(intern n)
-	,@body))))
+        ,@body))))
 #+end_src
 Do something in other window
 #+begin_src emacs-lisp
@@ -362,16 +362,16 @@ Do something in other window
 Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX-KEY."
   (declare (indent 2))
   (let* ((n  (symbol-name mode))
-	 (definer (intern (concat "my/local-leader-def-" n)))
-	 (prefix-map (intern (concat (symbol-name mode) "-map"))))
+         (definer (intern (concat "my/local-leader-def-" n)))
+         (prefix-map (intern (concat (symbol-name mode) "-map"))))
     `(eval-and-compile
        (general-create-definer ,definer
-	 :states ,'my/prefix-states
-	 :prefix ,(concat my/leader-def-prefix " " my/local-leader-def-prefix)
-	 :non-normal-prefix ,(concat my/leader-def-prefix-alt " " my/local-leader-def-prefix)
-	 :keymaps (quote ,prefix-map))
+         :states ,'my/prefix-states
+         :prefix ,(concat my/leader-def-prefix " " my/local-leader-def-prefix)
+         :non-normal-prefix ,(concat my/leader-def-prefix-alt " " my/local-leader-def-prefix)
+         :keymaps (quote ,prefix-map))
        (,definer
-	,@args))))
+        ,@args))))
 #+end_src
 *** general.el setup
 #+begin_src emacs-lisp :noweb yes
@@ -405,14 +405,14 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
       :keymaps 'my/prefix-map)
 
     (my/leader-def
-      "SPC"	'("Find file" . project-find-file)
-      "h"		(cons "Help" help-map)
-      "H"		'("Help at point" . helpful-at-point)
-      ";"		'("M-x" . execute-extended-command)
-      ":"		'("Eval" . eval-expression)
-      "."		'("Repeat" . repeat)
-      "r"		'("Run command" . async-shell-command)
-      "R"		'("Run command synchronously" . shell-command))
+      "SPC"     '("Find file" . project-find-file)
+      "h"               (cons "Help" help-map)
+      "H"               '("Help at point" . helpful-at-point)
+      ";"               '("M-x" . execute-extended-command)
+      ":"               '("Eval" . eval-expression)
+      "."               '("Repeat" . repeat)
+      "r"               '("Run command" . async-shell-command)
+      "R"               '("Run command synchronously" . shell-command))
     <<keybindings>>
     (provide 'my/general)))
 #+end_src
@@ -516,30 +516,30 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
 (defvar my/repl-fallback #'shell "The fallback repl to use.")
 (defun my/repl--open-or-create ()
   (let* ((mode (buffer-local-value 'major-mode (current-buffer)))
-	 (repl (alist-get mode my/repl-alist my/repl-fallback))
-	 (repl-buffer-name (concat "*"
-				   (symbol-name (if (eq repl my/repl-fallback) mode repl))
-				   ":repl*")))
+         (repl (alist-get mode my/repl-alist my/repl-fallback))
+         (repl-buffer-name (concat "*"
+                                   (symbol-name (if (eq repl my/repl-fallback) mode repl))
+                                   ":repl*")))
     (if (get-buffer repl-buffer-name)
-	(popper--find-buried-popups (get-buffer repl-buffer-name))
+        (popper--find-buried-popups (get-buffer repl-buffer-name))
       (progn
-	(add-popup! repl-buffer-name)
-	(funcall repl)
-	(rename-buffer repl-buffer-name)))))
+        (add-popup! repl-buffer-name)
+        (funcall repl)
+        (rename-buffer repl-buffer-name)))))
 (defun my/repl--choose (arg)
   (interactive (list (completing-read "Choose repl: " (mapcar #'symbol-name (mapcar #'car my/repl-alist)) nil t)))
   (let* ((repl (if (string= arg "fallback")
                    my/repl-fallback
                  (alist-get (intern arg) my/repl-alist my/repl-fallback)))
-	 (repl-buffer-name (concat "*"
-				   (symbol-name repl)
-				   ":repl*")))
+         (repl-buffer-name (concat "*"
+                                   (symbol-name repl)
+                                   ":repl*")))
     (if (get-buffer repl-buffer-name)
         (popper-raise-popup (get-buffer repl-buffer-name))
       (progn
-	(add-popup! repl-buffer-name)
-	(funcall repl)
-	(rename-buffer repl-buffer-name)))))
+        (add-popup! repl-buffer-name)
+        (funcall repl)
+        (rename-buffer repl-buffer-name)))))
 
 (defun my/repl (arg)
   (interactive "P")
@@ -553,8 +553,8 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
 (defun my/toggle-comment (beg end)
   "Comment or uncomment current region or line."
   (interactive (if (use-region-p)
-		   (list (region-beginning) (region-end))
-		 (list (line-beginning-position) (line-end-position))))
+                   (list (region-beginning) (region-end))
+                 (list (line-beginning-position) (line-end-position))))
   (comment-or-uncomment-region beg end))
 (my/general-global-menu! "Toggle" "t"
   "d" '("debug" . toggle-debug-on-error)
@@ -588,8 +588,8 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :preface (setq evil-want-integration t)
   :init
   (setq evil-want-keybinding nil
-	evil-want-C-u-scroll t
-	evil-want-C-i-jump t
+        evil-want-C-u-scroll t
+        evil-want-C-i-jump t
         evil-want-Y-yank-to-eol t
         evil-want-fine-undo t
         select-enable-clipboard nil)
@@ -725,9 +725,9 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :unless noninteractive
   :config
   (targets-setup t
-		 :next-key "n"
-		 :last-key "l"
-		 :remote-key "r")
+                 :next-key "n"
+                 :last-key "l"
+                 :remote-key "r")
   (targets-define-composite-to pair-delimiter
     (("(" ")" pair)
      ("[" "]" pair)
@@ -771,13 +771,13 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :demand t
   :init
   (setq popper-reference-buffers
-	'("\\*Messages\\*"
+        '("\\*Messages\\*"
           "Output\\*$"
           "\\*Async Shell Command\\*"
           "\\*helpful .*\\*"
           "\\*.*:repl\\*"
           "\\*scratch\\*"
-	  special-mode
+          special-mode
           help-mode
           compilation-mode))
 
@@ -790,10 +790,10 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   (setq popper-window-height 0.4)
   :config
   (after! my/general
-	  (my/general-global-menu! "Popper" "`"
-	    "`" '("Toggle latest" . popper-toggle)
-	    "c" '("Cycle" . popper-cycle)
-	    "T" '("Toggle type" . popper-toggle-type)))
+          (my/general-global-menu! "Popper" "`"
+            "`" '("Toggle latest" . popper-toggle)
+            "c" '("Cycle" . popper-cycle)
+            "T" '("Toggle type" . popper-toggle-type)))
   (general-def :keymaps 'popper-mode-map
     "C-`"   'popper-toggle
     "M-`"   'popper-cycle
@@ -827,16 +827,16 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :config
   ;; Enable all JetBrains Mono ligatures in programming modes
   (ligature-set-ligatures '(prog-mode text-mode) '("-|" "--" "-~" "---" "-<" "--" "->" "->>" "-->" "///" "/=" "/=="
-						   "/>" "//" "/*" "*>" "***" "*/" "<-" "<<-" "<=>" "<=" "<|" "<||"
-						   "<|||" "<|>" "<:" "<>" "<-<" "<<<" "<==" "<<=" "<=<" "<==>" "<-|"
-						   "<<" "<~>" "<=|" "<~~" "<~" "<$>" "<$" "<+>" "<+" "</>" "</" "<*"
-						   "<*>" "<->" "<!--" ":>" ":<" ":::" "::" ":?" ":?>" ":=" "::=" "=>>"
-						   "==>" "=/=" "=!=" "=>" "===" "=:=" "==" "!==" "!!" "!=" ">]" ">:"
-						   ">>-" ">>=" ">=>" ">>>" ">-" ">=" "&&&" "&&" "|||>" "||>" "|>" "|]"
-						   "|}" "|=>" "|->" "|=" "||-" "|-" "||=" "||" ".." ".?" ".=" ".-" "..<"
-						   "..." "+++" "+>" "++" "[||]" "[<" "[|" "{|" "??" "?." "?=" "?:" "##"
-						   "###" "####" "#[" "#{" "#=" "#!" "#:" "#_(" "#_" "#?" "#(" ";;" "_|_"
-						   "__" "~~" "~~>" "~>" "~-" "~@" "$>" "^=" "]#"))
+                                                   "/>" "//" "/*" "*>" "***" "*/" "<-" "<<-" "<=>" "<=" "<|" "<||"
+                                                   "<|||" "<|>" "<:" "<>" "<-<" "<<<" "<==" "<<=" "<=<" "<==>" "<-|"
+                                                   "<<" "<~>" "<=|" "<~~" "<~" "<$>" "<$" "<+>" "<+" "</>" "</" "<*"
+                                                   "<*>" "<->" "<!--" ":>" ":<" ":::" "::" ":?" ":?>" ":=" "::=" "=>>"
+                                                   "==>" "=/=" "=!=" "=>" "===" "=:=" "==" "!==" "!!" "!=" ">]" ">:"
+                                                   ">>-" ">>=" ">=>" ">>>" ">-" ">=" "&&&" "&&" "|||>" "||>" "|>" "|]"
+                                                   "|}" "|=>" "|->" "|=" "||-" "|-" "||=" "||" ".." ".?" ".=" ".-" "..<"
+                                                   "..." "+++" "+>" "++" "[||]" "[<" "[|" "{|" "??" "?." "?=" "?:" "##"
+                                                   "###" "####" "#[" "#{" "#=" "#!" "#:" "#_(" "#_" "#?" "#(" ";;" "_|_"
+                                                   "__" "~~" "~~>" "~>" "~-" "~@" "$>" "^=" "]#"))
   (global-ligature-mode t))
 #+end_src
 *** Prettify symbols
@@ -848,15 +848,15 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
     "Extend the alist of `prettify-symbols-alist' with PAIRS."
     (declare (indent 0))
     `(setq prettify-symbols-alist
-	   (-concat prettify-symbols-alist '(,@pairs))))
+           (-concat prettify-symbols-alist '(,@pairs))))
   (cl-defmacro my/prettify-symbols-extend-mode (mode &rest pairs &allow-other-keys)
     "Extend the alist of `prettify-symbols-alist' with PAIRS for MODE."
     (declare (indent 1))
     `(add-hook (intern (concat (symbol-name ,mode) "-hook"))
-	       (lambda ()
-		 (make-local-variable 'prettify-symbols-alist)
-		 ,(macroexpand
-		   `(my/prettify-symbols-extend ,@pairs)))))
+               (lambda ()
+                 (make-local-variable 'prettify-symbols-alist)
+                 ,(macroexpand
+                   `(my/prettify-symbols-extend ,@pairs)))))
   :config
   (global-prettify-symbols-mode nil))
 #+end_src
@@ -1007,7 +1007,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :unless noninteractive
   :init
   (unless (equal "Battery status not available"
-		 (battery))
+                 (battery))
     (display-battery-mode 1))
   :config (doom-modeline-mode 1)
   :custom
@@ -1069,7 +1069,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :init
   ;; Persist global marks
   (after! savehist
-	  (add-to-list 'savehist-additional-variables 'evil-markers-alist))
+          (add-to-list 'savehist-additional-variables 'evil-markers-alist))
   ;; Persist local marks
   (append! desktop-locals-to-save evil-markers-alist)
   ;; Show Marks in buffer
@@ -1176,9 +1176,9 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   (persp-sort 'created)
   :hook (after-init . persp-mode)
   :hook (ibuffer . (lambda ()
-		     (persp-ibuffer-set-filter-groups)
-		     (unless (eq ibuffer-sorting-mode 'alphabetic)
-		       (ibuffer-do-sort-by-alphabetic))))
+                     (persp-ibuffer-set-filter-groups)
+                     (unless (eq ibuffer-sorting-mode 'alphabetic)
+                       (ibuffer-do-sort-by-alphabetic))))
   :hook (kill-emacs . persp-state-save)
   :unless noninteractive
   :config
@@ -1188,13 +1188,13 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
     "TAB" '("Switch" . persp-switch))
   (if (package-installed-p 'projectile)
       (after! projectile
-	      (use-package persp-projectile
+              (use-package persp-projectile
                 :demand
-		:bind ([remap projectile-switch-project] . projectile-persp-switch-project))))
+                :bind ([remap projectile-switch-project] . projectile-persp-switch-project))))
   :hook (ibuffer . (lambda ()
-		     (persp-ibuffer-set-filter-groups)
-		     (unless (eq ibuffer-sorting-mode 'alphabetic)
-		       (ibuffer-do-sort-by-alphabetic))))
+                     (persp-ibuffer-set-filter-groups)
+                     (unless (eq ibuffer-sorting-mode 'alphabetic)
+                       (ibuffer-do-sort-by-alphabetic))))
   :hook (kill-emacs . persp-state-save))
 #+end_src
 * Buffer management
@@ -1204,7 +1204,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :ensure nil
   :commands ibuffer
   :init (my/general-global-Buffer
-	  "i" '("ibuffer" . ibuffer))
+          "i" '("ibuffer" . ibuffer))
   :config
   (setq ibuffer-expert t)
   (setq ibuffer-show-empty-filter-groups nil)
@@ -1224,23 +1224,23 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :commands (dired dired-jump dired-jump-other-window)
   :bind
   (:map my/general-global-Open-map
-	("/" . dired)
-	("d". dired-jump)
-	("D". dired-jump-other-window))
+        ("/" . dired)
+        ("d". dired-jump)
+        ("D". dired-jump-other-window))
   :config
   (require 'dired-aux)
   (require 'dired-x)
   (use-package dired-single)
   (setq dired-listing-switches "-lahFLHvZD --group-directories-first"
-	dired-dwim-target t
-	dired-recursive-copies 'always
-	dired-recursive-deletes 'always
-	dired-hide-details-hide-symlink-targets nil
-	dired-hide-details-hide-information-lines nil
-	insert-directory-program (if IS-MAC (executable-find "gls") insert-directory-program)
-	dired-use-ls-dired t
-	dired-auto-revert-buffer t
-	dired-kill-when-opening-new-dired-buffer t)
+        dired-dwim-target t
+        dired-recursive-copies 'always
+        dired-recursive-deletes 'always
+        dired-hide-details-hide-symlink-targets nil
+        dired-hide-details-hide-information-lines nil
+        insert-directory-program (if IS-MAC (executable-find "gls") insert-directory-program)
+        dired-use-ls-dired t
+        dired-auto-revert-buffer t
+        dired-kill-when-opening-new-dired-buffer t)
   (evil-collection-define-key 'normal 'dired-mode-map
     "h" 'dired-single-up-directory
     "l" 'dired-single-buffer)
@@ -1260,7 +1260,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
     (my/local-leader-def dired-mode-map
         "w" '("wdired" . wdired-change-to-wdired-mode))
     (after! evil-collection
-	    (evil-collection-wdired-setup)))
+            (evil-collection-wdired-setup)))
 #+end_src
 ** Preview
 #+begin_src emacs-lisp
@@ -1273,17 +1273,17 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   ;; Default values for demo purposes
   (dired-preview-ignored-extensions-regexp
    (concat "\\."
-	   "\\(mkv\\|webm\\|mp4\\|mp3\\|ogg\\|m4a"
-	   "\\|gz\\|zst\\|tar\\|xz\\|rar\\|zip"
-	   "\\|iso\\|epub\\|pdf\\)"))
+           "\\(mkv\\|webm\\|mp4\\|mp3\\|ogg\\|m4a"
+           "\\|gz\\|zst\\|tar\\|xz\\|rar\\|zip"
+           "\\|iso\\|epub\\|pdf\\)"))
   :config
   (defun dired-preview--find-file-no-select (file)
     (let ((inhibit-message t)
-	  (enable-local-variables :safe)
-	  (non-essential t)
-	  (delay-mode-hooks t))
+          (enable-local-variables :safe)
+          (non-essential t)
+          (delay-mode-hooks t))
       (cl-letf (((symbol-function 'recentf-push) #'ignore))
-	(find-file-noselect file :nowarn)))))
+        (find-file-noselect file :nowarn)))))
 #+end_src
 ** Icons
 #+begin_src emacs-lisp
@@ -1392,24 +1392,24 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
 * Eval region
 #+begin_src emacs-lisp
 (after! evil
-	(defun my/elisp-eval-region (beg end)
-	  (interactive "r")
-	  (eval-region beg end t))
-	(defvar my/evil-extra-operator-eval-modes-alist
-	  '((emacs-lisp-mode my/elisp-eval-region)))
+        (defun my/elisp-eval-region (beg end)
+          (interactive "r")
+          (eval-region beg end t))
+        (defvar my/evil-extra-operator-eval-modes-alist
+          '((emacs-lisp-mode my/elisp-eval-region)))
 
-	(evil-define-operator my/evil-operator-eval (beg end)
-	  :move-point nil
-	  (interactive "<r>")
-	  (let* ((mode (if (org-in-src-block-p) (intern (car (org-babel-get-src-block-info))) major-mode))
-		 (ele (assoc mode my/evil-extra-operator-eval-modes-alist))
-		 (f-a (cdr-safe ele))
-		 (func (car-safe f-a))
-		 (args (cdr-safe f-a)))
-	    (if (fboundp func)
-		(apply func beg end args)
-	      (eval-region beg end t))))
-	(define-key evil-motion-state-map "gr" 'my/evil-operator-eval))
+        (evil-define-operator my/evil-operator-eval (beg end)
+          :move-point nil
+          (interactive "<r>")
+          (let* ((mode (if (org-in-src-block-p) (intern (car (org-babel-get-src-block-info))) major-mode))
+                 (ele (assoc mode my/evil-extra-operator-eval-modes-alist))
+                 (f-a (cdr-safe ele))
+                 (func (car-safe f-a))
+                 (args (cdr-safe f-a)))
+            (if (fboundp func)
+                (apply func beg end args)
+              (eval-region beg end t))))
+        (define-key evil-motion-state-map "gr" 'my/evil-operator-eval))
 #+end_src
 * Calc
 #+begin_src emacs-lisp
@@ -1418,11 +1418,11 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :ensure nil ;; built-in
   :commands (calc full-calc)
   :init (my/general-global-Open
-	     "c" '("calc" . calc)
-	     "C" '("full-calc" . full-calc))
+             "c" '("calc" . calc)
+             "C" '("full-calc" . full-calc))
   :config
   (setq calc-angle-mode 'rad
-	calc-algebraic-mode t
+        calc-algebraic-mode t
         calc-display-trail t
         calc-group-digits t
         calc-line-numbering t
@@ -1503,7 +1503,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   (general-nmap
     "K" #'helpful-at-point)
   (after! undo-tree
-	  (append! undo-tree-incompatible-major-modes #'helpful-mode)))
+          (append! undo-tree-incompatible-major-modes #'helpful-mode)))
 #+end_src
 ** Man & TLDR
 #+begin_src emacs-lisp
@@ -1511,9 +1511,9 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :unless noninteractive
   :commands (tldr tldr-update-docs)
   :bind (:map help-map
-	      ("t" . tldr)
-	      ("h" . man)
-	      ("w" . woman))
+              ("t" . tldr)
+              ("h" . man)
+              ("w" . woman))
   :config
   (setq tldr-directory-path (concat my/cache-dir "tldr/")))
 #+end_src
@@ -1522,7 +1522,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
 (use-package devdocs
   :commands devdocs-lookup
   :init (general-def 'help-map
-	  "d" '("Devdocs" . devdocs-lookup)))
+          "d" '("Devdocs" . devdocs-lookup)))
 #+end_src
 * Undo
 ** Undo Fu
@@ -1588,7 +1588,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
 
   (add-to-list 'completion-styles-alist
                '(tab completion-basic-try-completion ignore
-		     "Completion style which provides TAB completion only."))
+                     "Completion style which provides TAB completion only."))
   (setq completion-styles '(tab orderless basic)))
 
 (use-package emacs
@@ -1632,7 +1632,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :hook (corfu-mode . corfu-history-mode)
   :config
   (after! savehist
-	  (append! savehist-additional-variables 'corfu-history)))
+          (append! savehist-additional-variables 'corfu-history)))
 #+end_src
 ** Icons
 #+begin_src emacs-lisp
@@ -1685,7 +1685,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
     ;; NOTE: We add `tempel-expand' *before* the main programming mode Capf,
     ;; such that it will be tried first.
     (unless (member #'tempel-expand completion-at-point-functions)
-	(make-local-variable 'completion-at-point-functions)
+        (make-local-variable 'completion-at-point-functions)
       (push #'tempel-expand completion-at-point-functions)))
   :hook (prog-mode . tempel-setup-capf)
   :hook (text-mode . tempel-setup-capf)
@@ -1738,11 +1738,11 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :config
   (vertico-mode)
   (after! embark
-	  (general-def
-	    :keymaps 'vertico-map
-	    "C-c C-o" #'embark-export
-	    "C-c C-c" #'embark-act
-	    "C-c C-f" #'embark-become))
+          (general-def
+            :keymaps 'vertico-map
+            "C-c C-o" #'embark-export
+            "C-c C-c" #'embark-act
+            "C-c C-f" #'embark-become))
   ;; Hide the mode line of the Embark live/completions buffers
   (add-to-list 'display-buffer-alist
                '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
@@ -1754,10 +1754,10 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
 (use-package consult
   :unless noninteractive
   :commands (consult-ripgrep
-	     consult-line
-	     consult-buffer
-	     consult-recent-file
-	     consult-man)
+             consult-line
+             consult-buffer
+             consult-recent-file
+             consult-man)
   :init
   (my/leader-def
     "/" '("Search project" . consult-ripgrep))
@@ -1774,17 +1774,17 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :commands consult-flymake
   :init
   (after! flycheck
-	  (my/general-global-menu! "Errors" "c e"
-	    "f" '("Consult Flymake" . consult-flymake))))
+          (my/general-global-menu! "Errors" "c e"
+            "f" '("Consult Flymake" . consult-flymake))))
 #+end_src
 ** Embark
 #+begin_src emacs-lisp
 (use-package embark
   :unless noninteractive
   :commands (embark-act
-	     embark-bindings
-	     embark-collect
-	     embark-export)
+             embark-bindings
+             embark-collect
+             embark-export)
   :config
   (add-hook 'eldoc-documentation-functions #'embark-eldoc-first-target)
   (setq which-key-use-C-h-commands nil
@@ -1810,7 +1810,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
     "c" '("collect" . embark-collect)))
 (use-package embark-consult
   :if (and (featurep 'embark)
-	   (featurep 'consult))
+           (featurep 'consult))
   :after (embark consult)
   :hook (embark-collect-mode . embark-consult-preview-minor-mode))
 #+end_src
@@ -1861,13 +1861,13 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   (my/general-global-Open
     "e" '("eshell" . eshell))
   (setq eshell-aliases-file (concat my/cache-dir "eshell/alias")
-	eshell-history-file-name (concat my/cache-dir "eshell/history")
-	eshell-buffer-maximum-lines 10000
-	eshell-hist-ignoredups t
-	eshell-scroll-to-bottom-on-input 'all
-	eshell-error-if-no-glob t
-	eshell-glob-case-insensitive t
-	eshell-scroll-show-maximum-output nil)
+        eshell-history-file-name (concat my/cache-dir "eshell/history")
+        eshell-buffer-maximum-lines 10000
+        eshell-hist-ignoredups t
+        eshell-scroll-to-bottom-on-input 'all
+        eshell-error-if-no-glob t
+        eshell-glob-case-insensitive t
+        eshell-scroll-show-maximum-output nil)
   (make-directory (concat my/cache-dir "eshell") t)
   :config
   (add-popup! "^\\*eshell.*\\*$" 'eshell-mode)
@@ -1915,11 +1915,11 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
     "[s" '("Spelling error" . jinx-previous)
     "z=" 'jinx-correct)
   (after! vertico
-	  (use-package vertico-grid :ensure nil)
-	  (use-package vertico-multiform :ensure nil)
-	  (add-to-list 'vertico-multiform-categories
-		       '(jinx grid (vertico-grid-annotate . 20)))
-	  (vertico-multiform-mode 1)))
+          (use-package vertico-grid :ensure nil)
+          (use-package vertico-multiform :ensure nil)
+          (add-to-list 'vertico-multiform-categories
+                       '(jinx grid (vertico-grid-annotate . 20)))
+          (vertico-multiform-mode 1)))
 #+end_src
 * Env
 ** Inherit ENV
@@ -1997,7 +1997,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :unless noninteractive
   :config
   (defhydra hydra-git-gutter (:body-pre (git-gutter-mode 1)
-					:hint nil)
+                                        :hint nil)
     "
 Git gutter:
   _j_: next hunk        _s_tage hunk     _q_uit
@@ -2009,9 +2009,9 @@ Git gutter:
     ("j" git-gutter:next-hunk)
     ("k" git-gutter:previous-hunk)
     ("h" (progn (goto-char (point-min))
-		(git-gutter:next-hunk 1)))
+                (git-gutter:next-hunk 1)))
     ("l" (progn (goto-char (point-min))
-		(git-gutter:previous-hunk 1)))
+                (git-gutter:previous-hunk 1)))
     ("s" git-gutter:stage-hunk)
     ("r" git-gutter:revert-hunk)
     ("p" git-gutter:popup-hunk)
@@ -2019,10 +2019,10 @@ Git gutter:
     ("c" magit-commit)
     ("q" nil :color blue)
     ("Q" (progn (git-gutter-mode -1)
-		;; git-gutter-fringe doesn't seem to
-		;; clear the markup right away
-		(sit-for 0.1)
-		(git-gutter:clear))
+                ;; git-gutter-fringe doesn't seem to
+                ;; clear the markup right away
+                (sit-for 0.1)
+                (git-gutter:clear))
      :color blue))
   (my/general-global-Hydras
     "g" '("Git" . hydra-git-gutter/body))
@@ -2059,14 +2059,14 @@ Git gutter:
   (when (featurep 'tempel)
     (use-package eglot-tempel))
   (after! cape
-	  (add-hook
-	   'eglot-managed-mode-hook
-	   (lambda ()
-	     (append! completion-category-overrides '((eglot (styles orderless))))
-	     (setq completion-category-defaults nil)
-	     (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster)
+          (add-hook
+           'eglot-managed-mode-hook
+           (lambda ()
+             (append! completion-category-overrides '((eglot (styles orderless))))
+             (setq completion-category-defaults nil)
+             (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster)
              (make-local-variable 'completion-at-point-functions)
-	     (append! completion-at-point-functions #'eglot-completion-at-point)))))
+             (append! completion-at-point-functions #'eglot-completion-at-point)))))
 #+end_src
 ** Eglot Tempel
 #+begin_src emacs-lisp
@@ -2175,13 +2175,13 @@ Git gutter:
   (add-hook 'nix-ts-mode-hook #'nix-mode)
   (add-hook 'nix-ts-mode-hook #'my/treesit-mode)
   (after! apheleia
-	  (setf (alist-get 'nixfmt apheleia-formatters)
-		'("nixfmt"))
-	  (setf (alist-get 'nix-ts-mode apheleia-mode-alist)
-		'(nixfmt)))
+          (setf (alist-get 'nixfmt apheleia-formatters)
+                '("nixfmt"))
+          (setf (alist-get 'nix-ts-mode apheleia-mode-alist)
+                '(nixfmt)))
   (after! eglot
-	  (setf (alist-get 'nix-ts-mode eglot-server-programs) (alist-get 'nix-mode eglot-server-programs))
-	  (add-hook 'nix-mode-hook #'eglot-ensure))
+          (setf (alist-get 'nix-ts-mode eglot-server-programs) (alist-get 'nix-mode eglot-server-programs))
+          (add-hook 'nix-mode-hook #'eglot-ensure))
   (provide 'nix-mode))
 
 (use-package nix-drv-mode
@@ -2211,10 +2211,10 @@ Git gutter:
   (setq python-check-command "pyflakes")
   :config
   (after! apheleia
-	  (add-hook 'python-mode-hook (lambda ()
-					(setq-local apheleia-formatter '(ruff ruff-isort)))))
+          (add-hook 'python-mode-hook (lambda ()
+                                        (setq-local apheleia-formatter '(ruff ruff-isort)))))
   (after! treesit-auto
-	  (add-to-list 'major-mode-remap-alist '(python-mode . python-ts-mode)))
+          (add-to-list 'major-mode-remap-alist '(python-mode . python-ts-mode)))
 
   (add-hook 'python-ts-mode-hook (defun my/python-ts-base-hook () (run-hooks 'python-mode-hook)))
   (add-hook 'python-ts-mode-hook #'my/treesit-mode)
@@ -2223,11 +2223,11 @@ Git gutter:
       "r" '("repl/python" . run-python)
       "b" '("send buffer to repl" . python-shell-send-buffer))
   (after! dape
-	  ;; for some reason "python" doesn't find the module "debugpy". It seems that dape
-	  ;; uses a strange way to lookup in path. This lets it find the installed debugger
-	  ;; when I'm using my global python env and can be reset in dir locals or direnv
-	  ;; otherwise
-	  (plist-put (alist-get 'debugpy dape-configs) 'command (executable-find "python3")))
+          ;; for some reason "python" doesn't find the module "debugpy". It seems that dape
+          ;; uses a strange way to lookup in path. This lets it find the installed debugger
+          ;; when I'm using my global python env and can be reset in dir locals or direnv
+          ;; otherwise
+          (plist-put (alist-get 'debugpy dape-configs) 'command (executable-find "python3")))
   (add-hook 'python-mode-hook 'eglot-ensure))
 
 (use-package flymake-ruff
@@ -2251,7 +2251,7 @@ Git gutter:
   (setq pyvenv-menu t)
   ;; Restart the python process when switching environments
   (add-hook 'pyvenv-post-activate-hooks (lambda ()
-					  (pyvenv-restart-python)))
+                                          (pyvenv-restart-python)))
   (my/local-leader-def-python-mode
    "v" '("workon" . pyvenv-workon))
   :after python
@@ -2261,7 +2261,7 @@ Git gutter:
   :after python
   :hook (python-mode . poetry-tracking-mode)
   :config (my/local-leader-def-python-mode
-	     "p" '("poetry" . poetry)))
+             "p" '("poetry" . poetry)))
 
 #+end_src
 *** Numpy Docstring
@@ -2279,9 +2279,9 @@ Git gutter:
 (use-package code-cells
   :mode ("\\.ipynb\\'" . code-cells-convert-ipynb)
   :bind (:map code-cells-mode-map
-	      ("M-k"   . code-cells-backward-cell)
-	      ("M-j"   . code-cells-forward-cell)
-	      ("C-M-`" . code-cells-eval))
+              ("M-k"   . code-cells-backward-cell)
+              ("M-j"   . code-cells-forward-cell)
+              ("C-M-`" . code-cells-eval))
   :hook (python-mode . code-cells-mode-maybe)
   :config
   (use-package ob-ipython)
@@ -2290,8 +2290,8 @@ Git gutter:
   ;; pandoc ipynb seems to be broken on my linux machines
   (if IS-MAC
       (setq code-cells-convert-ipynb-style '(("pandoc" "--to" "ipynb" "--from" "org")
-					     ("pandoc" "--to" "org" "--from" "ipynb")
-					     (lambda () #'org-mode))))
+                                             ("pandoc" "--to" "org" "--from" "ipynb")
+                                             (lambda () #'org-mode))))
   (use-package jupyter
     :config
     (append! org-babel-load-languages
@@ -2305,7 +2305,7 @@ Git gutter:
     (define-key map [remap evil-forward-word-end] (code-cells-speed-key 'code-cells-eval)) ;; e
     (define-key map [remap evil-jump-forward] (code-cells-speed-key 'outline-cycle))) ;; TAB
   (add-to-list 'code-cells-eval-region-commands
-	       '(python-ts-mode . python-shell-send-region) t))
+               '(python-ts-mode . python-shell-send-region) t))
 
 #+end_src
 ** Rust
@@ -2324,21 +2324,21 @@ Git gutter:
   (add-hook 'rustic-mode-hook 'eglot-ensure)
   (setq rustic-indent-method-chain t)
   (my/local-leader-def rustic-mode
-		       "b" '("build" . nil)
-		       "bb" '("build" . rustic-cargo-build)
-		       "br" '("run" . rustic-cargo-run)
-		       "ba" '("audit" . rustic-cargo-audit)
-		       "bt" '("test" . rustic-cargo-test)
-		       "bc" '("check" . rustic-cargo-check)
-		       "bd" '("doc" . rustic-cargo-build-doc)
-		       "bD" '("doc open" . rustic-cargo-doc)
-		       "bn" '("new" . rustic-cargo-new)
-		       "c" '("cargo" . nil)
-		       "co" '("outdated" . rustic-cargo-outdated)
-		       "ca" '("add" . rustic-cargo-add)
-		       "cd" '("rm" . rustic-cargo-rm)
-		       "cA" '("add missing" . rustic-cargo-add-missing-dependencies)
-		       "m" '("macro expand" . rustic-cargo-expand)))
+                       "b" '("build" . nil)
+                       "bb" '("build" . rustic-cargo-build)
+                       "br" '("run" . rustic-cargo-run)
+                       "ba" '("audit" . rustic-cargo-audit)
+                       "bt" '("test" . rustic-cargo-test)
+                       "bc" '("check" . rustic-cargo-check)
+                       "bd" '("doc" . rustic-cargo-build-doc)
+                       "bD" '("doc open" . rustic-cargo-doc)
+                       "bn" '("new" . rustic-cargo-new)
+                       "c" '("cargo" . nil)
+                       "co" '("outdated" . rustic-cargo-outdated)
+                       "ca" '("add" . rustic-cargo-add)
+                       "cd" '("rm" . rustic-cargo-rm)
+                       "cA" '("add missing" . rustic-cargo-add-missing-dependencies)
+                       "m" '("macro expand" . rustic-cargo-expand)))
 (use-package rustic-babel
   :ensure nil
   :after org
@@ -2380,13 +2380,13 @@ Git gutter:
   :config
   (add-hook 'julia-mode-hook #'eglot-ensure)
   (my/local-leader-def julia-mode
-		       "b" 'julia-repl-send-buffer
-		       "r" 'julia-repl-send-region-or-line
-		       "R" 'julia-repl
-		       "f" 'julia-repl-send-defun
-		       "l" 'julia-repl-send-line
-		       "s" 'julia-repl
-		       "S" 'julia-repl-switch)
+                       "b" 'julia-repl-send-buffer
+                       "r" 'julia-repl-send-region-or-line
+                       "R" 'julia-repl
+                       "f" 'julia-repl-send-defun
+                       "l" 'julia-repl-send-line
+                       "s" 'julia-repl
+                       "S" 'julia-repl-switch)
   (defun my/julia-def ()
     (my/general-global-Open :keymaps 'local
       "r" 'julia-repl-send-region-or-line
@@ -2420,23 +2420,23 @@ Git gutter:
   :config
   (setenv "JAVA_OPTS" "-Xmx8g")
   (add-hook 'kotlin-ts-mode-hook
-  	    (defun my/kotlin-ts-setup ()
-  	      (setq-local
-  	       read-process-output-max (* 16 1024 1024)
-  	       eglot-autoshutdown t
-  	       eglot-connect-timeout 300
-  	       eglot-ignored-server-capabilities '(:documentFormattingProvider
-  						   :documentRangeFormattingProvider
-  						   :documentOnTypeFormattingProvider
-  						   :documentHighlightProvider))))
+            (defun my/kotlin-ts-setup ()
+              (setq-local
+               read-process-output-max (* 16 1024 1024)
+               eglot-autoshutdown t
+               eglot-connect-timeout 300
+               eglot-ignored-server-capabilities '(:documentFormattingProvider
+                                                   :documentRangeFormattingProvider
+                                                   :documentOnTypeFormattingProvider
+                                                   :documentHighlightProvider))))
   (after! eglot
-  	  (add-to-list 'eglot-server-programs '(kotlin-ts-mode "kotlin-language-server")))
+          (add-to-list 'eglot-server-programs '(kotlin-ts-mode "kotlin-language-server")))
   (defun my/gradlew-command (command)
     "Run gradlew in this project."
     (interactive "Command: ")
     (let ((default-directory (locate-dominating-file buffer-file-name "gradlew"))
-  	  (compilation-read-command nil)
-  	  (compile-command (format "sh gradlew %s" command)))
+          (compilation-read-command nil)
+          (compile-command (format "sh gradlew %s" command)))
       (call-interactively #'compile)))
   (my/local-leader-def kotlin-ts-mode
       "tt"  '("go to test" . kotlin-ts-mode-goto-test-file)
@@ -2469,7 +2469,7 @@ Git gutter:
   (add-hook 'pdf-view-mode-hook #'my/disable-line-numbers)
   (add-to-list 'recentf-exclude "/**/*.pdf")
   (after! undo-tree
-	  (add-to-list 'undo-tree-incompatible-major-modes 'pdf-view-mode)))
+          (add-to-list 'undo-tree-incompatible-major-modes 'pdf-view-mode)))
 #+end_src
 ** Shell
 #+begin_src emacs-lisp
@@ -2561,22 +2561,22 @@ Mostly only used for double checking after org export.
      :enter-func (lambda () (mu4e-message "Entering context %s" name))
      :leave-func (lambda () (mu4e-message "Leaving context %s" name))
      :match-func (lambda (msg)
-		   (when msg
-		     (string-prefix-p (format "/%s" address)
-				      (mu4e-message-field msg :maildir))))
+                   (when msg
+                     (string-prefix-p (format "/%s" address)
+                                      (mu4e-message-field msg :maildir))))
      :vars `((user-mail-address . ,address)
-	     (user-full-name . ,user-full-name)
-	     (mu4e-compose-signature . ,(if (package-installed-p 'org-msg) signature))
-	     (mu4e-sent-folder . ,(format (if (s-contains? "gmail" address) "/%s/[Gmail]/Sent Mail" "/%s/Sent") name))
-	     (mu4e-drafts-folder . ,(format "/%s/[Gmail]/Drafts" name))
-	     (mu4e-trash-folder . ,(format "/%s/[Gmail]/Trash" name))
-	     (mu4e-refile-folder . ,(format "/%s/Archive" name))
-	     (smtpmail-smtp-user . ,address)
-	     (smtpmail-smtp-server . ,server)
-	     (smtpmail-smtp-service . 587)
-	     (smtpmail-stream-type . starttls)
-	     (smtpmail-debug-info . t)
-	     (smtpmail-debug-verb . t))))
+             (user-full-name . ,user-full-name)
+             (mu4e-compose-signature . ,(if (package-installed-p 'org-msg) signature))
+             (mu4e-sent-folder . ,(format (if (s-contains? "gmail" address) "/%s/[Gmail]/Sent Mail" "/%s/Sent") name))
+             (mu4e-drafts-folder . ,(format "/%s/[Gmail]/Drafts" name))
+             (mu4e-trash-folder . ,(format "/%s/[Gmail]/Trash" name))
+             (mu4e-refile-folder . ,(format "/%s/Archive" name))
+             (smtpmail-smtp-user . ,address)
+             (smtpmail-smtp-server . ,server)
+             (smtpmail-smtp-service . 587)
+             (smtpmail-stream-type . starttls)
+             (smtpmail-debug-info . t)
+             (smtpmail-debug-verb . t))))
   (defun my/wrap-signature (str)
     (concat
      "#+begin_signature\n"
@@ -2620,10 +2620,10 @@ Mostly only used for double checking after org export.
   :config
   (when IS-LINUX
     (progn (mu4e-alert-set-default-style 'libnotify)
-	   (add-hook 'after-init-hook #'mu4e-alert-enable-notifications)))
+           (add-hook 'after-init-hook #'mu4e-alert-enable-notifications)))
   (when IS-MAC
     (progn (mu4e-alert-set-default-style 'notifier)
-	   (add-hook 'after-init-hook #'mu4e-alert-enable-notifications)))
+           (add-hook 'after-init-hook #'mu4e-alert-enable-notifications)))
   (add-hook 'after-init-hook #'mu4e-alert-enable-mode-line-display))
 #+end_src
 ** msmtp
@@ -2644,9 +2644,9 @@ Mostly only used for double checking after org export.
                 org-msg-startup "hidestars indent inlineimages"
                 org-msg-greeting-fmt "\nHey%s,\n\n"
                 org-msg-greeting-name-limit 3
-                org-msg-default-alternatives '((new		. (text html))
-                                               (reply-to-html	. (text html))
-                                               (reply-to-text	. (text)))
+                org-msg-default-alternatives '((new             . (text html))
+                                               (reply-to-html   . (text html))
+                                               (reply-to-text   . (text)))
                 org-msg-convert-citation t
                 org-msg-signature "")
   (org-msg-mode))
@@ -2660,9 +2660,9 @@ Mostly only used for double checking after org export.
   (require 'org-tempo)
   (dolist (scheme '("ftp" "http" "https" "mailto" "news"))
     (org-link-set-parameters scheme
-			     :follow
-			     `(lambda (url arg)
-				(browse-url (concat ,scheme ":" url) arg))))
+                             :follow
+                             `(lambda (url arg)
+                                (browse-url (concat ,scheme ":" url) arg))))
   :init
   (defun my/relative-org (dir)
     "Makes a sting representing a directory relative to my org base directory"
@@ -2674,25 +2674,25 @@ Mostly only used for double checking after org export.
         org-insert-heading-respect-content t
         org-export-in-background t
         org-export-with-sub-superscripts '{}
-	org-pretty-entities t
-	org-pretty-entities-include-sub-superscripts t
+        org-pretty-entities t
+        org-pretty-entities-include-sub-superscripts t
         org-list-allow-alphabetical t
         org-catch-invisible-edits 'smart
         org-special-ctrl-a/e t
-	org-return-follows-link t
+        org-return-follows-link t
         org-export-backends '(latex beamer html ascii)
 
-	browse-url-browser-function (cond
-				     (IS-MAC #'browse-url-default-macosx-browser)
-				     (IS-LINUX #'browse-url-xdg-open))))
+        browse-url-browser-function (cond
+                                     (IS-MAC #'browse-url-default-macosx-browser)
+                                     (IS-LINUX #'browse-url-xdg-open))))
 #+end_src
 ** Smartparens
 #+begin_src emacs-lisp
 (after! (org smartparens)
-	(add-hook 'org-mode-hook #'smartparens-mode)
-	(sp-local-pair 'org-mode "\\[" "\\]")
-	(sp-local-pair 'org-mode "\\(" "\\)")
-	(sp-local-pair 'org-mode "$" "$"))
+        (add-hook 'org-mode-hook #'smartparens-mode)
+        (sp-local-pair 'org-mode "\\[" "\\]")
+        (sp-local-pair 'org-mode "\\(" "\\)")
+        (sp-local-pair 'org-mode "$" "$"))
 #+end_src
 ** Org Modern
 #+begin_src emacs-lisp
@@ -2802,7 +2802,7 @@ Mostly only used for double checking after org export.
   :if (and IS-PERSONAL (executable-find "pass") (file-exists-p (concat (getenv "PASSWORD_STORE_DIR") "/google.com/api/client_secret.gpg")))
   :commands (org-gcal-sync)
   :init (my/general-global-Open
-	     "a" '("agenda" . org-gcal-sync))
+             "a" '("agenda" . org-gcal-sync))
   :custom
   (org-gcal-client-id (auth-source-pass-get 'secret "google.com/api/client_id"))
   (org-gcal-client-secret (auth-source-pass-get 'secret "google.com/api/client_secret"))
@@ -2812,7 +2812,7 @@ Mostly only used for double checking after org export.
   (oauth2-auto-plstore (concat my/etc-dir "oauth2-auto.plist"))
   :config
   (cl-loop for (key . value) in org-gcal-file-alist
-	   do (append! org-agenda-files value))
+           do (append! org-agenda-files value))
   (unless (file-exists-p oauth2-auto-plstore) (f-touch oauth2-auto-plstore))
   (use-package plstore
     :ensure nil
@@ -2833,17 +2833,17 @@ Mostly only used for double checking after org export.
   :config
   ;; enable list of modes in org present then disable on quit
   (add-hook 'org-present-mode-hook
-	    (lambda ()
-	      (org-present-big)
-	      (org-display-inline-images)
-	      (org-present-hide-cursor)
-	      (org-present-read-only)))
+            (lambda ()
+              (org-present-big)
+              (org-display-inline-images)
+              (org-present-hide-cursor)
+              (org-present-read-only)))
   (add-hook 'org-present-mode-quit-hook
-	    (lambda ()
-	      (org-present-small)
-	      (org-remove-inline-images)
-	      (org-present-show-cursor)
-	      (org-present-read-write))))
+            (lambda ()
+              (org-present-small)
+              (org-remove-inline-images)
+              (org-present-show-cursor)
+              (org-present-read-write))))
 #+end_src
 ** LilyPond
 #+begin_src emacs-lisp
@@ -2869,12 +2869,12 @@ Mostly only used for double checking after org export.
 ** Org Previews
 #+begin_src emacs-lisp
 (after! org
-	;; Latex fragments
-	(add-hook 'org-mode-hook #'org-latex-preview)
+        ;; Latex fragments
+        (add-hook 'org-mode-hook #'org-latex-preview)
 
-	;; Images
-	(add-hook 'org-mode-hook #'org-display-inline-images)
-	(add-hook 'org-babel-after-execute-hook #'org-redisplay-inline-images))
+        ;; Images
+        (add-hook 'org-mode-hook #'org-display-inline-images)
+        (add-hook 'org-babel-after-execute-hook #'org-redisplay-inline-images))
 #+end_src
 ** Notes
 #+begin_src emacs-lisp
@@ -2915,21 +2915,21 @@ Mostly only used for double checking after org export.
      <<roam-templates>>
      ))
   :init (my/general-global-Notes
-	  "r" '("roam" . nil)
-	  "rf" '("find" . org-roam-node-find)
-	  "ri" '("insert" . org-roam-node-insert)
-	  "rg" '("graph" . org-roam-graph)
-	  "rt" '("today" . org-roam-dailies-find-today)
-	  "ry" '("yesterday" . org-roam-dailies-find-yesterday)
-	  "rr" '("tomorrow" . org-roam-dailies-find-tomorrow)
-	  "rd" '("date" . org-roam-dailies-find-date)
-	  "rc" '("capture today" . org-roam-dailies-capture-today)
-	  "rC" '("capture tomorrow" . org-roam-dailies-capture-tomorrow)
-	  "rD" '("capture date" . org-roam-dailies-capture-date)
-	  "rl" '("toggle display" . org-roam-buffer-toggle-display)
-	  "rL" '("display dedicated" . org-roam-buffer-display-dedicated)
-	  "rs" '("sync" . org-roam-db-sync)
-	  "rS" '("server" . org-roam-server-mode)))
+          "r" '("roam" . nil)
+          "rf" '("find" . org-roam-node-find)
+          "ri" '("insert" . org-roam-node-insert)
+          "rg" '("graph" . org-roam-graph)
+          "rt" '("today" . org-roam-dailies-find-today)
+          "ry" '("yesterday" . org-roam-dailies-find-yesterday)
+          "rr" '("tomorrow" . org-roam-dailies-find-tomorrow)
+          "rd" '("date" . org-roam-dailies-find-date)
+          "rc" '("capture today" . org-roam-dailies-capture-today)
+          "rC" '("capture tomorrow" . org-roam-dailies-capture-tomorrow)
+          "rD" '("capture date" . org-roam-dailies-capture-date)
+          "rl" '("toggle display" . org-roam-buffer-toggle-display)
+          "rL" '("display dedicated" . org-roam-buffer-display-dedicated)
+          "rs" '("sync" . org-roam-db-sync)
+          "rS" '("server" . org-roam-server-mode)))
 #+end_src
 **** Templates
 :PROPERTIES:
@@ -2955,7 +2955,7 @@ Mostly only used for double checking after org export.
 #+begin_src emacs-lisp
 ("rl" "Lesson" plain "#+filetags: lesson \"Topic: ${topic}\"\n* %?"
  :if-new (file+head "religious/lessons/%<%Y%m%d%H%M%S>-${slug}.org"
-		    "#+title: ${title}\n\n")
+                    "#+title: ${title}\n\n")
  :unnarrowed t)
 #+end_src
 ***** Generic
@@ -2984,24 +2984,24 @@ Mostly only used for double checking after org export.
   :config
   (add-popup! '("^\\*Org-Babel Error Output\\*$" . hide))
   (setq org-confirm-babel-evaluate nil
-	org-src-fontify-natively t
-	org-src-tab-acts-natively t
-	org-src-window-setup 'current-window
-	org-src-preserve-indentation t
-	org-src-strip-leading-and-trailing-blank-lines t
-	org-src-ask-before-returning-to-edit-buffer nil
+        org-src-fontify-natively t
+        org-src-tab-acts-natively t
+        org-src-window-setup 'current-window
+        org-src-preserve-indentation t
+        org-src-strip-leading-and-trailing-blank-lines t
+        org-src-ask-before-returning-to-edit-buffer nil
         org-babel-load-languages '((emacs-lisp . t))
-	org-babel-default-header-args '((:session . "default")
-					(:results . "replace")
-					(:mkdirp . "yes")
-					(:exports . "both")
-					(:cache . "yes")
-					(:noweb . "yes")
-					(:hlines . "no")
-					(:tangle . "no")
-					(:padnewline . "yes")
-					(:eval . "never-export")
-					(:comments . "link")))
+        org-babel-default-header-args '((:session . "default")
+                                        (:results . "replace")
+                                        (:mkdirp . "yes")
+                                        (:exports . "both")
+                                        (:cache . "yes")
+                                        (:noweb . "yes")
+                                        (:hlines . "no")
+                                        (:tangle . "no")
+                                        (:padnewline . "yes")
+                                        (:eval . "never-export")
+                                        (:comments . "link")))
   (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages))
 #+end_src
 ** Auto Tangle
@@ -3038,8 +3038,8 @@ Mostly only used for double checking after org export.
                   "\\begin{questions} %% %s"
                   "\\end{questions}")
                  ("\\question %s " . "\\question* %s")
-		 ("\\begin{parts} %s"
-		  "\\end{parts}"
+                 ("\\begin{parts} %s"
+                  "\\end{parts}"
                   "\\begin{parts} %s"
                   "\\end{parts}"))))
 #+end_src
@@ -3058,33 +3058,33 @@ Mostly only used for double checking after org export.
   (add-to-list 'org-latex-packages-alist '("" "scrextend" nil))
   (add-to-list 'org-latex-packages-alist '("" "xcolor" nil))
   (after! org-msg
-	  (setq org-msg-options (concat org-msg-options " html-content-class: chameleon "))))
+          (setq org-msg-options (concat org-msg-options " html-content-class: chameleon "))))
 #+end_src
 *** Async patch
 #+begin_src emacs-lisp
 (when (not noninteractive)
   (after! ox
-	  (setq org-export-async-init-file (make-temp-file "org-export-async-init-file" nil ".el"))
-	  (defun my/get-loaded-nix-file (name)
-	    (car (load-history-filename-element
-		  (concat
-		   "^/nix/store/.*emacs-packages-deps/share/emacs/site-lisp/"
-		   name
-		   "\\.elc?\\(\\.gz\\)?$"))))
+          (setq org-export-async-init-file (make-temp-file "org-export-async-init-file" nil ".el"))
+          (defun my/get-loaded-nix-file (name)
+            (car (load-history-filename-element
+                  (concat
+                   "^/nix/store/.*emacs-packages-deps/share/emacs/site-lisp/"
+                   name
+                   "\\.elc?\\(\\.gz\\)?$"))))
 
-	  (with-temp-file org-export-async-init-file
-	    (mapc (lambda (s)
-		    (insert (format "(load \"%s\")\n" s)))
-		  (-select #'identity
-			   (list
-			    (my/get-loaded-nix-file "site-start")
-			    (my/get-loaded-nix-file "subdirs")
-			    (my/get-loaded-nix-file "default")
-			    (my/get-loaded-nix-file "init"))))
-	    (insert (format "(setq engrave-faces-preset-styles '%S)\n" engrave-faces-preset-styles))
-	    (insert (format "(setq engrave-faces-themes '%S)\n" engrave-faces-themes))
-	    (insert (format "(setq load-path '%S)\n" load-path))
-	    (insert (format "(setq exec-path '%S)\n" exec-path)))))
+          (with-temp-file org-export-async-init-file
+            (mapc (lambda (s)
+                    (insert (format "(load \"%s\")\n" s)))
+                  (-select #'identity
+                           (list
+                            (my/get-loaded-nix-file "site-start")
+                            (my/get-loaded-nix-file "subdirs")
+                            (my/get-loaded-nix-file "default")
+                            (my/get-loaded-nix-file "init"))))
+            (insert (format "(setq engrave-faces-preset-styles '%S)\n" engrave-faces-preset-styles))
+            (insert (format "(setq engrave-faces-themes '%S)\n" engrave-faces-themes))
+            (insert (format "(setq load-path '%S)\n" load-path))
+            (insert (format "(setq exec-path '%S)\n" exec-path)))))
 #+end_src
 *** Syntax Highlighting
 #+name: engrave-faces-init
@@ -3105,13 +3105,13 @@ DOCSTRING and BODY are as in `defun'.
       (setq docstring nil))
     (let (where-alist)
       (while (keywordp (car body))
-	(push `(cons ,(pop body) (ensure-list ,(pop body)))
+        (push `(cons ,(pop body) (ensure-list ,(pop body)))
               where-alist))
       `(progn
-	 (defun ,symbol ,arglist ,docstring ,@body)
-	 (dolist (targets (list ,@(nreverse where-alist)))
-	   (dolist (target (cdr targets))
-	     (advice-add target (car targets) #',symbol))))))
+         (defun ,symbol ,arglist ,docstring ,@body)
+         (dolist (targets (list ,@(nreverse where-alist)))
+           (dolist (target (cdr targets))
+             (advice-add target (car targets) #',symbol))))))
   (defvar-local org-export-has-code-p nil)
 
   (defadvice! org-export-expect-no-code (&rest _)
@@ -3128,8 +3128,8 @@ DOCSTRING and BODY are as in `defun'.
     :around #'org-latex-example-block
     (let ((output-block (funcall orig-fn example-block contents info)))
       (if (eq 'engraved (plist-get info :latex-listings))
-	  (format "\\begin{Code}[alt]\n%s\n\\end{Code}" output-block)
-	output-block))))
+          (format "\\begin{Code}[alt]\n%s\n\\end{Code}" output-block)
+        output-block))))
 #+end_src
 #+begin_src emacs-lisp
 ;; both installed by engrave-faces
@@ -3161,8 +3161,8 @@ DOCSTRING and BODY are as in `defun'.
   (use-package evil-org-agenda :ensure nil)
   (evil-org-agenda-set-keys)
   (add-hook 'evil-org-mode-hook
-	    (lambda ()
-	      (evil-org-set-key-theme)))
+            (lambda ()
+              (evil-org-set-key-theme)))
   (use-package evil-org-agenda :ensure nil)
   (evil-org-agenda-set-keys))
 #+end_src
@@ -3171,7 +3171,7 @@ DOCSTRING and BODY are as in `defun'.
 (use-package org-src-context
   :after org
   :init (my/local-leader-def-org-mode
-	  "S" '("src LSP" . org-src-context-mode)))
+          "S" '("src LSP" . org-src-context-mode)))
 #+end_src
 ** Poly Org
 #+begin_src emacs-lisp
