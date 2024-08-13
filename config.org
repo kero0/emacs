@@ -149,6 +149,7 @@
 		 "/var/folders/.*"
 		 "/private/tmp/.*"
 		 "/private/var/.*"
+                 "/Applications/Xcode.app/.*"
 		 "~/\\.cache.*"
 		 ,(concat my/etc-dir ".*")
 		 ,(concat my/local-dir ".*")
