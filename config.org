@@ -1435,11 +1435,6 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
         calc-window-height 15)
   (add-hook 'calc-mode-hook #'my/disable-line-numbers))
 #+end_src
-** Casual calc
-#+begin_src emacs-lisp
-(use-package casual-calc
-  :bind (:map calc-mode-map ("C-o" . #'casual-calc-tmenu)))
-#+end_src
 * String Inflection
 #+begin_src emacs-lisp
 (use-package string-inflection
