@@ -191,15 +191,12 @@
 #+end_src
 ** Backup files
 #+begin_src emacs-lisp
-(setq backup-directory-alist `(("." . ,(expand-file-name "backups" my/local-dir)))
-      auto-save-file-name-transforms `((".*" ,(expand-file-name "auto-save/" my/local-dir) t)))
-(use-package tramp
-  :ensure nil
-  :custom
-  (tramp-backup-directory-alist nil)
-  (tramp-verbose 0)
-  (tramp-chunksize 2000)
-  (tramp-use-ssh-controlmaster-options nil))
+(setopt backup-directory-alist `(("." . ,(expand-file-name "backups" my/local-dir)))
+        auto-save-file-name-transforms `((".*" ,(expand-file-name "auto-save/" my/local-dir) t))
+        tramp-backup-directory-alist nil
+        tramp-verbose 0
+        tramp-chunksize 2000
+        tramp-use-ssh-controlmaster-options nil)
 #+end_src
 ** Lockfiles
 #+begin_src emacs-lisp
@@ -881,7 +878,6 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
 (use-package nerd-icons)
 (use-package dashboard
   :unless noninteractive
-  :hook (after-init . dashboard-setup-startup-hook)
   :init
   (setq dashboard-banner-logo-title "Welcome to Emacs Dashboard"
         dashboard-startup-banner 'logo
@@ -897,7 +893,10 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
         dashboard-set-navigator t
         dashboard-set-init-info t
         inhibit-startup-screen t)
-
+  :config
+  (dashboard-setup-startup-hook)
+  (when (daemonp)
+    (setq initial-buffer-choice (lambda () (get-buffer-create dashboard-buffer-name))))
   (add-hook 'dashboard-mode-hook #'my/disable-line-numbers))
 #+end_src
 ** Theme
@@ -1222,11 +1221,14 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :unless noninteractive
   :ensure nil
   :commands (dired dired-jump dired-jump-other-window)
+  :init
+  (after! evil
+          (general-nmap
+            "-" #'dired-jump))
   :bind
   (:map my/general-global-Open-map
-        ("/" . dired)
-        ("d". dired-jump)
-        ("D". dired-jump-other-window))
+        ("d" . dired-jump)
+        ("D" . dired-jump-other-window))
   :config
   (require 'dired-aux)
   (require 'dired-x)
@@ -1432,11 +1434,6 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
         calc-undo-length 1000
         calc-window-height 15)
   (add-hook 'calc-mode-hook #'my/disable-line-numbers))
-#+end_src
-** Casual calc
-#+begin_src emacs-lisp
-(use-package casual-calc
-  :bind (:map calc-mode-map ("C-o" . #'casual-calc-tmenu)))
 #+end_src
 * String Inflection
 #+begin_src emacs-lisp
@@ -1936,11 +1933,11 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
 #+begin_src emacs-lisp
 (use-package magit
   :unless noninteractive
+  :commands (magit-status magit-blame bagit-commit magit-status-here magit-stage-buffer-file magit-unstage-file)
   :init
   (setq magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
   (setq magit-log-arguments '("--graph" "--decorate" "--color"))
   (setq git-commit-fill-column 72)
-  :config
   (my/general-global-Git
     "g" '("Status" . magit-status)
     "b" '("Blame" . magit-blame)
@@ -1949,6 +1946,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
     "G" '("Status here" . magit-status-here)
     "S" '("Stage file" . magit-stage-buffer-file)
     "U" '("Unstage file" . magit-unstage-file))
+  :config
   (add-popup! "\\*\\*magit-process:.*\\*\\*")
   (setq magit-buffer-name-format (concat "*" magit-buffer-name-format "*"))
   (append! magit-status-sections-hook #'magit-insert-modules))
@@ -2146,14 +2144,16 @@ Git gutter:
 #+begin_src emacs-lisp
 (use-package dape
   ;; To use window configuration like gud (gdb-mi)
+  :bind
+  (:map my/general-global-Open-map
+        ("?" . dape))
   :custom
   (dape-buffer-window-arrangment 'gud)
   (dape-buffer-window-arrangment 'right)
   (dape-adapter-dir (concat my/local-dir "dape-adapters/"))
   :config
-
   (my/leader-def
-    "d" '("Debug" . dape-global-map))
+    "d" (cons "Debug" dape-global-map))
   ;; By default dape uses gdb keybinding prefix
   (setq dape-key-prefix "\C-x\C-a")
 
@@ -2505,6 +2505,7 @@ Git gutter:
 Mostly only used for double checking after org export.
 #+begin_src emacs-lisp
 (use-package auctex
+  :after org
   :config
   (org-babel-do-load-languages
    'org-babel-load-languages
@@ -2513,7 +2514,7 @@ Mostly only used for double checking after org export.
 (use-package reftex
   :after auctex
   :ensure nil
-  :hook (LaTeX-mode , turn-on-reftex))
+  :hook (LaTeX-mode . turn-on-reftex))
 
 (use-package cdlatex
   :hook (org-mode . org-cdlatex-mode)
@@ -2656,6 +2657,8 @@ Mostly only used for double checking after org export.
 (use-package org
   :defer 1
   :ensure nil ;; included in emacs
+  :commands org-mode
+  :mode ("\\.org\\'" . org-mode)
   :config
   (require 'org-tempo)
   (dolist (scheme '("ftp" "http" "https" "mailto" "news"))
