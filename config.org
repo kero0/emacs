@@ -2505,6 +2505,7 @@ Git gutter:
 Mostly only used for double checking after org export.
 #+begin_src emacs-lisp
 (use-package auctex
+  :after org
   :config
   (org-babel-do-load-languages
    'org-babel-load-languages
@@ -2513,7 +2514,7 @@ Mostly only used for double checking after org export.
 (use-package reftex
   :after auctex
   :ensure nil
-  :hook (LaTeX-mode , turn-on-reftex))
+  :hook (LaTeX-mode . turn-on-reftex))
 
 (use-package cdlatex
   :hook (org-mode . org-cdlatex-mode)
@@ -2656,6 +2657,8 @@ Mostly only used for double checking after org export.
 (use-package org
   :defer 1
   :ensure nil ;; included in emacs
+  :commands org-mode
+  :mode ("\\.org\\'" . org-mode)
   :config
   (require 'org-tempo)
   (dolist (scheme '("ftp" "http" "https" "mailto" "news"))
