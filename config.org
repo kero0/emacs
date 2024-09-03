@@ -878,7 +878,6 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
 (use-package nerd-icons)
 (use-package dashboard
   :unless noninteractive
-  :hook (after-init . dashboard-setup-startup-hook)
   :init
   (setq dashboard-banner-logo-title "Welcome to Emacs Dashboard"
         dashboard-startup-banner 'logo
@@ -894,7 +893,10 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
         dashboard-set-navigator t
         dashboard-set-init-info t
         inhibit-startup-screen t)
-
+  :config
+  (dashboard-setup-startup-hook)
+  (when (daemonp)
+    (setq initial-buffer-choice (lambda () (get-buffer-create dashboard-buffer-name))))
   (add-hook 'dashboard-mode-hook #'my/disable-line-numbers))
 #+end_src
 ** Theme
