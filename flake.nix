@@ -39,10 +39,6 @@
     };
 
     # temporary until fix is merged upstream
-    packages-org-msg = {
-      url = "github:danielfleischer/org-msg/1.12";
-      flake = false;
-    };
     packages-emacs-jupyter = {
       url = "github:emacs-jupyter/jupyter";
       flake = false;
@@ -223,9 +219,6 @@
                         runHook postBuild
                       '';
                     });
-                org-msg = super.melpaPackages.org-msg.overrideAttrs (old: {
-                  src = inputs.packages-org-msg;
-                });
               };
             }).overrideAttrs
               (old: {
