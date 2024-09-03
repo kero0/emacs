@@ -1933,11 +1933,11 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
 #+begin_src emacs-lisp
 (use-package magit
   :unless noninteractive
+  :commands (magit-status magit-blame bagit-commit magit-status-here magit-stage-buffer-file magit-unstage-file)
   :init
   (setq magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
   (setq magit-log-arguments '("--graph" "--decorate" "--color"))
   (setq git-commit-fill-column 72)
-  :config
   (my/general-global-Git
     "g" '("Status" . magit-status)
     "b" '("Blame" . magit-blame)
@@ -1946,6 +1946,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
     "G" '("Status here" . magit-status-here)
     "S" '("Stage file" . magit-stage-buffer-file)
     "U" '("Unstage file" . magit-unstage-file))
+  :config
   (add-popup! "\\*\\*magit-process:.*\\*\\*")
   (setq magit-buffer-name-format (concat "*" magit-buffer-name-format "*"))
   (append! magit-status-sections-hook #'magit-insert-modules))
