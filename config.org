@@ -2144,14 +2144,16 @@ Git gutter:
 #+begin_src emacs-lisp
 (use-package dape
   ;; To use window configuration like gud (gdb-mi)
+  :bind
+  (:map my/general-global-Open-map
+        ("?" . dape))
   :custom
   (dape-buffer-window-arrangment 'gud)
   (dape-buffer-window-arrangment 'right)
   (dape-adapter-dir (concat my/local-dir "dape-adapters/"))
   :config
-
   (my/leader-def
-    "d" '("Debug" . dape-global-map))
+    "d" (cons "Debug" dape-global-map))
   ;; By default dape uses gdb keybinding prefix
   (setq dape-key-prefix "\C-x\C-a")
 
