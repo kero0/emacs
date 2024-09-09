@@ -2072,7 +2072,6 @@ Git gutter:
   :config
   (my/general-global-menu! "LSP" "cl"
     "a" #'eglot-code-actions
-    "d" #'eglot-help-at-point
     "f" #'eglot-format-buffer)
   (when (featurep 'tempel)
     (use-package eglot-tempel))
