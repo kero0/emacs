@@ -2328,6 +2328,45 @@ Git gutter:
                '(python-ts-mode . python-shell-send-region) t))
 
 #+end_src
+** C/C++
+#+begin_src emacs-lisp
+(unless noninteractive
+  (after! eglot
+          (let ((val (list "clangd"
+                           "--background-index"
+                           ;; "--compile-commands-dir=build"
+                           "--all-scopes-completion"
+                           "--completion-style=detailed"
+                           (format "-j=%d" my/available-cores)
+                           "-cross-file-rename"
+                           "--clang-tidy"
+                           "--clang-tidy-checks=performance-*,bugprone-*")))
+            (setf (alist-get 'c++-ts-mode eglot-server-programs) val)
+            (setf (alist-get 'c-ts-mode eglot-server-programs) val)))
+  (use-package c-ts-mode
+    ;; builtin
+    :ensure nil
+    :mode
+    (("\\.c\\'" . c-ts-mode)
+     ("\\.h\\'" . c-or-c++-ts-mode))
+    :hook (c-ts-mode . eglot-ensure)
+    :hook (c-ts-mode . (lambda () (run-hooks 'c-mode-hook)))
+    :config
+    (setq-default c-basic-offset 2))
+
+  (use-package c++-ts-mode
+    ;; builtin
+    :ensure nil
+    :mode
+    (("\\.cpp\\'" . c++-ts-mode)
+     ("\\.cc\\'" . c++-ts-mode)
+     ("\\.hh\\'" . c++-ts-mode)
+     ("\\.hpp\\'" . c++-ts-mode))
+    :hook (c++-ts-mode . eglot-ensure)
+    :hook (c++-ts-mode . (lambda () (run-hooks 'c++-mode-hook)))
+    :config
+    (setq-default c-basic-offset 2)))
+#+end_src
 ** Rust
 #+begin_src emacs-lisp
 (use-package rustic
