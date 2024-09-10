@@ -1939,15 +1939,14 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
                        '(jinx grid (vertico-grid-annotate . 20)))
           (vertico-multiform-mode 1)))
 #+end_src
-* Env
-** Inherit ENV
+* Environment
 #+begin_src emacs-lisp
 (use-package inheritenv)
-#+end_src
-** direnv
-#+begin_src emacs-lisp
 (use-package envrc
   :hook (after-init . envrc-global-mode))
+(use-package editorconfig
+  :config
+  (editorconfig-mode 1))
 #+end_src
 * Git
 ** Magit
