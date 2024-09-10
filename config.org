@@ -259,6 +259,7 @@ I want windows that start with '*' to be opened in the lower 1/3 of the frame. T
 
 (setq comp-eln-cache-path (expand-file-name "eln-cache/" my/cache-dir)
       native-comp-async-report-warnings-errors 'silent
+      warning-minimum-level ':error
       native-comp-verbose 0)
 #+end_src
 *** Disable package.el
