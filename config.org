@@ -1226,10 +1226,9 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   (after! evil
           (general-nmap
             "-" #'dired-jump))
-  :bind
-  (:map my/general-global-Open-map
-        ("d" . dired-jump)
-        ("D" . dired-jump-other-window))
+  (my/general-global-Open
+    "d" #'dired-jump
+    "D" #'dired-jump-other-window)
   :config
   (require 'dired-aux)
   (require 'dired-x)
