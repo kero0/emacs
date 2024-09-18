@@ -1221,15 +1221,14 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
 (use-package dired
   :unless noninteractive
   :ensure nil
-  :commands (dired dired-jump dired-jump-other-window)
-  :init
+  :demand
+  :config
   (after! evil
           (general-nmap
             "-" #'dired-jump))
   (my/general-global-Open
     "d" #'dired-jump
     "D" #'dired-jump-other-window)
-  :config
   (require 'dired-aux)
   (require 'dired-x)
   (use-package dired-single)
