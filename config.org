@@ -2348,6 +2348,7 @@ Git gutter:
     (("\\.c\\'" . c-ts-mode)
      ("\\.h\\'" . c-or-c++-ts-mode))
     :hook (c-ts-mode . eglot-ensure)
+    :hook (c-ts-mode . my/treesit-mode)
     :hook (c-ts-mode . (lambda () (run-hooks 'c-mode-hook)))
     :config
     (setq-default c-basic-offset 2))
@@ -2361,6 +2362,7 @@ Git gutter:
      ("\\.hh\\'" . c++-ts-mode)
      ("\\.hpp\\'" . c++-ts-mode))
     :hook (c++-ts-mode . eglot-ensure)
+    :hook (c++-ts-mode . my/treesit-mode)
     :hook (c++-ts-mode . (lambda () (run-hooks 'c++-mode-hook)))
     :config
     (setq-default c-basic-offset 2)))
