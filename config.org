@@ -1916,10 +1916,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   (global-flycheck-mode)
   (add-popup! "^\\*Flycheck.*\\*$" #'flycheck-error-list-mode)
   :custom
-  (flycheck-emacs-lisp-load-path 'inherit)
-  (flycheck-display-errors-delay 0.25)
-  (flycheck-check-syntax-automatically '(save mode-enabled))
-  (flycheck-indication-mode 'right-fringe))
+  (flycheck-indication-mode 'left-margin))
 #+end_src
 ** Jinx
 #+begin_src emacs-lisp
@@ -2103,40 +2100,6 @@ Git gutter:
   :after (flycheck eglot)
   :custom (flycheck-eglot-exclusive nil)
   :config (global-flycheck-eglot-mode 1))
-#+end_src
-** Sideline
-#+begin_src emacs-lisp
-(use-package sideline
-  :unless noninteractive
-  :commands sideline-mode
-  :init
-  (setq
-   sideline-backends-right (list)
-   sideline-backends-left-skip-current-line t   ; don't display on current line (left)
-   sideline-backends-right-skip-current-line t  ; don't display on current line (right)
-   sideline-order-left 'down                    ; or 'up
-   sideline-order-right 'up                     ; or 'down
-   sideline-format-left "%s   "                 ; format for left aligment
-   sideline-format-right "   %s"                ; format for right aligment
-   sideline-priority 100                        ; overlays' priority
-   sideline-display-backend-name t)             ; display the backend name
-  )
-(use-package sideline-flycheck
-  :unless noninteractive
-  :hook (flycheck-mode . sideline-flycheck-setup)
-  :hook (flycheck-mode . sideline-mode)
-  :commands sideline-flycheck
-  :custom (sideline-flycheck-max-lines 5)
-  :init (append! sideline-backends-right #'sideline-flycheck))
-
-
-(use-package sideline-flymake
-  :unless noninteractive
-  :hook (flymake-mode . sideline-mode)
-  :commands sideline-flymake
-  :custom (sideline-flymake-max-lines 5)
-  :init (append! sideline-backends-right #'sideline-flymake))
-
 #+end_src
 ** eldoc
 #+begin_src emacs-lisp
