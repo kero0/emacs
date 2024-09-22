@@ -2072,6 +2072,8 @@ Git gutter:
   (when (featurep 'tempel)
     (use-package eglot-tempel))
   (after! cape
+          (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster)
+          (advice-add 'eglot-completion-at-point :around #'cape-wrap-noninterruptible)
           (add-hook
            'eglot-managed-mode-hook
            (lambda ()
