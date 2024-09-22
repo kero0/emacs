@@ -1836,6 +1836,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
 (use-package eat
   :unless noninteractive
   :hook (eshell-load . eat-eshell-mode)
+  :commands eat
   :custom
   (eat-shell-prompt-annotation-delay 0)
   (eat-very-visible-cursor-type '(nil nil nil))
