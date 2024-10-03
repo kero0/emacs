@@ -784,8 +784,12 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
     (setq popper-group-function #'popper-group-by-directory))
   (setq popper-display-control t)
 
-  (setq popper-display-function #'popper-select-popup-at-bottom)
+  (setq popper-display-function #'popper-display-popup-at-bottom)
   (setq popper-window-height 0.4)
+  (defun my/popper-toggle-and-select ()
+    (interactive)
+    (let ((popper-display-function #'popper-select-popup-at-bottom))
+      (popper-toggle)))
   :config
   (after! my/general
           (my/general-global-menu! "Popper" "`"
