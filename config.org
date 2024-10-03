@@ -1313,7 +1313,10 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :unless noninteractive
   :custom
   (treesit-auto-install nil)
+  (treesit-font-lock-level 4)
   :config
+  (define-minor-mode my/treesit-mode "My treesit mode. For easily binding keys"
+    :interactive nil)
   (if-let ((path (getenv "MY_TREESIT_PATH")))
       (add-to-list 'treesit-extra-load-path path))
   (treesit-auto-add-to-auto-mode-alist 'all)
@@ -1351,9 +1354,6 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   (defvar +tree-sitter-outer-text-objects-map (make-sparse-keymap))
   (defvar +tree-sitter-goto-previous-map (make-sparse-keymap))
   (defvar +tree-sitter-goto-next-map (make-sparse-keymap))
-
-  (define-minor-mode my/treesit-mode "My treesit mode. For easily binding keys"
-    :interactive nil)
 
   (evil-define-key '(visual operator) 'my/treesit-mode
     "i" +tree-sitter-inner-text-objects-map
