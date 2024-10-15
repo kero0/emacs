@@ -48,42 +48,22 @@
       flake = false;
     };
   };
-  outputs =
-    inputs@{
-      self,
-      nixpkgs,
-      emacs-overlay,
-      git-hooks,
-      ...
-    }:
+  outputs = inputs@{ self, nixpkgs, emacs-overlay, git-hooks, ... }:
     let
-      mkTrivialPkg =
-        {
-          pkgs,
-          name,
-          src ? inputs."packages-${name}",
-          buildInputs ? [ ],
-          extraFiles ? [ ],
-        }:
-        (
-          (pkgs.trivialBuild {
-            inherit buildInputs;
-            pname = name;
-            ename = name;
-            version = "0.0.0";
-            src = src;
-          }).overrideAttrs
-          (old: {
-            installPhase =
-              old.installPhase
-              + (builtins.concatStringsSep "\n" (map (s: ''cp -r "${s}" "$LISPDIR"'') extraFiles));
-            passthru = (old.passthru or { }) // {
-              treeSitter = true;
-            };
-          })
-        );
-      f =
-        system:
+      mkTrivialPkg = { pkgs, name, src ? inputs."packages-${name}"
+        , buildInputs ? [ ], extraFiles ? [ ], }:
+        ((pkgs.trivialBuild {
+          inherit buildInputs;
+          pname = name;
+          ename = name;
+          version = "0.0.0";
+          src = src;
+        }).overrideAttrs (old: {
+          installPhase = old.installPhase + (builtins.concatStringsSep "\n"
+            (map (s: ''cp -r "${s}" "$LISPDIR"'') extraFiles));
+          passthru = (old.passthru or { }) // { treeSitter = true; };
+        }));
+      f = system:
         let
           pkgs = import nixpkgs {
             inherit system;
@@ -110,8 +90,8 @@
                   --set FONTCONFIG_FILE ${
                     pkgs.makeFontsConf {
                       fontDirectories = with pkgs; [
-                        julia-mono
                         (nerdfonts.override { fonts = [ "JetBrainsMono" ]; })
+                        noto-fonts
                       ];
                     }
                   } \
@@ -130,100 +110,77 @@
               --funcall org-babel-tangle                         \
               --kill
           '';
-        in
-        rec {
+        in rec {
           ${system} = import nixpkgs {
             inherit system;
             overlays = [ emacs-overlay.overlay ];
           };
-          packages.${system}.default =
-            (pkgs.emacsWithPackagesFromUsePackage {
-              config = "${config'}/default.el";
-              defaultInitFile = true;
-              package = emacs;
-              alwaysEnsure = true;
-              alwaysTangle = true;
-              extraEmacsPackages =
-                epkgs: with epkgs; [
-                  engrave-faces
-                  ox-chameleon
-                  dependencies
-                ];
-              override = self: super: {
-                eglot-booster = (
-                  mkTrivialPkg {
-                    pkgs = self;
-                    name = "eglot-booster";
-                    buildInputs = with self; [ ];
-                  }
-                );
-                org-pretty-table = (
-                  mkTrivialPkg {
-                    pkgs = self;
-                    name = "org-pretty-table";
-                    buildInputs = with self; [ ];
-                  }
-                );
-                org-src-context = (
-                  mkTrivialPkg {
-                    pkgs = self;
-                    name = "org-src-context";
-                    buildInputs = with self; [ ];
-                  }
-                );
-                ox-chameleon = (
-                  mkTrivialPkg {
-                    pkgs = self;
-                    name = "ox-chameleon";
-                    buildInputs = with self; [ engrave-faces ];
-                  }
-                );
-                targets =
-                  (mkTrivialPkg {
-                    pkgs = self;
-                    name = "targets";
-                    buildInputs = with self; [ evil ];
-                  }).overrideAttrs
-                    (old: {
-                      # fixing a bug in the package when byte compiling
-                      buildPhase = ''
-                        runHook preBuild
-                        runHook postBuild
-                      '';
-                    });
-                jupyter =
-                  (mkTrivialPkg {
-                    pkgs = self;
-                    name = "emacs-jupyter";
-                    buildInputs = with self; [
-                      simple-httpd
-                      websocket
-                      zmq
-                    ];
-                  }).overrideAttrs
-                    (old: {
-                      buildPhase = ''
-                        runHook preBuild
-                        runHook postBuild
-                      '';
-                    });
-                zmq =
-                  (mkTrivialPkg {
-                    pkgs = self;
-                    name = "zmq";
-                    buildInputs = with self; [ websocket ];
-                  }).overrideAttrs
-                    (old: {
-                      buildPhase = ''
-                        runHook preBuild
-                        runHook postBuild
-                      '';
-                    });
-              };
-            }).overrideAttrs
-              (old: {
-                name = "emacs";
+          packages.${system}.default = (pkgs.emacsWithPackagesFromUsePackage {
+            config = "${config'}/default.el";
+            defaultInitFile = true;
+            package = emacs;
+            alwaysEnsure = true;
+            alwaysTangle = true;
+            extraEmacsPackages = epkgs:
+              with epkgs; [
+                engrave-faces
+                ox-chameleon
+                dependencies
+              ];
+            override = self: super: {
+              eglot-booster = (mkTrivialPkg {
+                pkgs = self;
+                name = "eglot-booster";
+                buildInputs = with self; [ ];
               });
+              org-pretty-table = (mkTrivialPkg {
+                pkgs = self;
+                name = "org-pretty-table";
+                buildInputs = with self; [ ];
+              });
+              org-src-context = (mkTrivialPkg {
+                pkgs = self;
+                name = "org-src-context";
+                buildInputs = with self; [ ];
+              });
+              ox-chameleon = (mkTrivialPkg {
+                pkgs = self;
+                name = "ox-chameleon";
+                buildInputs = with self; [ engrave-faces ];
+              });
+              targets = (mkTrivialPkg {
+                pkgs = self;
+                name = "targets";
+                buildInputs = with self; [ evil ];
+              }).overrideAttrs (old: {
+                # fixing a bug in the package when byte compiling
+                buildPhase = ''
+                  runHook preBuild
+                  runHook postBuild
+                '';
+              });
+              jupyter = (mkTrivialPkg {
+                pkgs = self;
+                name = "emacs-jupyter";
+                buildInputs = with self; [ simple-httpd websocket zmq ];
+              }).overrideAttrs (old: {
+                buildPhase = ''
+                  runHook preBuild
+                  runHook postBuild
+                '';
+              });
+              zmq = (mkTrivialPkg {
+                pkgs = self;
+                name = "zmq";
+                buildInputs = with self; [ websocket ];
+              }).overrideAttrs (old: {
+                buildPhase = ''
+                  runHook preBuild
+                  runHook postBuild
+                '';
+              });
+            };
+          }).overrideAttrs (old: { name = "emacs"; });
           devShell.${system} = pkgs.mkShell {
             inherit (self.checks.${system}.pre-commit-check) shellHook;
             buildInputs = [
@@ -231,7 +188,8 @@
               self.checks.${system}.pre-commit-check.enabledPackages
             ];
           };
-          formatter.${system} = nixpkgs.legacyPackages.${system}.nixfmt-rfc-style;
+          formatter.${system} =
+            nixpkgs.legacyPackages.${system}.nixfmt-rfc-style;
           checks.${system}.pre-commit-check = git-hooks.lib.${system}.run {
             src = ./.;
             hooks = {
@@ -242,11 +200,6 @@
             };
           };
         };
-    in
-    nixpkgs.lib.foldl nixpkgs.lib.recursiveUpdate { } (
-      map f [
-        "x86_64-linux"
-        "aarch64-darwin"
-      ]
-    );
+    in nixpkgs.lib.foldl nixpkgs.lib.recursiveUpdate { }
+    (map f [ "x86_64-linux" "aarch64-darwin" ]);
 }

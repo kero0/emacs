@@ -815,17 +815,29 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
 #+begin_src emacs-lisp
 (defconst my/font/name "JetBrainsMono Nerd Font Mono") ;; ligatures assumes this font
 (defvar my/font/size 180)
-(defvar my/font/unicode-name "Julia Mono")
-
-
 
 (set-face-attribute 'default nil :font my/font/name :height my/font/size)
 (set-face-attribute 'fixed-pitch nil :font my/font/name :height my/font/size)
 (set-face-attribute 'variable-pitch nil :font my/font/name :height my/font/size :weight 'regular)
-#+end_src
-*** Ligatures
-#+begin_src emacs-lisp :tangle no
+
+(set-fontset-font "fontset-default" 'nil (font-spec :name my/font/name)) ; general default
+(set-fontset-font "fontset-default" '(#x1200 . #x137F) (font-spec :name "Noto Sans Ethiopic")) ; ethiopic
+(set-fontset-font "fontset-default" '(#x1380 . #x139F) (font-spec :name "Noto Sans Ethiopic")) ; ethiopic supplement
+(set-fontset-font "fontset-default" '(#x2D80 . #x2DDF) (font-spec :name "Noto Sans Ethiopic")) ; ethiopic extended
+(set-fontset-font "fontset-default" '(#x2C80 . #x2CFF) (font-spec :name "Noto Sans Coptic")) ; coptic
+(set-fontset-font "fontset-default" '(#x13000 . #x1343F) (font-spec :name "Noto Sans Egyptian Hieroglyphs")) ; hieroglyphic
+
+(my/leader-def "U" '("Insert Unicode char (by name)" . insert-char))
+(my/general-global-menu! "Input-Language" "I"
+  "C"   '("Coptic" . (lambda () (interactive) (set-input-method "coptic")))
+  "d"   '("Default" . (lambda () (interactive) (set-input-method nil)))
+  "ESC" '("Default" . (lambda () (interactive) (set-input-method nil))))
+(general-def
+  "C-c l" (cons "Input-Language" my/general-global-Input-Language-map))
+
+
 (use-package ligature
+  :hook ((prog-mode text-mode) . ligature-mode)
   :config
   ;; Enable all JetBrains Mono ligatures in programming modes
   (ligature-set-ligatures '(prog-mode text-mode) '("-|" "--" "-~" "---" "-<" "--" "->" "->>" "-->" "///" "/=" "/=="
@@ -840,43 +852,6 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
                                                    "###" "####" "#[" "#{" "#=" "#!" "#:" "#_(" "#_" "#?" "#(" ";;" "_|_"
                                                    "__" "~~" "~~>" "~>" "~-" "~@" "$>" "^=" "]#"))
   (global-ligature-mode t))
-#+end_src
-*** Prettify symbols
-#+begin_src emacs-lisp
-(use-package emacs
-  :ensure nil
-  :init
-  (cl-defmacro my/prettify-symbols-extend (&rest pairs &allow-other-keys)
-    "Extend the alist of `prettify-symbols-alist' with PAIRS."
-    (declare (indent 0))
-    `(setq prettify-symbols-alist
-           (-concat prettify-symbols-alist '(,@pairs))))
-  (cl-defmacro my/prettify-symbols-extend-mode (mode &rest pairs &allow-other-keys)
-    "Extend the alist of `prettify-symbols-alist' with PAIRS for MODE."
-    (declare (indent 1))
-    `(add-hook (intern (concat (symbol-name ,mode) "-hook"))
-               (lambda ()
-                 (make-local-variable 'prettify-symbols-alist)
-                 ,(macroexpand
-                   `(my/prettify-symbols-extend ,@pairs)))))
-  :config
-  (global-prettify-symbols-mode nil))
-#+end_src
-*** Emoji
-#+begin_src emacs-lisp
-(use-package emojify
-  ;; :unless noninteractive
-  :unless t
-  :hook (after-init . global-emojify-mode)
-  :config (setq emojify-styles '(unicode)))
-#+end_src
-*** Unicode
-#+begin_src emacs-lisp
-(use-package unicode-fonts
-  :config
-  (unicode-fonts-setup '(my/font/unicode-name))
-  :init
-  (my/leader-def "U" '("Insert Unicode char (by name)" . insert-char)))
 #+end_src
 ** Dashboard
 #+begin_src emacs-lisp
