@@ -1243,29 +1243,6 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
     (after! evil-collection
             (evil-collection-wdired-setup)))
 #+end_src
-** Preview
-#+begin_src emacs-lisp
-(use-package dired-preview
-  :bind (:map dired-mode-map
-              ("P" . dired-preview-mode))
-  :custom
-  (dired-preview-delay 0.7)
-  (dired-preview-max-size (* 1024 1024 1024))
-  ;; Default values for demo purposes
-  (dired-preview-ignored-extensions-regexp
-   (concat "\\."
-           "\\(mkv\\|webm\\|mp4\\|mp3\\|ogg\\|m4a"
-           "\\|gz\\|zst\\|tar\\|xz\\|rar\\|zip"
-           "\\|iso\\|epub\\|pdf\\)"))
-  :config
-  (defun dired-preview--find-file-no-select (file)
-    (let ((inhibit-message t)
-          (enable-local-variables :safe)
-          (non-essential t)
-          (delay-mode-hooks t))
-      (cl-letf (((symbol-function 'recentf-push) #'ignore))
-        (find-file-noselect file :nowarn)))))
-#+end_src
 ** Icons
 #+begin_src emacs-lisp
 (use-package nerd-icons-dired
