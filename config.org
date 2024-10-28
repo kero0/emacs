@@ -318,6 +318,9 @@ I want windows that start with '*' to be opened in the lower 1/3 of the frame. T
 (setq use-package-always-demand (daemonp)
       use-package-expand-minimally t
       use-package-verbose nil)
+(eval-when-compile
+  (require 'use-package)
+  (advice-add #'use-package-handler/:bind :around #'eval-when-compile))
 (add-hook 'after-init-hook #'repeat-mode)
 #+end_src
 ** general.el
