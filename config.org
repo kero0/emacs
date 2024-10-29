@@ -2053,7 +2053,9 @@ Git gutter:
 #+begin_src emacs-lisp
 (use-package eglot-booster
   :after eglot
-  :config (eglot-booster-mode))
+  :config
+  (eglot-booster-mode)
+  (setf (car eglot-booster--boost) (executable-find "emacs-lsp-booster")))
 #+end_src
 ** Flycheck Eglot
 #+begin_src emacs-lisp
