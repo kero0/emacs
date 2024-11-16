@@ -318,33 +318,69 @@ I want windows that start with '*' to be opened in the lower 1/3 of the frame. T
 (setq use-package-always-demand (daemonp)
       use-package-expand-minimally t
       use-package-verbose nil)
-(eval-when-compile
+(eval-and-compile
   (require 'use-package)
-  (advice-add #'use-package-handler/:bind :around #'eval-when-compile))
+  (advice-add #'use-package-handler/:bind :around #'eval-and-compile))
 (add-hook 'after-init-hook #'repeat-mode)
 #+end_src
-** general.el
-*** Helpers
+** which-key
+#+begin_src emacs-lisp
+(use-package which-key
+  :unless noninteractive
+  :hook (after-init . which-key-mode)
+  :commands which-key-add-keymap-based-replacements
+  :diminish
+  :config
+  (setq which-key-idle-delay 0.4
+        which-key-idle-secondary-delay 0.01
+        which-key-max-description-length 32
+        which-key-sort-order 'which-key-key-order-alpha
+        which-key-allow-evil-operators t
+        which-key-prefix-prefix "+"))
+#+end_src
+** Helpers
 :PROPERTIES:
 :header-args: :tangle no :noweb-ref keybindings
 :END:
 Macro to define nested keymaps
 #+begin_src emacs-lisp
-;; copied from https://github.com/progfolio/.emacs.d/blob/master/init.org
-(defmacro my/general-global-menu! (name prefix-key &rest body)
+(defmacro my/map-menu! (name prefix-key &rest body)
   "Create a definer named +general-global-NAME wrapping global-definer.
   Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX-KEY."
   (declare (indent 2))
-  (let* ((n (concat "my/general-global-" name))
+  (let* ((n (concat "my/map-" name))
          (prefix-map (intern (concat n "-map"))))
     `(eval-and-compile
-       (defvar ,prefix-map (make-sparse-keymap))
-       (my/leader-def
-         ,prefix-key (cons ,name ,prefix-map))
-       (general-create-definer ,(intern n)
-         :keymaps (quote ,prefix-map))
-       (,(intern n)
-        ,@body))))
+         (defvar-keymap ,prefix-map
+           ,@body)
+         (which-key-add-keymap-based-replacements my/maps/leader
+           ,prefix-key               (cons ,name ,prefix-map))
+         (cl-defmacro ,(intern n) (&rest body)
+           `(which-key-add-keymap-based-replacements ,',prefix-map
+              ,@body)))))
+(defmacro my/leader-def (&rest body)
+  `(which-key-add-keymap-based-replacements my/maps/leader
+     ,@body))
+#+end_src
+Local bindings
+#+begin_src emacs-lisp :noweb-ref keybindings :tangle no
+(cl-defmacro my/local-leader-def (mode &rest args)
+  "Create a definer named +general-global-NAME wrapping global-definer.
+Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX-KEY."
+  (declare (indent 2))
+  (let* ((n  (symbol-name mode))
+         (definer (intern (concat "my/local-leader-def-" n)))
+         (hook (intern (concat n "-hook")))
+         (prefix-map (intern (concat "my/maps/" (symbol-name mode)))))
+    `(eval-and-compile
+       (defvar-keymap ,prefix-map
+         ,@args)
+       (add-hook ',hook (lambda ()
+                          (make-local-variable 'my/maps/leader)
+                          (keymap-set my/maps/leader ,my/local-leader-def-prefix ,prefix-map)))
+       (cl-defmacro ,definer (&rest body)
+         `(which-key-add-keymap-based-replacements ',,prefix-map
+            ,@body)))))
 #+end_src
 Do something in other window
 #+begin_src emacs-lisp
@@ -354,84 +390,20 @@ Do something in other window
         (apply fn args)
         (switch-to-buffer buf)))
 #+end_src
-**** Local Bindings
+*** Assorted Keybindings
 :PROPERTIES:
 :header-args: :tangle no :noweb-ref keybindings
 :END:
-#+begin_src emacs-lisp :noweb-ref keybindings :tangle no
-(cl-defmacro my/local-leader-def (mode &rest args)
-  "Create a definer named +general-global-NAME wrapping global-definer.
-Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX-KEY."
-  (declare (indent 2))
-  (let* ((n  (symbol-name mode))
-         (definer (intern (concat "my/local-leader-def-" n)))
-         (prefix-map (intern (concat (symbol-name mode) "-map"))))
-    `(eval-and-compile
-       (general-create-definer ,definer
-         :states ,'my/prefix-states
-         :prefix ,(concat my/leader-def-prefix " " my/local-leader-def-prefix)
-         :non-normal-prefix ,(concat my/leader-def-prefix-alt " " my/local-leader-def-prefix)
-         :keymaps (quote ,prefix-map))
-       (,definer
-        ,@args))))
-#+end_src
-*** general.el setup
-#+begin_src emacs-lisp :noweb yes
-(eval-and-compile
-  (defvar my/leader-def-prefix "SPC"
-    "Prefix for general.el leader keybindings.")
-  (defvar my/leader-def-prefix-alt "M-SPC"
-    "Alternative prefix for general.el leader keybindings.")
-  (defvar my/local-leader-def-prefix "m"
-    "Prefix for general.el local leader keybindings.
-   Relative to `my/leader-def-prefix'.")
-  (defvar my/prefix-states '(normal visual motion)
-    "States in which to bind general.el leader keybindings."))
-
-(eval-and-compile
-  (use-package general
-    :demand t
-    :config
-    (general-evil-setup)
-    (general-override-mode 1)
-    (general-auto-unbind-keys)
-    (general-define-key
-     :major-modes t
-     :keymaps 'override
-     :states my/prefix-states
-     :prefix-map 'my/prefix-map
-     :prefix my/leader-def-prefix
-     :global-prefix my/leader-def-prefix-alt)
-
-    (general-create-definer my/leader-def
-      :keymaps 'my/prefix-map)
-
-    (my/leader-def
-      "SPC"     '("Find file" . project-find-file)
-      "h"               (cons "Help" help-map)
-      "H"               '("Help at point" . helpful-at-point)
-      ";"               '("M-x" . execute-extended-command)
-      ":"               '("Eval" . eval-expression)
-      "."               '("Repeat" . repeat)
-      "r"               '("Run command" . async-shell-command)
-      "R"               '("Run command synchronously" . shell-command))
-    <<keybindings>>
-    (provide 'my/general)))
-#+end_src
-**** Assorted Keybindings
-:PROPERTIES:
-:header-args: :tangle no :noweb-ref keybindings
-:END:
-***** Quit
+**** Quit
 #+begin_src emacs-lisp
-(my/general-global-menu! "Quit" "q"
+(my/map-menu! "Quit" "q"
   "q" '("Quit Emacs" . save-buffers-kill-terminal)
   "Q" '("Quit Emacs immediately" . kill-emacs)
   "r" '("Restart Emacs" . restart-emacs)
   "R" '("Restart Emacs daemon" . restart-emacs--daemon)
   "d" '("Restart Emacs with debug init" . restart-emacs-debug-init))
 #+end_src
-***** Buffer
+**** Buffer
 #+begin_src emacs-lisp
 (defun my/kill-buffer (&optional buf)
   (interactive)
@@ -444,7 +416,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   (my/do-in-other-window (lambda () (progn (my/kill-buffer) (delete-window)))))
 
 
-(my/general-global-menu! "Buffer" "b"
+(my/map-menu! "Buffer" "b"
   "B" '("Switch buffer other window" . switch-to-buffer-other-window)
   "d" '("Kill current buffer" . kill-current-buffer)
   "k" '("Kill buffer" . my/kill-buffer)
@@ -462,13 +434,13 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
 (my/leader-def
   "x" '("Open scratch buffer" . scratch-buffer))
 #+end_src
-***** Code
+**** Code
 #+begin_src emacs-lisp
-(my/general-global-menu! "Code" "c"
+(my/map-menu! "Code" "c"
   "c" '("Recompile" . recompile)
   "C" '("Compile" . compile))
 #+end_src
-***** File
+**** File
 #+begin_src emacs-lisp
 (defun my/find-file-other-window ()
   (interactive)
@@ -481,7 +453,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   (interactive)
   (let ((file-name (buffer-file-name)))
     (find-file (concat "/sudo:root@localhost:" file-name))))
-(my/general-global-menu! "File" "f"
+(my/map-menu! "File" "f"
 
   "f" '("Find file" . find-file)
   "F" '("Find file other window" . find-file-other-window)
@@ -493,11 +465,11 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   "u" '("Find file as root" . my/find-file-sudo)
   "U" '("Open this file as root" . my/this-file-sudo))
 #+end_src
-***** Git
+**** Git
 #+begin_src emacs-lisp
-(my/general-global-menu! "Git" "g")
+(my/map-menu! "Git" "g")
 #+end_src
-***** Open
+**** Open
 #+begin_src emacs-lisp
 (defvar my/open-proc (cond (IS-MAC "open")
                            (IS-LINUX "xdg-open"))
@@ -506,11 +478,11 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   (interactive)
   (start-process my/open-proc nil my/open-proc file))
 
-(my/general-global-menu! "Open" "o"
+(my/map-menu! "Open" "o"
                          "o" '("Open file" . (lambda () (interactive) (my/default-open (buffer-file-name))) )
                          "s" '("Shell" . shell))
 #+end_src
-***** REPL
+**** REPL
 #+begin_src emacs-lisp
 (defvar my/repl-alist '((emacs-lisp-mode . ielm)
                         (fallback . my/repl-fallback))
@@ -548,9 +520,9 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   (if arg
       (call-interactively #'my/repl--choose)
     (my/repl--open-or-create)))
-(my/general-global-Open "r" '("REPL" . my/repl))
+(my/map-Open "r" '("REPL" . my/repl))
 #+end_src
-***** Toggle
+**** Toggle
 #+begin_src emacs-lisp
 (defun my/toggle-comment (beg end)
   "Comment or uncomment current region or line."
@@ -558,30 +530,43 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
                    (list (region-beginning) (region-end))
                  (list (line-beginning-position) (line-end-position))))
   (comment-or-uncomment-region beg end))
-(my/general-global-menu! "Toggle" "t"
+(my/map-menu! "Toggle" "t"
   "d" '("debug" . toggle-debug-on-error)
   "/" '("comment" . comment-or-uncomment-region))
 #+end_src
-***** Search
+**** Search
 #+begin_src emacs-lisp
-(my/general-global-menu! "Search" "s")
+(my/map-menu! "Search" "s")
 #+end_src
+** Keybinding setup
+#+begin_src emacs-lisp :noweb yes
+(eval-and-compile
+  (defvar my/leader-def-prefix (kbd "SPC")
+    "Prefix for general.el leader keybindings.")
+  (defvar my/leader-def-prefix-alt (kbd "M-SPC")
+    "Alternative prefix for general.el leader keybindings.")
+  (defvar my/local-leader-def-prefix "m"
+    "Prefix for general.el local leader keybindings.
+   Relative to `my/leader-def-prefix'.")
+  (defvar my/prefix-states '(normal visual motion)
+    "States in which to bind general.el leader keybindings."))
 
-** Hydra
-#+begin_src emacs-lisp
-(use-package hydra
-  :demand
-  :unless noninteractive
-  :after (general evil)
-  :config
-  (defhydra my/zoom-hydra ()
-    ("=" text-scale-increase "zoom in")
-    ("k" text-scale-increase "zoom in")
-    ("j" text-scale-decrease "zoom out")
-    ("-" text-scale-decrease "zoom out"))
-  (my/general-global-menu! "Hydras" "H"
-    "=" '("Zoom" . my/zoom-hydra/body)
-    "-" '("Zoom" . my/zoom-hydra/body)))
+
+(eval-and-compile
+  (defvar-keymap my/maps/leader
+    "SPC"             '("Find file" . project-find-file)
+    "H"               '("Help at point" . helpful-at-point)
+    ";"               '("M-x" . execute-extended-command)
+    ":"               '("Eval" . eval-expression)
+    "."               '("Repeat" . repeat)
+    "r"               '("Run command" . async-shell-command)
+    "R"               '("Run command synchronously" . shell-command))
+  (require 'which-key)
+  (require 'bind-key)
+  (which-key-add-keymap-based-replacements my/maps/leader
+    "h"               `("Help" . ,help-map))
+  <<keybindings>>
+  (provide 'my/map-loaded))
 #+end_src
 ** evil
 #+begin_src emacs-lisp
@@ -599,6 +584,8 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   (evil-mode)
   (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
   (define-key evil-insert-state-map (kbd "C-h") 'evil-delete-backward-char-and-join)
+  (evil-define-key 'normal 'global my/leader-def-prefix my/maps/leader)
+  (evil-define-key 'visual 'global my/leader-def-prefix my/maps/leader)
 
   ;; Use visual line motions even outside of visual-line-mode buffers
   (evil-global-set-key 'motion "j" 'evil-next-visual-line)
@@ -607,10 +594,11 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   (evil-set-initial-state 'messages-buffer-mode 'normal)
   (evil-set-initial-state 'dashboard-mode 'normal)
 
-  (my/leader-def
-    "w" '("Window" . evil-window-map))
-  (my/leader-def
-    "u" '("Universal argument" . universal-argument)))
+  (after! my/map-loaded
+          (my/leader-def
+           "w" '("Window" . evil-window-map))
+          (my/leader-def
+           "u" '("Universal argument" . universal-argument))))
 
 (use-package evil-collection
   :after evil
@@ -620,8 +608,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :config
   (unless noninteractive
     (evil-collection-init))
-  (general-def minibuffer-local-map
-    :states 'normal
+  (evil-define-key 'normal minibuffer-local-map
     [escape] 'abort-recursive-edit))
 #+end_src
 *** evil-lion
@@ -705,14 +692,14 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
     (evil-multiedit-scope 'buffer)
     (evil-multiedit-store-in-search-history t))
   :config
-  (general-nmap
+  (evil-define-key 'normal 'global
     "gm"  '("Multi-cursor" . evil-mc-cursors-map)
     "M-d" 'evil-mc-make-and-goto-next-match
     "M-S-d" 'evil-mc-make-and-goto-prev-match)
-  (general-vmap
+  (evil-define-key 'visual 'global
     "A" 'evil-mc-make-cursor-in-visual-selection-end
     "I" 'evil-mc-make-cursor-in-visual-selection-beg)
-  (my/general-global-menu! "Multi-Cursor" "c m"
+  (my/map-menu! "Multi-Cursor" "c m"
     "a" '("Make all cursors" . evil-mc-make-all-cursors)
     "n" '("Make and go to next match" . evil-mc-make-and-goto-next-match)
     "N" '("Make and go to previous match" . evil-mc-make-and-goto-prev-match)
@@ -752,19 +739,21 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
     :remote-key "r"
     :keys "q"))
 #+end_src
-** which-key
+** Hydra
 #+begin_src emacs-lisp
-(use-package which-key
+(use-package hydra
+  :demand
   :unless noninteractive
-  :hook (after-init . which-key-mode)
-  :diminish
+  :after evil
   :config
-  (setq which-key-idle-delay 0.4
-        which-key-idle-secondary-delay 0.01
-        which-key-max-description-length 32
-        which-key-sort-order 'which-key-key-order-alpha
-        which-key-allow-evil-operators t
-        which-key-prefix-prefix "+"))
+  (defhydra my/zoom-hydra ()
+    ("=" text-scale-increase "zoom in")
+    ("k" text-scale-increase "zoom in")
+    ("j" text-scale-decrease "zoom out")
+    ("-" text-scale-decrease "zoom out"))
+  (my/map-menu! "Hydras" "H"
+    "=" '("Zoom" . my/zoom-hydra/body)
+    "-" '("Zoom" . my/zoom-hydra/body)))
 #+end_src
 * Popper
 #+begin_src emacs-lisp
@@ -795,18 +784,15 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
     (let ((popper-display-function #'popper-select-popup-at-bottom))
       (popper-toggle)))
   :config
-  (after! my/general
-          (my/general-global-menu! "Popper" "`"
-            "`" '("Toggle latest" . popper-toggle)
-            "c" '("Cycle" . popper-cycle)
-            "T" '("Toggle type" . popper-toggle-type)))
-  (general-def :keymaps 'popper-mode-map
-    "C-`"   'popper-toggle
-    "M-`"   'popper-cycle
-    "C-M-`" 'popper-toggle-type)
+  (my/map-menu! "Popper" "`"
+                "`" '("Toggle latest" . popper-toggle)
+                "c" '("Cycle" . popper-cycle)
+                "T" '("Toggle type" . popper-toggle-type))
+  (bind-key "C-`"   #'popper-toggle)
+  (bind-key "M-`"   #'popper-cycle)
+  (bind-key "C-M-`" #'popper-toggle-type)
   (popper-mode +1))
 #+end_src
-
 * UI
 ** Fancy Compile
 #+begin_src emacs-lisp
@@ -832,12 +818,11 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
 (set-fontset-font "fontset-default" '(#x13000 . #x1343F) (font-spec :name "Noto Sans Egyptian Hieroglyphs")) ; hieroglyphic
 
 (my/leader-def "U" '("Insert Unicode char (by name)" . insert-char))
-(my/general-global-menu! "Input-Language" "I"
+(my/map-menu! "Input-Language" "I"
   "C"   '("Coptic" . (lambda () (interactive) (set-input-method "coptic")))
   "d"   '("Default" . (lambda () (interactive) (set-input-method nil)))
   "ESC" '("Default" . (lambda () (interactive) (set-input-method nil))))
-(general-def
-  "C-c l" (cons "Input-Language" my/general-global-Input-Language-map))
+(keymap-set global-map "C-c l" (cons "Input-Language" my/map-Input-Language-map))
 
 
 (use-package ligature
@@ -969,7 +954,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
 
 (load-theme 'modus-operandi t)
 (setq modus-themes-to-toggle '(modus-operandi modus-vivendi))
-(my/general-global-Toggle
+(my/map-Toggle
   "t" '("theme" . modus-themes-toggle))
 #+end_src
 
@@ -1000,7 +985,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
 ** Word Wrapping
 #+begin_src emacs-lisp
 (global-visual-line-mode t)
-(my/general-global-Toggle
+(my/map-Toggle
  "w" '("Word wrap" . visual-line-mode))
 #+end_src
 ** Rainbow delimeters
@@ -1056,10 +1041,10 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   ;; Persist local marks
   (append! desktop-locals-to-save evil-markers-alist)
   ;; Show Marks in buffer
-  (my/general-global-Open "`" '("Show marks" . evil-show-marks))
+  (my/map-Open "`" '("Show marks" . evil-show-marks))
   :config
   (setq evil-fringe-mark-show-special t)
-  (my/general-global-Toggle "f" '("Evil Marks" . evil-fringe-mark-mode)))
+  (my/map-Toggle "f" '("Evil Marks" . evil-fringe-mark-mode)))
 #+end_src
 
 ** Bookmark
@@ -1068,7 +1053,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :ensure nil
   :unless noninteractive
   :after evil
-  :config (my/general-global-menu! "Bookmarks" "B"
+  :config (my/map-menu! "Bookmarks" "B"
              "b" '("Jump" . bookmark-jump)
              "l" '("List" . bookmark-bmenu-list)
              "s" '("Set" . bookmark-set)
@@ -1111,7 +1096,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
     :confirm prefix
     :flags ("--hidden -g !.git")
     :menu ("Search" "p" "Project"))
-  (my/general-global-Search
+  (my/map-Search
     "p" '("Project Search" . my/grep-project)
     "S" '("Ripgrep menu" . rg-menu)))
 #+end_src
@@ -1135,14 +1120,14 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
                                                   "Ignore matching regexes in `my/projectile-ignore-projects'."
                                                   (cl-some (lambda (regex) (string-match-p regex project-root))
                                                            my/projectile-ignore-projects))))
-  (my/general-global-Buffer
+  (my/map-Buffer
     "]" '("Next Buffer" . #'projectile-next-project-buffer)
     "[" '("Previous Buffer" . #'projectile-previous-project-buffer))
   (after! evil
-          (general-define-key [remap evil-next-buffer] #'projectile-next-project-buffer)
-          (general-define-key [remap evil-previous-buffer] #'projectile-previous-project-buffer)
-          (general-define-key [remap next-buffer] #'projectile-next-project-buffer)
-          (general-define-key [remap previous-buffer] #'projectile-previous-project-buffer))
+          (keymap-set global-map "<remap> <evil-next-buffer>" #'projectile-next-project-buffer)
+          (keymap-set global-map "<remap> <evil-previous-buffer>" #'projectile-previous-project-buffer)
+          (keymap-set global-map "<remap> <next-buffer>" #'projectile-next-project-buffer)
+          (keymap-set global-map "<remap> <previous-buffer>" #'projectile-previous-project-buffer))
   (my/leader-def
     "p" '("projectile" . projectile-command-map))
   (after! rg
@@ -1167,7 +1152,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :config
   (my/leader-def
     "TAB" '("Workspaces" . perspective-map))
-  (general-def :keymaps 'perspective-map
+  (which-key-add-keymap-based-replacements perspective-map
     "TAB" '("Switch" . persp-switch))
   (if (package-installed-p 'projectile)
       (after! projectile
@@ -1186,7 +1171,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :unless noninteractive
   :ensure nil
   :commands ibuffer
-  :init (my/general-global-Buffer
+  :init (my/map-Buffer
           "i" '("ibuffer" . ibuffer))
   :config
   (setq ibuffer-expert t)
@@ -1207,14 +1192,14 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :demand
   :config
   (after! evil
-          (general-nmap
+          (evil-define-key 'normal 'global
             "-" #'dired-jump))
-  (my/general-global-Open
-    "d" #'dired-jump
-    "D" #'dired-jump-other-window)
+  (my/map-Open
+    "d" '("dired" . dired-jump)
+    "D" '("dired other window" . dired-jump-other-window))
   (require 'dired-aux)
   (require 'dired-x)
-  (use-package dired-single)
+  ;; (use-package dired-single)
   (setq dired-listing-switches "-lahFLHvZD --group-directories-first"
         dired-dwim-target t
         dired-recursive-copies 'always
@@ -1241,7 +1226,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
     (wdired-allow-to-redirect-links t)
     (wdired-confirm-overwrite t)
     :config
-    (my/local-leader-def dired-mode-map
+    (my/local-leader-def dired-mode
         "w" '("wdired" . wdired-change-to-wdired-mode))
     (after! evil-collection
             (evil-collection-wdired-setup)))
@@ -1287,17 +1272,18 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
          ("<backtab>" . expreg-contract)))
 #+end_src
 ** evil text obj
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package evil-textobj-tree-sitter
   :after (evil treesit)
   :unless noninteractive
   :config
+  (require 'evil-textobj-tree-sitter-core)
   (defun meain/fancy-narrow-to-thing (thing)
     (interactive)
     (if (buffer-narrowed-p) (fancy-widen))
     (let ((range (evil-textobj-tree-sitter--range 1 (list (intern thing)))))
       (fancy-narrow-to-region (car range) (cdr range))))
-  (my/general-global-menu! "Narrow" "N"
+  (my/map-menu! "Narrow" "N"
     "n" `("widen" . ,(lambda () (interactive) (fancy-widen)))
     "f" `("function" . ,(lambda () (interactive) (meain/fancy-narrow-to-thing "function.outer")))
     "c" `("class" . ,(lambda () (interactive) (meain/fancy-narrow-to-thing "class.outer")))
@@ -1317,7 +1303,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   (evil-define-key 'normal 'my/treesit-mode
     "[g" +tree-sitter-goto-previous-map
     "]g" +tree-sitter-goto-next-map)
-  (general-def :keymaps '+tree-sitter-inner-text-objects-map
+  (which-key-add-keymap-based-replacements +tree-sitter-inner-text-objects-map
     "A" `("call" . ,(evil-textobj-tree-sitter-get-textobj ("parameter.inner" "call.inner")))
     "f" `("function" . ,(evil-textobj-tree-sitter-get-textobj "function.inner"))
     "F" `("call" . ,(evil-textobj-tree-sitter-get-textobj "call.inner"))
@@ -1325,7 +1311,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
     "v" `("conditional" . ,(evil-textobj-tree-sitter-get-textobj "conditional.inner"))
     "l" `("loop" . ,(evil-textobj-tree-sitter-get-textobj "loop.inner"))
     "c" `("comment" . ,(evil-textobj-tree-sitter-get-textobj "comment.inner")))
-  (general-def :keymaps '+tree-sitter-outer-text-objects-map
+  (which-key-add-keymap-based-replacements +tree-sitter-outer-text-objects-map
     "A" `("call" . ,(evil-textobj-tree-sitter-get-textobj ("parameter.outer" "call.outer")))
     "f" `("function" . ,(evil-textobj-tree-sitter-get-textobj "function.outer"))
     "F" `("call" . ,(evil-textobj-tree-sitter-get-textobj "call.outer"))
@@ -1333,7 +1319,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
     "v" `("conditional" . ,(evil-textobj-tree-sitter-get-textobj "conditional.outer"))
     "l" `("loop" . ,(evil-textobj-tree-sitter-get-textobj "loop.outer"))
     "c" `("comment" . ,(evil-textobj-tree-sitter-get-textobj "comment.outer")))
-  (general-def :keymaps '+tree-sitter-goto-previous-map
+  (which-key-add-keymap-based-replacements +tree-sitter-goto-previous-map
     "A" `("call" . ,(evil-textobj-tree-sitter-get-textobj ("parameter.outer" "call.outer") t))
     "f" `("function" . ,(evil-textobj-tree-sitter-get-textobj "function.outer" t))
     "F" `("call" . ,(evil-textobj-tree-sitter-get-textobj "call.outer" t))
@@ -1341,7 +1327,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
     "c" `("comment" . ,(evil-textobj-tree-sitter-get-textobj "comment.outer" t))
     "v" `("conditional" . ,(evil-textobj-tree-sitter-get-textobj "conditional.outer" t))
     "l" `("loop" . ,(evil-textobj-tree-sitter-get-textobj "loop.outer" t)))
-  (general-def :keymaps '+tree-sitter-goto-next-map
+  (which-key-add-keymap-based-replacements +tree-sitter-goto-next-map
     "A" `("call" . ,(evil-textobj-tree-sitter-get-textobj ("parameter.outer" "call.outer")))
     "f" `("function" . ,(evil-textobj-tree-sitter-get-textobj "function.outer"))
     "F" `("call" . ,(evil-textobj-tree-sitter-get-textobj "call.outer"))
@@ -1370,7 +1356,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
             (if (fboundp func)
                 (apply func beg end args)
               (eval-region beg end t))))
-        (define-key evil-motion-state-map "gr" 'my/evil-operator-eval))
+        (evil-define-key 'motion 'global "gr" 'my/evil-operator-eval))
 #+end_src
 * Calc
 #+begin_src emacs-lisp
@@ -1378,7 +1364,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :unless noninteractive
   :ensure nil ;; built-in
   :commands (calc full-calc)
-  :init (my/general-global-Open
+  :init (my/map-Open
              "c" '("calc" . calc)
              "C" '("full-calc" . full-calc))
   :config
@@ -1400,7 +1386,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :unless noninteractive
   :after evil
   :config
-  (my/general-global-menu! "naming convention" "c ~"
+  (my/map-menu! "naming convention" "c ~"
     "~" '("cycle" . string-inflection-all-cycle)
     "t" '("toggle" . string-inflection-toggle)
     "c" '("CamelCase" . string-inflection-camelcase)
@@ -1433,7 +1419,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :hook (prog-mode . smartparens-mode)
   :hook (prog-mode . show-smartparens-mode)
   :config
-  (my/general-global-Toggle "p" #'smartparens-mode)
+  (my/map-Toggle "p" '("smartparens" . smartparens-mode))
   (use-package smartparens-config :ensure nil)
   (sp-local-pair '(minibuffer-mode minibuffer-inactive-mode emacs-lisp-mode) "'" nil :actions nil)
   (sp-local-pair '(minibuffer-mode minibuffer-inactive-mode emacs-lisp-mode) "`" nil :actions nil)
@@ -1456,7 +1442,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   ([remap describe-symbol] . helpful-symbol)
   ([remap describe-command] . helpful-command)
   :config
-  (general-nmap
+  (evil-define-key 'normal 'global
     "K" #'helpful-at-point)
   (after! undo-tree
           (append! undo-tree-incompatible-major-modes #'helpful-mode)))
@@ -1472,13 +1458,6 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
               ("w" . woman))
   :config
   (setq tldr-directory-path (concat my/cache-dir "tldr/")))
-#+end_src
-** Devdocs
-#+begin_src emacs-lisp
-(use-package devdocs
-  :commands devdocs-lookup
-  :init (general-def 'help-map
-          "d" '("Devdocs" . devdocs-lookup)))
 #+end_src
 * Undo
 ** Undo Fu
@@ -1623,7 +1602,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :unless noninteractive
   :config
   (require 'cape-keyword)
-  (my/general-global-menu! "Completions" "c p"
+  (my/map-menu! "Completions" "c p"
     "p" '("Complete at point" . completion-at-point)
     "t" '("Complete tag" . complete-tag)
     "d" '("Dabbrev" . cape-dabbrev)
@@ -1650,7 +1629,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :custom
   (tempel-trigger-prefix "<")
   :config
-  (general-def :keymaps 'tempel-map "TAB" 'tempel-next) ;; progress through fields via `TAB'
+  (define-key tempel-map "TAB" #'tempel-next)
   :init
   ;; Setup completion at point
   (defun tempel-setup-capf ()
@@ -1661,7 +1640,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
     ;; NOTE: We add `tempel-expand' *before* the main programming mode Capf,
     ;; such that it will be tried first.
     (unless (member #'tempel-expand completion-at-point-functions)
-        (make-local-variable 'completion-at-point-functions)
+      (make-local-variable 'completion-at-point-functions)
       (push #'tempel-expand completion-at-point-functions)))
   :hook (prog-mode . tempel-setup-capf)
   :hook (text-mode . tempel-setup-capf)
@@ -1714,8 +1693,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :config
   (vertico-mode)
   (after! embark
-          (general-def
-            :keymaps 'vertico-map
+          (which-key-add-keymap-based-replacements vertico-map
             "C-c C-o" #'embark-export
             "C-c C-c" #'embark-act
             "C-c C-f" #'embark-become))
@@ -1737,20 +1715,20 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :init
   (my/leader-def
     "/" '("Search project" . consult-ripgrep))
-  (my/general-global-Search
+  (my/map-Search
     "s" '("Search line" . consult-line))
-  (my/general-global-Buffer
+  (my/map-Buffer
     "b" '("Buffer selection" . consult-buffer))
-  (my/general-global-File
-    "r" '("Recent File" . consult-recent-file))
-  (general-def :keymaps 'help-map
-    "h m" '("Manpage" . consult-man)))
+  (my/map-File
+   "r" '("Recent File" . consult-recent-file))
+  (keymap-unset help-map "h")
+  (keymap-set help-map "h m" #'consult-man))
 (use-package consult-flymake
   :ensure consult
   :commands consult-flymake
   :init
   (after! flycheck
-          (my/general-global-menu! "Errors" "c e"
+          (my/map-menu! "Errors" "c e"
             "f" '("Consult Flymake" . consult-flymake))))
 #+end_src
 ** Embark
@@ -1765,7 +1743,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   (add-hook 'eldoc-documentation-functions #'embark-eldoc-first-target)
   (setq which-key-use-C-h-commands nil
         prefix-help-command #'embark-prefix-help-command)
-  (general-define-key [remap describe-bindings] #'embark-bindings)
+  (keymap-set global-map "<remap> <describe-bindings>" #'embark-bindings)
   (add-to-list 'display-buffer-alist
                '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
                  nil
@@ -1773,17 +1751,13 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   (setq embark-prompter 'embark-completing-read-prompter)
   (add-popup! #'embark-collect-mode)
   :init
-  (my/general-global-menu! "Embark" "e"
+  (my/map-menu! "Embark" "e"
     "o" '("export" . embark-export)
     "e" '("act" . embark-act)
     "b" '("bindings" . embark-bindings)
     "c" '("collect" . embark-collect))
-  (general-def
-    :prefix "C-c e"
-    "o" '("export" . embark-export)
-    "e" '("act" . embark-act)
-    "b" '("bindings" . embark-bindings)
-    "c" '("collect" . embark-collect)))
+  (which-key-add-key-based-replacements
+    "C-c e" '("embark" . my/map-Embark-map)))
 (use-package embark-consult
   :if (and (featurep 'embark)
            (featurep 'consult))
@@ -1817,7 +1791,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
     (defun my/eat ()
       (interactive)
       (eat)))
-  (my/general-global-Open "t" '("Terminal" . my/eat))
+  (my/map-Open "t" '("Terminal" . my/eat))
   :config
   (add-hook 'eat-mode-hook
             (defun my/eat-hook ()
@@ -1835,7 +1809,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :commands eshell
   :init
   (setq my/repl-fallback #'eshell)
-  (my/general-global-Open
+  (my/map-Open
     "e" '("eshell" . eshell))
   (setq eshell-aliases-file (concat my/cache-dir "eshell/alias")
         eshell-history-file-name (concat my/cache-dir "eshell/history")
@@ -1867,7 +1841,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
 (use-package flycheck
   :unless noninteractive
   :config
-  (my/general-global-Errors
+  (my/map-Errors
     "e" '("List errors" . flycheck-list-errors)
     "n" '("Next error" . flycheck-next-error)
     "p" '("Previous error" . flycheck-previous-error)
@@ -1884,7 +1858,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :unless noninteractive
   :hook (emacs-startup . global-jinx-mode)
   :config
-  (general-nmap
+  (evil-define-key 'normal 'global
     "]s" '("Spelling error" . jinx-next)
     "[s" '("Spelling error" . jinx-previous)
     "z=" 'jinx-correct)
@@ -1914,7 +1888,7 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   (setq magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
   (setq magit-log-arguments '("--graph" "--decorate" "--color"))
   (setq git-commit-fill-column 72)
-  (my/general-global-Git
+  (my/map-Git
     "g" '("Status" . magit-status)
     "b" '("Blame" . magit-blame)
     "l" '("Log" . magit-log)
@@ -1956,11 +1930,11 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
   :commands (git-timemachine)
   :init
   (setq git-timemachine-show-minibuffer-details t)
-  (my/general-global-Git
+  (my/map-Git
     "t" '("Time machine" . git-timemachine))
   :config
   (add-hook 'git-timemachine-mode-hook 'evil-normalize-keymaps)
-  (general-def :keymaps 'git-timemachine-mode-map
+  (which-key-add-keymap-based-replacements git-timemachine-mode-map
     "C-k" 'git-timemachine-show-previous-revision
     "C-j" 'git-timemachine-show-next-revision
     "q" 'git-timemachine-quit))
@@ -1998,10 +1972,10 @@ Git gutter:
                 (sit-for 0.1)
                 (git-gutter:clear))
      :color blue))
-  (my/general-global-Hydras
+  (my/map-Hydras
     "g" '("Git" . hydra-git-gutter/body))
   (global-git-gutter-mode t)
-  (my/general-global-Git
+  (my/map-Git
     "n" '("next hunk" . git-gutter:next-hunk)
     "p" '("previous hunk" . git-gutter:previous-hunk)
     "s" '("stage hunk" . git-gutter:stage-hunk)
@@ -2026,7 +2000,7 @@ Git gutter:
   (setq eglot-events-buffer-size 0) ;; don't log events
   (setq eglot-extend-to-xref t)
   :config
-  (my/general-global-menu! "LSP" "cl"
+  (my/map-menu! "LSP" "cl"
     "a" #'eglot-code-actions
     "f" #'eglot-format-buffer)
   (when (featurep 'tempel)
@@ -2091,7 +2065,7 @@ Git gutter:
 (use-package dape
   ;; To use window configuration like gud (gdb-mi)
   :bind
-  (:map my/general-global-Open-map
+  (:map my/map-Open-map
         ("?" . dape))
   :custom
   (dape-buffer-window-arrangment 'gud)
@@ -2140,7 +2114,7 @@ Git gutter:
   :ensure nix-mode
   :after nix-mode
   :config
-  (my/general-global-Open
+  (my/map-Open
     :definer 'minor-mode
     :keymaps 'nix-mode-map
     "r" 'nix-repl))
@@ -2312,19 +2286,19 @@ Git gutter:
   (setq rustic-indent-method-chain t)
   (my/local-leader-def rustic-mode
                        "b" '("build" . nil)
-                       "bb" '("build" . rustic-cargo-build)
-                       "br" '("run" . rustic-cargo-run)
-                       "ba" '("audit" . rustic-cargo-audit)
-                       "bt" '("test" . rustic-cargo-test)
-                       "bc" '("check" . rustic-cargo-check)
-                       "bd" '("doc" . rustic-cargo-build-doc)
-                       "bD" '("doc open" . rustic-cargo-doc)
-                       "bn" '("new" . rustic-cargo-new)
+                       "b b" '("build" . rustic-cargo-build)
+                       "b r" '("run" . rustic-cargo-run)
+                       "b a" '("audit" . rustic-cargo-audit)
+                       "b t" '("test" . rustic-cargo-test)
+                       "b c" '("check" . rustic-cargo-check)
+                       "b d" '("doc" . rustic-cargo-build-doc)
+                       "b D" '("doc open" . rustic-cargo-doc)
+                       "b n" '("new" . rustic-cargo-new)
                        "c" '("cargo" . nil)
-                       "co" '("outdated" . rustic-cargo-outdated)
-                       "ca" '("add" . rustic-cargo-add)
-                       "cd" '("rm" . rustic-cargo-rm)
-                       "cA" '("add missing" . rustic-cargo-add-missing-dependencies)
+                       "c o" '("outdated" . rustic-cargo-outdated)
+                       "c a" '("add" . rustic-cargo-add)
+                       "c d" '("rm" . rustic-cargo-rm)
+                       "c A" '("add missing" . rustic-cargo-add-missing-dependencies)
                        "m" '("macro expand" . rustic-cargo-expand)))
 (use-package rustic-babel
   :ensure nil
@@ -2375,7 +2349,7 @@ Git gutter:
                        "s" 'julia-repl
                        "S" 'julia-repl-switch)
   (defun my/julia-def ()
-    (my/general-global-Open :keymaps 'local
+    (my/map-Open :keymaps 'local
       "r" 'julia-repl-send-region-or-line
       "f" 'julia-repl-send-defun
       "l" 'julia-repl-send-line))
@@ -2426,10 +2400,10 @@ Git gutter:
           (compile-command (format "sh gradlew %s" command)))
       (call-interactively #'compile)))
   (my/local-leader-def kotlin-ts-mode
-      "tt"  '("go to test" . kotlin-ts-mode-goto-test-file)
-      "tr"  '("run test function" . kotlin-ts-mode-run-current-test-function)
-      "tR"  '("run test class" . kotlin-ts-mode-run-current-test-class)
-      "ta" '("gradlew test" . (lambda () (interactive) (my/gradlew-command "test")))
+      "t t"  '("go to test" . kotlin-ts-mode-goto-test-file)
+      "t r"  '("run test function" . kotlin-ts-mode-run-current-test-function)
+      "t R"  '("run test class" . kotlin-ts-mode-run-current-test-class)
+      "t a" '("gradlew test" . (lambda () (interactive) (my/gradlew-command "test")))
 
       "a" '("gradlew assemble" . (lambda () (interactive) (my/gradlew-command "assemble")))
       "b" '("gradlew build" . (lambda () (interactive) (my/gradlew-command "build")))
@@ -2486,7 +2460,7 @@ Git gutter:
 
 (use-package docker
   :commands docker
-  :init (my/general-global-Open "!" '("Container" . docker)))
+  :init (my/map-Open "!" '("Container" . docker)))
 #+end_src
 ** Latex
 Mostly only used for double checking after org export.
@@ -2537,7 +2511,7 @@ Mostly only used for double checking after org export.
   :commands mu4e
   :init
   (add-to-list 'recentf-exclude my/mail-dir)
-  (my/general-global-Open "m" '("Email" . mu4e))
+  (my/map-Open "m" '("Email" . mu4e))
   :config
   (my/local-leader-def mu4e-headers-mode
       "u" '("Update" . mu4e-update-mail-and-index))
@@ -2720,69 +2694,69 @@ Mostly only used for double checking after org export.
     "x" #'org-toggle-checkbox
 
     "a" '("attachments" . nil)
-    "aa" 'org-attach
-    "ad" 'org-attach-delete-one
-    "aD" 'org-attach-delete-all
-    "af" '+org/find-file-in-attachments
-    "al" '+org/attach-file-and-insert-link
-    "an" 'org-attach-new
-    "ao" 'org-attach-open
-    "aO" 'org-attach-open-in-emacs
-    "ar" 'org-attach-reveal
-    "aR" 'org-attach-reveal-in-emacs
-    "au" 'org-attach-url
-    "as" 'org-attach-set-directory
-    "aS" 'org-attach-sync
+    "a a" 'org-attach
+    "a d" 'org-attach-delete-one
+    "a D" 'org-attach-delete-all
+    "a f" '+org/find-file-in-attachments
+    "a l" '+org/attach-file-and-insert-link
+    "a n" 'org-attach-new
+    "a o" 'org-attach-open
+    "a O" 'org-attach-open-in-emacs
+    "a r" 'org-attach-reveal
+    "a R" 'org-attach-reveal-in-emacs
+    "a u" 'org-attach-url
+    "a s" 'org-attach-set-directory
+    "a S" 'org-attach-sync
 
     "b" '("tabels" . nil)
-    "b-" 'org-table-insert-hline
-    "ba" 'org-table-align
-    "bb" 'org-table-blank-field
-    "bc" 'org-table-create-or-convert-from-region
-    "be" 'org-table-edit-field
-    "bf" 'org-table-edit-formulas
-    "bh" 'org-table-field-info
-    "bs" 'org-table-sort-lines
-    "br" 'org-table-recalculate
-    "bR" 'org-table-recalculate-buffer-tables
+    "b -" 'org-table-insert-hline
+    "b a" 'org-table-align
+    "b b" 'org-table-blank-field
+    "b c" 'org-table-create-or-convert-from-region
+    "b e" 'org-table-edit-field
+    "b f" 'org-table-edit-formulas
+    "b h" 'org-table-field-info
+    "b s" 'org-table-sort-lines
+    "b r" 'org-table-recalculate
+    "b R" 'org-table-recalculate-buffer-tables
 
-    "bd" '("delete" . nil)
-    "bdc" 'org-table-delete-column
-    "bdr" 'org-table-kill-row
+    "b d" '("delete" . nil)
+    "b d c" 'org-table-delete-column
+    "b d r" 'org-table-kill-row
 
-    "bi" '("insert" . nil)
-    "bic" 'org-table-insert-column
-    "bih" 'org-table-insert-hline
-    "bir" 'org-table-insert-row
-    "biH" 'org-table-hline-and-move
+    "b i" '("insert" . nil)
+    "b i c" 'org-table-insert-column
+    "b i h" 'org-table-insert-hline
+    "b i r" 'org-table-insert-row
+    "b i H" 'org-table-hline-and-move
 
     "l" '("links" . nil)
-    "lc" 'org-cliplink
-    "ld" '+org/remove-link
-    "li" 'org-id-store-link
-    "ll" 'org-insert-link
-    "lL" 'org-insert-all-links
-    "ls" 'org-store-link
-    "lS" 'org-insert-last-stored-link
-    "lt" 'org-toggle-link-display
-    "lg" '(org-mac-link-get-link :if IS-MAC)
+    "l c" 'org-cliplink
+    "l d" '+org/remove-link
+    "l i" 'org-id-store-link
+    "l l" 'org-insert-link
+    "l L" 'org-insert-all-links
+    "l s" 'org-store-link
+    "l S" 'org-insert-last-stored-link
+    "l t" 'org-toggle-link-display
+    "l g" '(org-mac-link-get-link :if IS-MAC)
 
 
     "s" '("subtree" . nil)
-    "sa" 'org-toggle-archive-tag
-    "sb" 'org-tree-to-indirect-buffer
-    "sc" 'org-clone-subtree-with-time-shift
-    "sd" 'org-cut-subtree
-    "sh" 'org-promote-subtree
-    "sj" 'org-move-subtree-down
-    "sk" 'org-move-subtree-up
-    "sl" 'org-demote-subtree
-    "sn" 'org-narrow-to-subtree
-    "sr" 'org-refile
-    "ss" 'org-sparse-tree
-    "sA" 'org-archive-subtree
-    "sN" 'widen
-    "sS" 'org-sort))
+    "s a" 'org-toggle-archive-tag
+    "s b" 'org-tree-to-indirect-buffer
+    "s c" 'org-clone-subtree-with-time-shift
+    "s d" 'org-cut-subtree
+    "s h" 'org-promote-subtree
+    "s j" 'org-move-subtree-down
+    "s k" 'org-move-subtree-up
+    "s l" 'org-demote-subtree
+    "s n" 'org-narrow-to-subtree
+    "s r" 'org-refile
+    "s s" 'org-sparse-tree
+    "s A" 'org-archive-subtree
+    "s N" 'widen
+    "s S" 'org-sort))
 #+end_src
 ** Agenda
 #+begin_src emacs-lisp
@@ -2791,7 +2765,7 @@ Mostly only used for double checking after org export.
   :unless noninteractive
   :if (and IS-PERSONAL (executable-find "pass") (file-exists-p (concat (getenv "PASSWORD_STORE_DIR") "/google.com/api/client_secret.gpg")))
   :commands (org-gcal-sync)
-  :init (my/general-global-Open
+  :init (my/map-Open
              "a" '("agenda" . org-gcal-sync))
   :custom
   (org-gcal-client-id (auth-source-pass-get 'secret "google.com/api/client_id"))
@@ -2868,7 +2842,7 @@ Mostly only used for double checking after org export.
 #+end_src
 ** Notes
 #+begin_src emacs-lisp
-(my/general-global-menu! "Notes" "n")
+(my/map-menu! "Notes" "n")
 #+end_src
 *** Deft
 #+begin_src emacs-lisp
@@ -2888,7 +2862,7 @@ Mostly only used for double checking after org export.
   (deft-text-mode 'org-mode)
   :config
   (add-popup! "\\*Deft\\*")
-  :init (my/general-global-Notes
+  :init (my/map-Notes
              "d" '("deft" . deft)))
 #+end_src
 *** Roam
@@ -2904,7 +2878,7 @@ Mostly only used for double checking after org export.
    '(
      <<roam-templates>>
      ))
-  :init (my/general-global-Notes
+  :init (my/map-Notes
           "r" '("roam" . nil)
           "rf" '("find" . org-roam-node-find)
           "ri" '("insert" . org-roam-node-insert)
