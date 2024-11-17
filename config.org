@@ -586,6 +586,7 @@ Do something in other window
   (define-key evil-insert-state-map (kbd "C-h") 'evil-delete-backward-char-and-join)
   (evil-define-key 'normal 'global my/leader-def-prefix my/maps/leader)
   (evil-define-key 'visual 'global my/leader-def-prefix my/maps/leader)
+  (global-set-key my/leader-def-prefix-alt my/maps/leader)
 
   ;; Use visual line motions even outside of visual-line-mode buffers
   (evil-global-set-key 'motion "j" 'evil-next-visual-line)
