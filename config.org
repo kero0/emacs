@@ -319,18 +319,17 @@ I want windows that start with '*' to be opened in the lower 1/3 of the frame. T
       use-package-expand-minimally t
       use-package-verbose nil)
 (eval-and-compile
-  (require 'use-package)
-  (advice-add #'use-package-handler/:bind :around #'eval-and-compile))
+  (require 'use-package))
 (add-hook 'after-init-hook #'repeat-mode)
 #+end_src
 ** which-key
 #+begin_src emacs-lisp
 (use-package which-key
   :unless noninteractive
-  :hook (after-init . which-key-mode)
-  :commands which-key-add-keymap-based-replacements
+  :demand
   :diminish
   :config
+  (which-key-mode)
   (setq which-key-idle-delay 0.4
         which-key-idle-secondary-delay 0.01
         which-key-max-description-length 32
@@ -351,17 +350,19 @@ Macro to define nested keymaps
   (let* ((n (concat "my/map-" name))
          (prefix-map (intern (concat n "-map"))))
     `(eval-and-compile
-         (defvar-keymap ,prefix-map
-           ,@body)
+       (defvar-keymap ,prefix-map
+         ,@body)
+       (with-eval-after-load 'which-key
          (which-key-add-keymap-based-replacements my/maps/leader
            ,prefix-key               (cons ,name ,prefix-map))
          (cl-defmacro ,(intern n) (&rest body)
            `(which-key-add-keymap-based-replacements ,',prefix-map
-              ,@body)))))
+              ,@body))))))
 (defmacro my/leader-def (&rest body)
-  `(which-key-add-keymap-based-replacements my/maps/leader
-     ,@body))
-#+end_src
+  `(with-eval-after-load 'which-key
+     (which-key-add-keymap-based-replacements my/maps/leader
+       ,@body)))
+  #+end_src
 Local bindings
 #+begin_src emacs-lisp :noweb-ref keybindings :tangle no
 (cl-defmacro my/local-leader-def (mode &rest args)
@@ -379,8 +380,8 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
                           (make-local-variable 'my/maps/leader)
                           (keymap-set my/maps/leader ,my/local-leader-def-prefix ,prefix-map)))
        (cl-defmacro ,definer (&rest body)
-         `(which-key-add-keymap-based-replacements ',,prefix-map
-            ,@body)))))
+         `(with-eval-after-load 'which-key (which-key-add-keymap-based-replacements ',,prefix-map
+                                             ,@body))))))
 #+end_src
 Do something in other window
 #+begin_src emacs-lisp
@@ -585,7 +586,7 @@ Do something in other window
   (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
   (define-key evil-insert-state-map (kbd "C-h") 'evil-delete-backward-char-and-join)
   (evil-define-key '(normal visual) 'global my/leader-def-prefix my/maps/leader)
-  (global-set-key my/leader-def-prefix-alt my/maps/leader)
+  (bind-key my/leader-def-prefix-alt my/maps/leader)
 
   ;; Use visual line motions even outside of visual-line-mode buffers
   (evil-global-set-key 'motion "j" 'evil-next-visual-line)
@@ -694,9 +695,10 @@ Do something in other window
     (evil-multiedit-store-in-search-history t))
   :config
   (evil-define-key 'normal 'global
-    "gm"  '("Multi-cursor" . evil-mc-cursors-map)
-    "M-d" 'evil-mc-make-and-goto-next-match
-    "M-S-d" 'evil-mc-make-and-goto-prev-match)
+    "gm"  `("Multi-cursor" . ,evil-mc-cursors-map))
+  (bind-keys
+   ("M-d" . evil-mc-make-and-goto-next-match)
+   ("M-S-d" . evil-mc-make-and-goto-prev-match))
   (evil-define-key 'visual 'global
     "A" 'evil-mc-make-cursor-in-visual-selection-end
     "I" 'evil-mc-make-cursor-in-visual-selection-beg)
@@ -1122,15 +1124,16 @@ Do something in other window
                                                   (cl-some (lambda (regex) (string-match-p regex project-root))
                                                            my/projectile-ignore-projects))))
   (my/map-Buffer
-    "]" '("Next Buffer" . #'projectile-next-project-buffer)
-    "[" '("Previous Buffer" . #'projectile-previous-project-buffer))
+   "]" '("Next Buffer" . projectile-next-project-buffer)
+   "[" '("Previous Buffer" . projectile-previous-project-buffer))
   (after! evil
-          (keymap-set global-map "<remap> <evil-next-buffer>" #'projectile-next-project-buffer)
-          (keymap-set global-map "<remap> <evil-previous-buffer>" #'projectile-previous-project-buffer)
-          (keymap-set global-map "<remap> <next-buffer>" #'projectile-next-project-buffer)
-          (keymap-set global-map "<remap> <previous-buffer>" #'projectile-previous-project-buffer))
+          (bind-keys
+           ([remap evil-next-buffer] . projectile-next-project-buffer)
+           ([remap next-buffer] . projectile-next-project-buffer)
+           ([remap evil-previous-buffer] . projectile-previous-project-buffer)
+           ([remap previous-buffer] . projectile-previous-project-buffer)))
   (my/leader-def
-    "p" '("projectile" . projectile-command-map))
+   "p" '("projectile" . projectile-command-map))
   (after! rg
           (add-to-list 'my/rg-project-funcs #'projectile-project-root)))
 #+end_src
@@ -1693,11 +1696,6 @@ Do something in other window
   (vertico-count 20)
   :config
   (vertico-mode)
-  (after! embark
-          (which-key-add-keymap-based-replacements vertico-map
-            "C-c C-o" #'embark-export
-            "C-c C-c" #'embark-act
-            "C-c C-f" #'embark-become))
   ;; Hide the mode line of the Embark live/completions buffers
   (add-to-list 'display-buffer-alist
                '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
@@ -1744,7 +1742,7 @@ Do something in other window
   (add-hook 'eldoc-documentation-functions #'embark-eldoc-first-target)
   (setq which-key-use-C-h-commands nil
         prefix-help-command #'embark-prefix-help-command)
-  (keymap-set global-map "<remap> <describe-bindings>" #'embark-bindings)
+  (bind-key [remap describe-bindings] #'embark-bindings)
   (add-to-list 'display-buffer-alist
                '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
                  nil
@@ -1757,8 +1755,8 @@ Do something in other window
     "e" '("act" . embark-act)
     "b" '("bindings" . embark-bindings)
     "c" '("collect" . embark-collect))
-  (which-key-add-key-based-replacements
-    "C-c e" '("embark" . my/map-Embark-map)))
+  (bind-key
+   "C-c e" `("embark" . ,my/map-Embark-map)))
 (use-package embark-consult
   :if (and (featurep 'embark)
            (featurep 'consult))
