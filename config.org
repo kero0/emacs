@@ -584,8 +584,7 @@ Do something in other window
   (evil-mode)
   (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
   (define-key evil-insert-state-map (kbd "C-h") 'evil-delete-backward-char-and-join)
-  (evil-define-key 'normal 'global my/leader-def-prefix my/maps/leader)
-  (evil-define-key 'visual 'global my/leader-def-prefix my/maps/leader)
+  (evil-define-key '(normal visual) 'global my/leader-def-prefix my/maps/leader)
   (global-set-key my/leader-def-prefix-alt my/maps/leader)
 
   ;; Use visual line motions even outside of visual-line-mode buffers
@@ -606,6 +605,7 @@ Do something in other window
   :unless noninteractive
   :custom
   (evil-collection-setup-minibuffer t)
+  (evil-collection-key-blacklist '("SPC"))
   :config
   (unless noninteractive
     (evil-collection-init))
@@ -1898,6 +1898,7 @@ Do something in other window
     "S" '("Stage file" . magit-stage-buffer-file)
     "U" '("Unstage file" . magit-unstage-file))
   :config
+  (keymap-unset magit-mode-map "SPC")
   (add-popup! "\\*\\*magit-process:.*\\*\\*")
   (setq magit-buffer-name-format (concat "*" magit-buffer-name-format "*"))
   (append! magit-status-sections-hook #'magit-insert-modules))
