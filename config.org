@@ -1117,7 +1117,6 @@ Do something in other window
   (projectile-require-project-root t)
   (projectile-per-project-compilation-buffer t)
   :config
-  (projectile-mode +1)
   (eval-and-compile
     (setq projectile-ignored-project-function #'(defun my/projectile-ignore-projects (project-root)
                                                   "Ignore matching regexes in `my/projectile-ignore-projects'."
@@ -1135,7 +1134,9 @@ Do something in other window
   (my/leader-def
    "p" '("projectile" . projectile-command-map))
   (after! rg
-          (add-to-list 'my/rg-project-funcs #'projectile-project-root)))
+          (add-to-list 'my/rg-project-funcs #'projectile-project-root))
+  (append! projectile-project-root-files-bottom-up "Androib.bp")
+  (projectile-mode +1))
 #+end_src
 ** Perspective
 #+begin_src emacs-lisp
