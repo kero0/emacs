@@ -2113,11 +2113,8 @@ Git gutter:
 (use-package nix-repl
   :ensure nix-mode
   :after nix-mode
-  :config
-  (my/map-Open
-    :definer 'minor-mode
-    :keymaps 'nix-mode-map
-    "r" 'nix-repl))
+  :bind (:map my/map-Open-map :filter nix-mode
+              ("r" . nix-repl)))
 #+end_src
 ** Python
 #+begin_src emacs-lisp
