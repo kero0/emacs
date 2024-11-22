@@ -1474,7 +1474,7 @@ Do something in other window
     (undo-limit         (* 512 1024 1024))
     (undo-strong-limit  (* 1024 1024 1024))
     (undo-outer-limit   (* 2 1024 1024 1024))
-    (evil-undo-system 'undo-redo)
+    (evil-undo-system 'undo-fu)
     :bind
     ([remap undo] . undo-fu-only-undo)
     ([remap redo] . undo-fu-only-redo)
@@ -1490,33 +1490,24 @@ Do something in other window
     ("C-x r U"    . undo-fu-session-recover)
     :custom
     (undo-fu-session-directory (concat my/cache-dir "undo-fu-session/"))
-    (undo-fu-session-compression 'zst))
-    ;; based on https://www.reddit.com/r/emacs/comments/t07e7e/file_name_too_long_error/
-    ;; hash filenames due to errors with deeply nested files
+    (undo-fu-session-compression 'zst)
     :config
-    (setq undo-fu-session-make-file-name-function
-        (defun my/undo-fu-session-make-file-name (filename ext)
-          "Take the path FILENAME, EXT and return a name base on this."
-          (declare (important-return-value t) (side-effect-free error-free))
-          (defun sha1-the-tail (filename)
-            "Hash part of the filename but keep initial 58 chars to make it distinguishable."
-            (let ((shortened (string-limit filename 100)))
-              (if (equal shortened filename)
-                  filename
-                (let ((first-58-chars (string-limit shortened 58))
-                      (later-part-to-hash (substring filename 58)))
-                  (concat first-58-chars "-" (sha1 later-part-to-hash))))))
-          (concat
-           (file-name-concat undo-fu-session-directory
-                             (sha1-the-tail
-                              (convert-standard-filename (expand-file-name filename))))
-           ext))))
+    (setopt undo-fu-session-make-file-name-function
+            (defun my/undo-fu-session-make-file-name (filename ext)
+              "Take the path FILENAME, EXT and return a name base on this."
+              (declare (important-return-value t) (side-effect-free error-free))
+              (concat
+               (file-name-concat undo-fu-session-directory
+                                 (sha1
+                                  (convert-standard-filename (expand-file-name filename))))
+               ext)))))
 #+end_src
-
 ** Vundo
 #+begin_src emacs-lisp
 (use-package vundo
   :unless noninteractive
+  :bind (:map my/map-Open-map
+              ("u" ("Undo Tree" . vundo)))
   :custom
   (vundo-compact-display nil)
   (vundo-glyph-alist vundo-unicode-symbols))
