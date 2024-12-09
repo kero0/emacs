@@ -1703,17 +1703,17 @@ Do something in other window
              consult-buffer
              consult-recent-file
              consult-man)
-  :init
-  (my/leader-def
-    "/" '("Search project" . consult-ripgrep))
-  (my/map-Search
-    "s" '("Search line" . consult-line))
-  (my/map-Buffer
-    "b" '("Buffer selection" . consult-buffer))
-  (my/map-File
-   "r" '("Recent File" . consult-recent-file))
-  (keymap-unset help-map "h")
-  (keymap-set help-map "h m" #'consult-man))
+  :bind
+  (:map my/maps/leader
+        ("/" ("Search project" . consult-ripgrep)))
+  (:map my/map-Search-map
+        ("s" ("Search line" . consult-line)))
+  (:map my/map-Buffer-map
+        ("b" ("Buffer selection" . consult-buffer)))
+  (:map my/map-File-map
+        ("r" ("Recent File" . consult-recent-file)))
+  (:map help-map
+        ("h" . consult-man)))
 (use-package consult-flymake
   :ensure consult
   :commands consult-flymake
