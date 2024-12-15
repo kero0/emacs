@@ -1188,6 +1188,14 @@ Do something in other window
     (file-size-human-readable (buffer-size))))
 ; next/prev buffer skip special buffers
 (setq switch-to-prev-buffer-skip-regexp '("^\\*.*\\*$"))
+
+(use-package buffer-terminator
+  :custom
+  (buffer-terminator-verbose nil)
+  (buffer-terminator-interval (* 10 60))
+  (buffer-terminator-inactivity-timeout (* 30 60))
+  :config
+  (buffer-terminator-mode 1))
 #+end_src
 * Dired
 #+begin_src emacs-lisp
