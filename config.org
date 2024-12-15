@@ -1698,20 +1698,15 @@ Do something in other window
 #+begin_src emacs-lisp
 (use-package consult
   :unless noninteractive
-  :commands (consult-ripgrep
-             consult-line
-             consult-buffer
-             consult-recent-file
-             consult-man)
   :bind
   (:map my/maps/leader
-        ("/" ("Search project" . consult-ripgrep)))
+        ("/" . consult-ripgrep))
   (:map my/map-Search-map
-        ("s" ("Search line" . consult-line)))
+        ("s" . consult-line))
   (:map my/map-Buffer-map
-        ("b" ("Buffer selection" . consult-buffer)))
+        ("b" . consult-buffer))
   (:map my/map-File-map
-        ("r" ("Recent File" . consult-recent-file)))
+        ("r" . consult-recent-file))
   (:map help-map
         ("h" . consult-man)))
 (use-package consult-flymake
