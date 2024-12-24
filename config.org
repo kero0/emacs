@@ -1524,15 +1524,15 @@ Do something in other window
   :demand
   :custom
   (corfu-cycle t)
-  (corfu-auto t)                 ;; Enable auto completion
+  (corfu-auto t)
   (corfu-auto-prefix 2)
-  (corfu-preselect 'prompt)      ;; Preselect the prompt
-  (corfu-on-exact-match nil)     ;; Configure handling of exact matches
-  (corfu-scroll-margin 5)        ;; Use scroll margin
+  (corfu-preselect 'prompt)
+  (corfu-on-exact-match nil)
+  (corfu-scroll-margin 5)
   (corfu-quit-at-boundary t)
   (completion-cycle-threshold t)
   (read-extended-command-predicate #'command-completion-default-include-p)
-  (completion-styles '(tab orderless basic))
+  (completion-styles '(orderless basic))
   (tab-always-indent 'complete)
   (text-mode-ispell-word-completion nil)
   :bind
@@ -1541,7 +1541,6 @@ Do something in other window
         ([tab] . corfu-next)
         ("S-TAB" . corfu-previous)
         ([backtab] . corfu-previous))
-  :init
   :config
   (global-corfu-mode)
 
@@ -1693,6 +1692,8 @@ Do something in other window
 #+begin_src emacs-lisp
 (use-package consult
   :unless noninteractive
+  :custom
+  (consult-line-start-from-top t)
   :bind
   (:map my/maps/leader
         ("/" . consult-ripgrep))
