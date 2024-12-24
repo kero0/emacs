@@ -23,3 +23,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Print PR number
         run: echo Pull request number is ${{ steps.update.outputs.pull-request-number }}.
+      - name: Enable auto merge created PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr merge --auto --merge ${{ steps.update.outputs.pull-request-number }}
