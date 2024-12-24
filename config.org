@@ -74,9 +74,9 @@
         (_ (if (eq (car features) 'or)
                `(progn
                   ,@(cl-map 'list
-                           (lambda (feature)
-                             `(after! ,feature ,@body))
-                           (cdr features)))
+                            (lambda (feature)
+                              `(after! ,feature ,@body))
+                            (cdr features)))
              `(with-eval-after-load (quote ,(car features))
                 (after! ,(cdr features) ,@body)))))
     `(with-eval-after-load (quote ,features)
@@ -386,10 +386,10 @@ Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX
 Do something in other window
 #+begin_src emacs-lisp
 (defun my/do-in-other-window (fn &rest args)
-    (let ((buf (current-buffer)))
-        (other-window 1)
-        (apply fn args)
-        (switch-to-buffer buf)))
+  (let ((buf (current-buffer)))
+    (other-window 1)
+    (apply fn args)
+    (switch-to-buffer buf)))
 #+end_src
 *** Assorted Keybindings
 :PROPERTIES:
@@ -414,7 +414,6 @@ Do something in other window
   (interactive)
   (my/do-in-other-window (lambda () (progn (my/kill-buffer) (delete-window)))))
 
-
 (my/map-menu! "Buffer" "b"
   "B" '("Switch buffer other window" . switch-to-buffer-other-window)
   "d" '("Kill current buffer" . kill-current-buffer)
@@ -431,7 +430,7 @@ Do something in other window
   "U" '("Unbury buffer" . unbury-buffer)
   "x" '("Open scratch buffer" . scratch-buffer))
 (my/leader-def
-  "x" '("Open scratch buffer" . scratch-buffer))
+ "x" '("Open scratch buffer" . scratch-buffer))
 #+end_src
 **** Code
 #+begin_src emacs-lisp
@@ -453,7 +452,6 @@ Do something in other window
   (let ((file-name (buffer-file-name)))
     (find-file (concat "/sudo:root@localhost:" file-name))))
 (my/map-menu! "File" "f"
-
   "f" '("Find file" . find-file)
   "F" '("Find file other window" . find-file-other-window)
   "s" '("Save buffer" . save-buffer)
@@ -478,8 +476,8 @@ Do something in other window
   (start-process my/open-proc nil my/open-proc file))
 
 (my/map-menu! "Open" "o"
-                         "o" '("Open file" . (lambda () (interactive) (my/default-open (buffer-file-name))) )
-                         "s" '("Shell" . shell))
+  "o" '("Open file" . (lambda () (interactive) (my/default-open (buffer-file-name))) )
+  "s" '("Shell" . shell))
 #+end_src
 **** REPL
 #+begin_src emacs-lisp
@@ -958,7 +956,7 @@ Do something in other window
 (load-theme 'modus-operandi t)
 (setq modus-themes-to-toggle '(modus-operandi modus-vivendi))
 (my/map-Toggle
-  "t" '("theme" . modus-themes-toggle))
+ "t" '("theme" . modus-themes-toggle))
 #+end_src
 
 ** Indent guides
@@ -1057,12 +1055,12 @@ Do something in other window
   :unless noninteractive
   :after evil
   :config (my/map-menu! "Bookmarks" "B"
-             "b" '("Jump" . bookmark-jump)
-             "l" '("List" . bookmark-bmenu-list)
-             "s" '("Set" . bookmark-set)
-             "r" '("Rename" . bookmark-rename)
-             "d" '("Delete" . bookmark-delete)
-             "a" '("Add" . bookmark-set))
+            "b" '("Jump" . bookmark-jump)
+            "l" '("List" . bookmark-bmenu-list)
+            "s" '("Set" . bookmark-set)
+            "r" '("Rename" . bookmark-rename)
+            "d" '("Delete" . bookmark-delete)
+            "a" '("Add" . bookmark-set))
   :init
   (setq bookmark-default-file (concat my/cache-dir "bookmarks")
         bookmark-save-flag 1))
@@ -1100,8 +1098,8 @@ Do something in other window
     :flags ("--hidden -g !.git")
     :menu ("Search" "p" "Project"))
   (my/map-Search
-    "p" '("Project Search" . my/grep-project)
-    "S" '("Ripgrep menu" . rg-menu)))
+   "p" '("Project Search" . my/grep-project)
+   "S" '("Ripgrep menu" . rg-menu)))
 #+end_src
 * Project management
 ** Projectile
@@ -1156,7 +1154,7 @@ Do something in other window
   :unless noninteractive
   :config
   (my/leader-def
-    "TAB" '("Workspaces" . perspective-map))
+   "TAB" '("Workspaces" . perspective-map))
   (which-key-add-keymap-based-replacements perspective-map
     "TAB" '("Switch" . persp-switch))
   (if (package-installed-p 'projectile)
@@ -1177,7 +1175,7 @@ Do something in other window
   :ensure nil
   :commands ibuffer
   :init (my/map-Buffer
-          "i" '("ibuffer" . ibuffer))
+         "i" '("ibuffer" . ibuffer))
   :config
   (setq ibuffer-expert t)
   (setq ibuffer-show-empty-filter-groups nil)
@@ -1186,7 +1184,7 @@ Do something in other window
   (define-ibuffer-column size
     (:name "Size" :inline t)
     (file-size-human-readable (buffer-size))))
-; next/prev buffer skip special buffers
+                                        ; next/prev buffer skip special buffers
 (setq switch-to-prev-buffer-skip-regexp '("^\\*.*\\*$"))
 #+end_src
 * Dired
@@ -1200,8 +1198,8 @@ Do something in other window
           (evil-define-key 'normal 'global
             "-" #'dired-jump))
   (my/map-Open
-    "d" '("dired" . dired-jump)
-    "D" '("dired other window" . dired-jump-other-window))
+   "d" '("dired" . dired-jump)
+   "D" '("dired other window" . dired-jump-other-window))
   (require 'dired-aux)
   (require 'dired-x)
   ;; (use-package dired-single)
@@ -1224,17 +1222,17 @@ Do something in other window
 ** Writable file tree
 #+begin_src emacs-lisp
 (use-package wdired
-    :ensure nil
-    :after dired
-    :custom
-    (wdired-allow-to-change-permissions 'advanced)
-    (wdired-allow-to-redirect-links t)
-    (wdired-confirm-overwrite t)
-    :config
-    (my/local-leader-def dired-mode
-        "w" '("wdired" . wdired-change-to-wdired-mode))
-    (after! evil-collection
-            (evil-collection-wdired-setup)))
+  :ensure nil
+  :after dired
+  :custom
+  (wdired-allow-to-change-permissions 'advanced)
+  (wdired-allow-to-redirect-links t)
+  (wdired-confirm-overwrite t)
+  :config
+  (my/local-leader-def dired-mode
+      "w" '("wdired" . wdired-change-to-wdired-mode))
+  (after! evil-collection
+          (evil-collection-wdired-setup)))
 #+end_src
 ** Icons
 #+begin_src emacs-lisp
@@ -1370,8 +1368,8 @@ Do something in other window
   :ensure nil ;; built-in
   :commands (calc full-calc)
   :init (my/map-Open
-             "c" '("calc" . calc)
-             "C" '("full-calc" . full-calc))
+         "c" '("calc" . calc)
+         "C" '("full-calc" . full-calc))
   :config
   (setq calc-angle-mode 'rad
         calc-algebraic-mode t
@@ -1790,7 +1788,7 @@ Do something in other window
   :init
   (setq my/repl-fallback #'eshell)
   (my/map-Open
-    "e" '("eshell" . eshell))
+   "e" '("eshell" . eshell))
   (setq eshell-aliases-file (concat my/cache-dir "eshell/alias")
         eshell-history-file-name (concat my/cache-dir "eshell/history")
         eshell-buffer-maximum-lines 10000
@@ -1822,11 +1820,11 @@ Do something in other window
   :unless noninteractive
   :config
   (my/map-Errors
-    "e" '("List errors" . flycheck-list-errors)
-    "n" '("Next error" . flycheck-next-error)
-    "p" '("Previous error" . flycheck-previous-error)
-    "d" '("Describe checker" . flycheck-describe-checker)
-    "v" '("Verify setup" . flycheck-verify-setup))
+   "e" '("List errors" . flycheck-list-errors)
+   "n" '("Next error" . flycheck-next-error)
+   "p" '("Previous error" . flycheck-previous-error)
+   "d" '("Describe checker" . flycheck-describe-checker)
+   "v" '("Verify setup" . flycheck-verify-setup))
   (global-flycheck-mode)
   (add-popup! "^\\*Flycheck.*\\*$" #'flycheck-error-list-mode)
   :custom
@@ -1869,13 +1867,13 @@ Do something in other window
   (setq magit-log-arguments '("--graph" "--decorate" "--color"))
   (setq git-commit-fill-column 72)
   (my/map-Git
-    "g" '("Status" . magit-status)
-    "b" '("Blame" . magit-blame)
-    "l" '("Log" . magit-log)
-    "c" '("commit" . magit-commit)
-    "G" '("Status here" . magit-status-here)
-    "S" '("Stage file" . magit-stage-buffer-file)
-    "U" '("Unstage file" . magit-unstage-file))
+   "g" '("Status" . magit-status)
+   "b" '("Blame" . magit-blame)
+   "l" '("Log" . magit-log)
+   "c" '("commit" . magit-commit)
+   "G" '("Status here" . magit-status-here)
+   "S" '("Stage file" . magit-stage-buffer-file)
+   "U" '("Unstage file" . magit-unstage-file))
   :config
   (keymap-unset magit-mode-map "SPC")
   (add-popup! "\\*\\*magit-process:.*\\*\\*")
@@ -1912,7 +1910,7 @@ Do something in other window
   :init
   (setq git-timemachine-show-minibuffer-details t)
   (my/map-Git
-    "t" '("Time machine" . git-timemachine))
+   "t" '("Time machine" . git-timemachine))
   :config
   (add-hook 'git-timemachine-mode-hook 'evil-normalize-keymaps)
   (which-key-add-keymap-based-replacements git-timemachine-mode-map
@@ -1954,13 +1952,13 @@ Git gutter:
                 (git-gutter:clear))
      :color blue))
   (my/map-Hydras
-    "g" '("Git" . hydra-git-gutter/body))
+   "g" '("Git" . hydra-git-gutter/body))
   (global-git-gutter-mode t)
   (my/map-Git
-    "n" '("next hunk" . git-gutter:next-hunk)
-    "p" '("previous hunk" . git-gutter:previous-hunk)
-    "s" '("stage hunk" . git-gutter:stage-hunk)
-    "r" '("revert hunk" . git-gutter:revert-hunk)))
+   "n" '("next hunk" . git-gutter:next-hunk)
+   "p" '("previous hunk" . git-gutter:previous-hunk)
+   "s" '("stage hunk" . git-gutter:stage-hunk)
+   "r" '("revert hunk" . git-gutter:revert-hunk)))
 #+end_src
 ** Forge
 #+begin_src emacs-lisp
@@ -2053,7 +2051,7 @@ Git gutter:
   (dape-adapter-dir (concat my/local-dir "dape-adapters/"))
   :config
   (my/leader-def
-    "d" (cons "Debug" dape-global-map))
+   "d" (cons "Debug" dape-global-map))
   ;; By default dape uses gdb keybinding prefix
   (setq dape-key-prefix "\C-x\C-a")
 
@@ -2158,7 +2156,7 @@ Git gutter:
   :after python
   :hook (python-mode . poetry-tracking-mode)
   :config (my/local-leader-def-python-mode
-             "p" '("poetry" . poetry)))
+           "p" '("poetry" . poetry)))
 
 #+end_src
 *** Numpy Docstring
@@ -2262,21 +2260,21 @@ Git gutter:
   (add-hook 'rustic-mode-hook 'eglot-ensure)
   (setq rustic-indent-method-chain t)
   (my/local-leader-def rustic-mode
-                       "b" '("build" . nil)
-                       "b b" '("build" . rustic-cargo-build)
-                       "b r" '("run" . rustic-cargo-run)
-                       "b a" '("audit" . rustic-cargo-audit)
-                       "b t" '("test" . rustic-cargo-test)
-                       "b c" '("check" . rustic-cargo-check)
-                       "b d" '("doc" . rustic-cargo-build-doc)
-                       "b D" '("doc open" . rustic-cargo-doc)
-                       "b n" '("new" . rustic-cargo-new)
-                       "c" '("cargo" . nil)
-                       "c o" '("outdated" . rustic-cargo-outdated)
-                       "c a" '("add" . rustic-cargo-add)
-                       "c d" '("rm" . rustic-cargo-rm)
-                       "c A" '("add missing" . rustic-cargo-add-missing-dependencies)
-                       "m" '("macro expand" . rustic-cargo-expand)))
+      "b" '("build" . nil)
+      "b b" '("build" . rustic-cargo-build)
+      "b r" '("run" . rustic-cargo-run)
+      "b a" '("audit" . rustic-cargo-audit)
+      "b t" '("test" . rustic-cargo-test)
+      "b c" '("check" . rustic-cargo-check)
+      "b d" '("doc" . rustic-cargo-build-doc)
+      "b D" '("doc open" . rustic-cargo-doc)
+      "b n" '("new" . rustic-cargo-new)
+      "c" '("cargo" . nil)
+      "c o" '("outdated" . rustic-cargo-outdated)
+      "c a" '("add" . rustic-cargo-add)
+      "c d" '("rm" . rustic-cargo-rm)
+      "c A" '("add missing" . rustic-cargo-add-missing-dependencies)
+      "m" '("macro expand" . rustic-cargo-expand)))
 (use-package rustic-babel
   :ensure nil
   :after org
@@ -2318,18 +2316,18 @@ Git gutter:
   :config
   (add-hook 'julia-mode-hook #'eglot-ensure)
   (my/local-leader-def julia-mode
-                       "b" 'julia-repl-send-buffer
-                       "r" 'julia-repl-send-region-or-line
-                       "R" 'julia-repl
-                       "f" 'julia-repl-send-defun
-                       "l" 'julia-repl-send-line
-                       "s" 'julia-repl
-                       "S" 'julia-repl-switch)
+      "b" 'julia-repl-send-buffer
+      "r" 'julia-repl-send-region-or-line
+      "R" 'julia-repl
+      "f" 'julia-repl-send-defun
+      "l" 'julia-repl-send-line
+      "s" 'julia-repl
+      "S" 'julia-repl-switch)
   (defun my/julia-def ()
     (my/map-Open :keymaps 'local
-      "r" 'julia-repl-send-region-or-line
-      "f" 'julia-repl-send-defun
-      "l" 'julia-repl-send-line))
+                 "r" 'julia-repl-send-region-or-line
+                 "f" 'julia-repl-send-defun
+                 "l" 'julia-repl-send-line))
   (add-hook 'julia-mode-hook #'my/julia-def))
 ;; First use requires running 'import Pkg; Pkg.add("LanguageServer")' in the Julia REPL
 #+end_src
@@ -2653,92 +2651,92 @@ Mostly only used for double checking after org export.
 (use-package org
   :config
   (my/local-leader-def org-mode
-    "#" #'org-update-statistics-cookies
-    "'" #'org-edit-special
-    "*" #'org-ctrl-c-star
-    "+" #'org-ctrl-c-minus
-    "," #'org-switchb
-    "@" #'org-cite-insert
-    "." #'consult-org-heading
-    "/" #'counsel-org-goto-all
-    "A" #'org-archive-subtree
-    "e" #'org-export-dispatch
-    "f" #'org-footnote-action
-    "h" #'org-toggle-heading
-    "i" #'org-toggle-item
-    "I" #'org-id-get-create
-    "k" #'org-babel-remove-result
-    "n" #'org-store-link
-    "o" #'org-set-property
-    "q" #'org-set-tags-command
-    "t" #'org-todo
-    "T" #'org-todo-list
-    "x" #'org-toggle-checkbox
+      "#" #'org-update-statistics-cookies
+      "'" #'org-edit-special
+      "*" #'org-ctrl-c-star
+      "+" #'org-ctrl-c-minus
+      "," #'org-switchb
+      "@" #'org-cite-insert
+      "." #'consult-org-heading
+      "/" #'counsel-org-goto-all
+      "A" #'org-archive-subtree
+      "e" #'org-export-dispatch
+      "f" #'org-footnote-action
+      "h" #'org-toggle-heading
+      "i" #'org-toggle-item
+      "I" #'org-id-get-create
+      "k" #'org-babel-remove-result
+      "n" #'org-store-link
+      "o" #'org-set-property
+      "q" #'org-set-tags-command
+      "t" #'org-todo
+      "T" #'org-todo-list
+      "x" #'org-toggle-checkbox
 
-    "a" '("attachments" . nil)
-    "a a" 'org-attach
-    "a d" 'org-attach-delete-one
-    "a D" 'org-attach-delete-all
-    "a f" '+org/find-file-in-attachments
-    "a l" '+org/attach-file-and-insert-link
-    "a n" 'org-attach-new
-    "a o" 'org-attach-open
-    "a O" 'org-attach-open-in-emacs
-    "a r" 'org-attach-reveal
-    "a R" 'org-attach-reveal-in-emacs
-    "a u" 'org-attach-url
-    "a s" 'org-attach-set-directory
-    "a S" 'org-attach-sync
+      "a" '("attachments" . nil)
+      "a a" 'org-attach
+      "a d" 'org-attach-delete-one
+      "a D" 'org-attach-delete-all
+      "a f" '+org/find-file-in-attachments
+      "a l" '+org/attach-file-and-insert-link
+      "a n" 'org-attach-new
+      "a o" 'org-attach-open
+      "a O" 'org-attach-open-in-emacs
+      "a r" 'org-attach-reveal
+      "a R" 'org-attach-reveal-in-emacs
+      "a u" 'org-attach-url
+      "a s" 'org-attach-set-directory
+      "a S" 'org-attach-sync
 
-    "b" '("tabels" . nil)
-    "b -" 'org-table-insert-hline
-    "b a" 'org-table-align
-    "b b" 'org-table-blank-field
-    "b c" 'org-table-create-or-convert-from-region
-    "b e" 'org-table-edit-field
-    "b f" 'org-table-edit-formulas
-    "b h" 'org-table-field-info
-    "b s" 'org-table-sort-lines
-    "b r" 'org-table-recalculate
-    "b R" 'org-table-recalculate-buffer-tables
+      "b" '("tabels" . nil)
+      "b -" 'org-table-insert-hline
+      "b a" 'org-table-align
+      "b b" 'org-table-blank-field
+      "b c" 'org-table-create-or-convert-from-region
+      "b e" 'org-table-edit-field
+      "b f" 'org-table-edit-formulas
+      "b h" 'org-table-field-info
+      "b s" 'org-table-sort-lines
+      "b r" 'org-table-recalculate
+      "b R" 'org-table-recalculate-buffer-tables
 
-    "b d" '("delete" . nil)
-    "b d c" 'org-table-delete-column
-    "b d r" 'org-table-kill-row
+      "b d" '("delete" . nil)
+      "b d c" 'org-table-delete-column
+      "b d r" 'org-table-kill-row
 
-    "b i" '("insert" . nil)
-    "b i c" 'org-table-insert-column
-    "b i h" 'org-table-insert-hline
-    "b i r" 'org-table-insert-row
-    "b i H" 'org-table-hline-and-move
+      "b i" '("insert" . nil)
+      "b i c" 'org-table-insert-column
+      "b i h" 'org-table-insert-hline
+      "b i r" 'org-table-insert-row
+      "b i H" 'org-table-hline-and-move
 
-    "l" '("links" . nil)
-    "l c" 'org-cliplink
-    "l d" '+org/remove-link
-    "l i" 'org-id-store-link
-    "l l" 'org-insert-link
-    "l L" 'org-insert-all-links
-    "l s" 'org-store-link
-    "l S" 'org-insert-last-stored-link
-    "l t" 'org-toggle-link-display
-    "l g" '(org-mac-link-get-link :if IS-MAC)
+      "l" '("links" . nil)
+      "l c" 'org-cliplink
+      "l d" '+org/remove-link
+      "l i" 'org-id-store-link
+      "l l" 'org-insert-link
+      "l L" 'org-insert-all-links
+      "l s" 'org-store-link
+      "l S" 'org-insert-last-stored-link
+      "l t" 'org-toggle-link-display
+      "l g" '(org-mac-link-get-link :if IS-MAC)
 
 
-    "s" '("subtree" . nil)
-    "s a" 'org-toggle-archive-tag
-    "s b" 'org-tree-to-indirect-buffer
-    "s c" 'org-clone-subtree-with-time-shift
-    "s d" 'org-cut-subtree
-    "s h" 'org-promote-subtree
-    "s j" 'org-move-subtree-down
-    "s k" 'org-move-subtree-up
-    "s l" 'org-demote-subtree
-    "s n" 'org-narrow-to-subtree
-    "s r" 'org-refile
-    "s s" 'org-sparse-tree
-    "s A" 'org-archive-subtree
-    "s N" 'widen
-    "s S" 'org-sort))
+      "s" '("subtree" . nil)
+      "s a" 'org-toggle-archive-tag
+      "s b" 'org-tree-to-indirect-buffer
+      "s c" 'org-clone-subtree-with-time-shift
+      "s d" 'org-cut-subtree
+      "s h" 'org-promote-subtree
+      "s j" 'org-move-subtree-down
+      "s k" 'org-move-subtree-up
+      "s l" 'org-demote-subtree
+      "s n" 'org-narrow-to-subtree
+      "s r" 'org-refile
+      "s s" 'org-sparse-tree
+      "s A" 'org-archive-subtree
+      "s N" 'widen
+      "s S" 'org-sort))
 #+end_src
 ** Agenda
 #+begin_src emacs-lisp
@@ -2748,7 +2746,7 @@ Mostly only used for double checking after org export.
   :if (and IS-PERSONAL (executable-find "pass") (file-exists-p (concat (getenv "PASSWORD_STORE_DIR") "/google.com/api/client_secret.gpg")))
   :commands (org-gcal-sync)
   :init (my/map-Open
-             "a" '("agenda" . org-gcal-sync))
+         "a" '("agenda" . org-gcal-sync))
   :custom
   (org-gcal-client-id (auth-source-pass-get 'secret "google.com/api/client_id"))
   (org-gcal-client-secret (auth-source-pass-get 'secret "google.com/api/client_secret"))
@@ -2845,7 +2843,7 @@ Mostly only used for double checking after org export.
   :config
   (add-popup! "\\*Deft\\*")
   :init (my/map-Notes
-             "d" '("deft" . deft)))
+         "d" '("deft" . deft)))
 #+end_src
 *** Roam
 #+begin_src emacs-lisp
@@ -2861,21 +2859,21 @@ Mostly only used for double checking after org export.
      <<roam-templates>>
      ))
   :init (my/map-Notes
-          "r" '("roam" . nil)
-          "rf" '("find" . org-roam-node-find)
-          "ri" '("insert" . org-roam-node-insert)
-          "rg" '("graph" . org-roam-graph)
-          "rt" '("today" . org-roam-dailies-find-today)
-          "ry" '("yesterday" . org-roam-dailies-find-yesterday)
-          "rr" '("tomorrow" . org-roam-dailies-find-tomorrow)
-          "rd" '("date" . org-roam-dailies-find-date)
-          "rc" '("capture today" . org-roam-dailies-capture-today)
-          "rC" '("capture tomorrow" . org-roam-dailies-capture-tomorrow)
-          "rD" '("capture date" . org-roam-dailies-capture-date)
-          "rl" '("toggle display" . org-roam-buffer-toggle-display)
-          "rL" '("display dedicated" . org-roam-buffer-display-dedicated)
-          "rs" '("sync" . org-roam-db-sync)
-          "rS" '("server" . org-roam-server-mode)))
+         "r" '("roam" . nil)
+         "rf" '("find" . org-roam-node-find)
+         "ri" '("insert" . org-roam-node-insert)
+         "rg" '("graph" . org-roam-graph)
+         "rt" '("today" . org-roam-dailies-find-today)
+         "ry" '("yesterday" . org-roam-dailies-find-yesterday)
+         "rr" '("tomorrow" . org-roam-dailies-find-tomorrow)
+         "rd" '("date" . org-roam-dailies-find-date)
+         "rc" '("capture today" . org-roam-dailies-capture-today)
+         "rC" '("capture tomorrow" . org-roam-dailies-capture-tomorrow)
+         "rD" '("capture date" . org-roam-dailies-capture-date)
+         "rl" '("toggle display" . org-roam-buffer-toggle-display)
+         "rL" '("display dedicated" . org-roam-buffer-display-dedicated)
+         "rs" '("sync" . org-roam-db-sync)
+         "rS" '("server" . org-roam-server-mode)))
 #+end_src
 **** Templates
 :PROPERTIES:
@@ -2992,8 +2990,8 @@ Mostly only used for double checking after org export.
 *** =ox-html=
 #+begin_src emacs-lisp
 (use-package ox-html
-:ensure nil
-:after org)
+  :ensure nil
+  :after org)
 #+end_src
 *** =ox-chameleon=
 #+begin_src emacs-lisp
@@ -3117,7 +3115,7 @@ DOCSTRING and BODY are as in `defun'.
 (use-package org-src-context
   :after org
   :init (my/local-leader-def-org-mode
-          "S" '("src LSP" . org-src-context-mode)))
+         "S" '("src LSP" . org-src-context-mode)))
 #+end_src
 ** Poly Org
 #+begin_src emacs-lisp
@@ -3127,7 +3125,7 @@ DOCSTRING and BODY are as in `defun'.
   :after org
   :init
   (my/local-leader-def-org-mode
-    "p" '("poly-org-mode" . poly-org-mode)))
+   "p" '("poly-org-mode" . poly-org-mode)))
 #+end_src
 * Footer
 #+begin_src emacs-lisp
