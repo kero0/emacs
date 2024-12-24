@@ -2431,6 +2431,11 @@ Git gutter:
   (org-babel-shell-results-defaults-to-output t)
   (org-babel-default-header-args:sh '((:session . nil))))
 #+end_src
+** Soong mode
+#+begin_src emacs-lisp
+(use-package soong-mode
+  :mode "\\.bp\\'")
+#+end_src
 ** Docker
 #+begin_src emacs-lisp
 (use-package dockerfile-mode
