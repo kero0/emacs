@@ -235,7 +235,7 @@
 ** Window management
 I want windows that start with '*' to be opened in the lower 1/3 of the frame. These windows should close when their buffer dies and should not be reused. If they are not in ~my/special-window-no-cursor-manage-alist~ then they should automatically grab the cursor.
 #+begin_src emacs-lisp
-(defvar my/special-window-no-cursor-manage-alist '("*Help*" "*Warnings*" "*Backtrace*" "*Messages*"))
+(defvar my/special-window-no-cursor-manage-alist '("^\\*Help\\*$" "^\\*Warnings\\*$" "^\\*Backtrace\\*$" "^\\*Messages\\*$"))
 #+end_src
 ** Proxy Settings
 #+begin_src emacs-lisp
@@ -509,12 +509,12 @@ Do something in other window
          (repl-buffer-name (concat "*"
                                    (symbol-name repl)
                                    ":repl*")))
-    (if (get-buffer repl-buffer-name)
-        (popper-raise-popup (get-buffer repl-buffer-name))
+    (if-let ((buffer (get-buffer repl-buffer-name)))
+        (funcall popper-display-function buffer)
       (progn
-        (add-popup! repl-buffer-name)
         (funcall repl)
-        (rename-buffer repl-buffer-name)))))
+        (rename-buffer repl-buffer-name)
+        (popper-lower-to-popup (get-buffer repl-buffer-name))))))
 
 (defun my/repl (arg)
   (interactive "P")
@@ -782,18 +782,20 @@ Do something in other window
 
   (setq popper-display-function #'popper-display-popup-at-bottom)
   (setq popper-window-height 0.4)
-  (defun my/popper-toggle-and-select ()
-    (interactive)
-    (let ((popper-display-function #'popper-select-popup-at-bottom))
-      (popper-toggle)))
   :config
   (my/map-menu! "Popper" "`"
-                "`" '("Toggle latest" . popper-toggle)
-                "c" '("Cycle" . popper-cycle)
-                "T" '("Toggle type" . popper-toggle-type))
+    "`" '("Toggle latest" . popper-toggle)
+    "c" '("Cycle" . popper-cycle)
+    "T" '("Toggle type" . popper-toggle-type))
   (bind-key "C-`"   #'popper-toggle)
   (bind-key "M-`"   #'popper-cycle)
   (bind-key "C-M-`" #'popper-toggle-type)
+  (defun my/popper-display-function (buffer &optional alist)
+    "my display function for popper"
+    (if (-any (lambda (regex) (string-match regex (buffer-name buffer))) my/special-window-no-cursor-manage-alist)
+        (popper-display-popup-at-bottom buffer alist)
+      (popper-select-popup-at-bottom buffer alist)))
+  (setopt popper-display-function #'my/popper-display-function)
   (popper-mode +1))
 #+end_src
 * UI
@@ -1449,6 +1451,7 @@ Do something in other window
   :config
   (evil-define-key 'normal 'global
     "K" #'helpful-at-point)
+  (append! my/special-window-no-cursor-manage-alist "^\\*helpful .*\\*$")
   (after! undo-tree
           (append! undo-tree-incompatible-major-modes #'helpful-mode)))
 #+end_src
@@ -1459,9 +1462,10 @@ Do something in other window
   :commands (tldr tldr-update-docs)
   :bind (:map help-map
               ("t" . tldr)
-              ("h" . man)
               ("w" . woman))
-  :config
+  :init
+  (append! my/special-window-no-cursor-manage-alist "^\\*tldr\\*$")
+  (add-popup! "^\\*tldr\\*$" 'tldr-mode)
   (setq tldr-directory-path (concat my/cache-dir "tldr/")))
 #+end_src
 * Undo
