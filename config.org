@@ -400,9 +400,7 @@ Do something in other window
 (my/map-menu! "Quit" "q"
   "q" '("Quit Emacs" . save-buffers-kill-terminal)
   "Q" '("Quit Emacs immediately" . kill-emacs)
-  "r" '("Restart Emacs" . restart-emacs)
-  "R" '("Restart Emacs daemon" . restart-emacs--daemon)
-  "d" '("Restart Emacs with debug init" . restart-emacs-debug-init))
+  "r" '("Restart Emacs" . restart-emacs))
 #+end_src
 **** Buffer
 #+begin_src emacs-lisp
