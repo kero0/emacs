@@ -26,4 +26,4 @@ jobs:
       - name: Enable auto merge created PR
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh pr merge --auto --merge ${{ steps.update.outputs.pull-request-number }}
+        run: gh pr merge --auto --squash ${{ steps.update.outputs.pull-request-number }}
