@@ -332,7 +332,8 @@ Macro to define nested keymaps
 #+begin_src emacs-lisp
 (defmacro my/map-menu! (name prefix-key &rest body)
   "Create a definer named +general-global-NAME wrapping global-definer.
-  Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX-KEY."
+   Create prefix map: +general-global-NAME-map. Prefix bindings in BODY
+   with PREFIX-KEY."
   (declare (indent 2))
   (let* ((n (concat "my/map-" name))
          (prefix-map (intern (concat n "-map"))))
@@ -354,7 +355,8 @@ Local bindings
 #+begin_src emacs-lisp :noweb-ref keybindings :tangle no
 (cl-defmacro my/local-leader-def (mode &rest args)
   "Create a definer named +general-global-NAME wrapping global-definer.
-Create prefix map: +general-global-NAME-map. Prefix bindings in BODY with PREFIX-KEY."
+   Create prefix map: +general-global-NAME-map. Prefix bindings in BODY
+   with PREFIX-KEY."
   (declare (indent 2))
   (let* ((n  (symbol-name mode))
          (definer (intern (concat "my/local-leader-def-" n)))
@@ -479,7 +481,7 @@ Do something in other window
                                    (symbol-name (if (eq repl my/repl-fallback) mode repl))
                                    ":repl*")))
     (if (get-buffer repl-buffer-name)
-        (popper--find-buried-popups (get-buffer repl-buffer-name))
+        (popper-display-popup-at-bottom (get-buffer repl-buffer-name))
       (progn
         (add-popup! repl-buffer-name)
         (funcall repl)
@@ -2096,6 +2098,11 @@ Git gutter:
 
   (add-hook 'python-ts-mode-hook (defun my/python-ts-base-hook () (run-hooks 'python-mode-hook)))
   (add-hook 'python-ts-mode-hook #'my/treesit-mode)
+
+  (add-hook 'python-mode-hook (lambda ()
+                                (setf
+                                 (alist-get 'python-mode my/repl-alist) #'run-python
+                                 (alist-get 'python-ts-mode my/repl-alist) #'run-python)))
 
   (my/local-leader-def python-mode
       "r" '("repl/python" . run-python)
