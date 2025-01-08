@@ -237,19 +237,6 @@ I want windows that start with '*' to be opened in the lower 1/3 of the frame. T
 #+begin_src emacs-lisp
 (defvar my/special-window-no-cursor-manage-alist '("^\\*Help\\*$" "^\\*Warnings\\*$" "^\\*Backtrace\\*$" "^\\*Messages\\*$"))
 #+end_src
-** Proxy Settings
-#+begin_src emacs-lisp
-(defvar my/proxy nil
-  "Proxy to use")
-(when IS-WORK
-  (setq my/proxy  "http://internet.ford.com:83")
-  (setq url-using-proxy my/proxy
-        url-proxy-services `(("http" . ,my/proxy)
-                             ("https" . ,my/proxy)
-                             ("ssh" . ,my/proxy)))
-  (after! lsp-mode
-          (setq lsp-http-proxy my/proxy)))
-#+end_src
 ** Early init
 :PROPERTIES:
 :header-args: :tangle early-init.el :noweb yes :lexical t :eval never-export
