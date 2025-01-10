@@ -2,7 +2,7 @@ name: Update Lockfile
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 0 * * 5"
+    - cron: "0 0 * * *"
 
 jobs:
   lockfile-update:
