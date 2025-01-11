@@ -814,6 +814,8 @@ Do something in other window
   "ESC" '("Default" . (lambda () (interactive) (set-input-method nil))))
 (keymap-set global-map "C-c l" (cons "Input-Language" my/map-Input-Language-map))
 
+(when (daemonp)
+  (add-to-list 'default-frame-alist `(font . ,my/font/name)))
 
 (use-package ligature
   :hook ((prog-mode text-mode) . ligature-mode)
