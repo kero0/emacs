@@ -142,38 +142,6 @@
         "type": "github"
       }
     },
-    "packages-emacs-jupyter": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1733253455,
-        "narHash": "sha256-v/oOk3px5niHSrkDzH8naxoM3ddICYy4K12X1AiKXT4=",
-        "owner": "emacs-jupyter",
-        "repo": "jupyter",
-        "rev": "db8a9e233a010a61063f34220821ec76157a2d84",
-        "type": "github"
-      },
-      "original": {
-        "owner": "emacs-jupyter",
-        "repo": "jupyter",
-        "type": "github"
-      }
-    },
-    "packages-org-pretty-table": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1679237547,
-        "narHash": "sha256-IeHnoB9hpISwuzI+pKiU+5wvGvz9YJrG5amGg6DGgq4=",
-        "owner": "Fuco1",
-        "repo": "org-pretty-table",
-        "rev": "38e4354bbf7a8d08294babd067fac697038119b1",
-        "type": "github"
-      },
-      "original": {
-        "owner": "Fuco1",
-        "repo": "org-pretty-table",
-        "type": "github"
-      }
-    },
     "packages-org-src-context": {
       "flake": false,
       "locked": {
@@ -222,34 +190,15 @@
         "type": "github"
       }
     },
-    "packages-zmq": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1728241041,
-        "narHash": "sha256-B1gONCwCCRb7L4aIeb2WuLuNOE1CdbMbP3y1XgJ/ydc=",
-        "owner": "nnicandro",
-        "repo": "emacs-zmq",
-        "rev": "fe856c43286674aa6770d95a81d915363f5df399",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nnicandro",
-        "repo": "emacs-zmq",
-        "type": "github"
-      }
-    },
     "root": {
       "inputs": {
         "emacs-overlay": "emacs-overlay",
         "git-hooks": "git-hooks",
         "nixpkgs": "nixpkgs_2",
         "packages-eglot-booster": "packages-eglot-booster",
-        "packages-emacs-jupyter": "packages-emacs-jupyter",
-        "packages-org-pretty-table": "packages-org-pretty-table",
         "packages-org-src-context": "packages-org-src-context",
         "packages-ox-chameleon": "packages-ox-chameleon",
-        "packages-targets": "packages-targets",
-        "packages-zmq": "packages-zmq"
+        "packages-targets": "packages-targets"
       }
     }
   },

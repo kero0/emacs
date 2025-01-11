@@ -25,26 +25,12 @@
       url = "github:noctuid/targets.el";
       flake = false;
     };
-    packages-org-pretty-table = {
-      url = "github:Fuco1/org-pretty-table";
-      flake = false;
-    };
     packages-org-src-context = {
       url = "github:karthink/org-src-context";
       flake = false;
     };
     packages-ox-chameleon = {
       url = "github:tecosaur/ox-chameleon";
-      flake = false;
-    };
-
-    # temporary until fix is merged upstream
-    packages-emacs-jupyter = {
-      url = "github:emacs-jupyter/jupyter";
-      flake = false;
-    };
-    packages-zmq = {
-      url = "github:nnicandro/emacs-zmq";
       flake = false;
     };
   };
@@ -157,13 +143,6 @@
                     buildInputs = with self; [ ];
                   }
                 );
-                org-pretty-table = (
-                  mkTrivialPkg {
-                    pkgs = self;
-                    name = "org-pretty-table";
-                    buildInputs = with self; [ ];
-                  }
-                );
                 org-src-context = (
                   mkTrivialPkg {
                     pkgs = self;
@@ -191,40 +170,12 @@
                         runHook postBuild
                       '';
                     });
-                jupyter =
-                  (mkTrivialPkg {
-                    pkgs = self;
-                    name = "emacs-jupyter";
-                    buildInputs = with self; [
-                      simple-httpd
-                      websocket
-                      zmq
-                    ];
-                  }).overrideAttrs
-                    (old: {
-                      buildPhase = ''
-                        runHook preBuild
-                        runHook postBuild
-                      '';
-                    });
-                zmq =
-                  (mkTrivialPkg {
-                    pkgs = self;
-                    name = "zmq";
-                    buildInputs = with self; [ websocket ];
-                  }).overrideAttrs
-                    (old: {
-                      buildPhase = ''
-                        runHook preBuild
-                        runHook postBuild
-                      '';
-                    });
               };
             }).overrideAttrs
               (old: {
                 name = "emacs";
               });
-          devShell.${system} = pkgs.mkShell {
+          devShells.${system}.default = pkgs.mkShell {
             inherit (self.checks.${system}.pre-commit-check) shellHook;
             buildInputs = [
               packages.${system}.default
@@ -232,14 +183,17 @@
             ];
           };
           formatter.${system} = nixpkgs.legacyPackages.${system}.nixfmt-rfc-style;
-          checks.${system}.pre-commit-check = git-hooks.lib.${system}.run {
-            src = ./.;
-            hooks = {
-              nixfmt = {
-                enable = true;
-                package = self.formatter.${system};
+          checks.${system} = {
+            pre-commit-check = git-hooks.lib.${system}.run {
+              src = ./.;
+              hooks = {
+                nixfmt-rfc-style = {
+                  enable = true;
+                  package = self.formatter.${system};
+                };
               };
             };
+            package = self.packages.${system}.default;
           };
         };
     in
