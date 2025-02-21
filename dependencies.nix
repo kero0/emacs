@@ -82,11 +82,11 @@ with pkgs;
       jupyter
       jupytext
       nbformat
+
+      python-lsp-server
     ]
   ))
   poetry
-
-  pyright
   ruff
 
   # jupyter notebooks

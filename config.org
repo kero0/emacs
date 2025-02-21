@@ -1958,44 +1958,21 @@ Git gutter:
 #+end_src
 * Eglot
 #+begin_src emacs-lisp
-(use-package eglot
-  :unless noninteractive
-  :ensure nil ;; included in emacs29+
-  :commands (eglot eglot-ensure)
-  :init
-  (use-package markdown-mode) ;; Better formatting eldoc
-  (setq eglot-events-buffer-size 0) ;; don't log events
-  (setq eglot-extend-to-xref t)
+(use-package lspce
   :config
-  (my/map-menu! "LSP" "cl"
-    "a" #'eglot-code-actions
-    "f" #'eglot-format-buffer)
-  (when (featurep 'tempel)
-    (use-package eglot-tempel))
-  (after! cape
-          (add-hook
-           'eglot-managed-mode-hook
-           (defun my/eglot-managed-mode-hook-completions ()
-             (append! completion-category-overrides '((eglot (styles orderless))))
-             (setq completion-category-defaults nil)
-             (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster)
-             (advice-add 'eglot-completion-at-point :around #'cape-wrap-noninterruptible)
-             (make-local-variable 'completion-at-point-functions)
-             (append! completion-at-point-functions #'eglot-completion-at-point)))))
-#+end_src
-** Eglot Tempel
-#+begin_src emacs-lisp
-(use-package eglot-tempel
-  :unless noninteractive
-  :after (eglot tempel))
-#+end_src
-** Booster
-#+begin_src emacs-lisp
-(use-package eglot-booster
-  :after eglot
-  :config
-  (eglot-booster-mode)
-  (setf (car eglot-booster--boost) (executable-find "emacs-lsp-booster")))
+  (setq lspce-send-changes-idle-time 0.1)
+  (setq lspce-show-log-level-in-modeline t) ;; show log level in mode line
+  (setq lspce-inherit-exec-path t)
+
+  ;; You should call this first if you want lspce to write logs
+  ;; (lspce-set-log-file "/tmp/lspce.log")
+  ;; (lspce-enable-logging)
+
+  ;; modify `lspce-server-programs' to add or change a lsp server, see document
+  ;; of `lspce-lsp-type-function' to understand how to get buffer's lsp type.
+  ;; Bellow is what I use
+  (setq lspce-server-programs '())
+  )
 #+end_src
 ** Flycheck Eglot
 #+begin_src emacs-lisp
@@ -2065,9 +2042,9 @@ Git gutter:
                 '("nixfmt"))
           (setf (alist-get 'nix-ts-mode apheleia-mode-alist)
                 '(nixfmt)))
-  (after! eglot
-          (setf (alist-get 'nix-ts-mode eglot-server-programs) (alist-get 'nix-mode eglot-server-programs))
-          (add-hook 'nix-mode-hook #'eglot-ensure))
+  (after! lspce
+          (append! lspce-server-programs '("nix" "nil" ""))
+          (add-hook 'nix-mode-hook #'lspce-mode))
   (provide 'nix-mode))
 
 (use-package nix-drv-mode
@@ -2093,6 +2070,7 @@ Git gutter:
   :init
   (setq python-check-command "pyflakes")
   :config
+  (append! lspce-server-programs '("python" "pylsp" "" ))
   (after! apheleia
           (add-hook 'python-mode-hook (lambda ()
                                         (setq-local apheleia-formatter '(ruff ruff-isort)))))
@@ -2116,11 +2094,11 @@ Git gutter:
           ;; when I'm using my global python env and can be reset in dir locals or direnv
           ;; otherwise
           (plist-put (alist-get 'debugpy dape-configs) 'command (executable-find "python3")))
-  (add-hook 'python-mode-hook 'eglot-ensure))
+  (add-hook 'python-mode-hook 'lspce-mode))
 
 (use-package flymake-ruff
   :unless noninteractive
-  :hook (eglot-managed-mode . flymake-ruff-load))
+  :hook (lspce-mode . flymake-ruff-load))
 
 (use-package ob-python
   :ensure nil
@@ -2165,28 +2143,17 @@ Git gutter:
 ** C/C++
 #+begin_src emacs-lisp
 (unless noninteractive
-  (after! eglot
-          (let ((val (list "clangd"
-                           "--background-index"
-                           ;; "--compile-commands-dir=build"
-                           "--all-scopes-completion"
-                           "--completion-style=detailed"
-                           (format "-j=%d" my/available-cores)
-                           "-cross-file-rename"
-                           "--clang-tidy"
-                           "--clang-tidy-checks=performance-*,bugprone-*")))
-            (setf (alist-get 'c++-ts-mode eglot-server-programs) val)
-            (setf (alist-get 'c-ts-mode eglot-server-programs) val)))
   (use-package c-ts-mode
     ;; builtin
     :ensure nil
     :mode
     (("\\.c\\'" . c-ts-mode)
      ("\\.h\\'" . c-or-c++-ts-mode))
-    :hook (c-ts-mode . eglot-ensure)
+    :hook (c-ts-mode . lspce-mode)
     :hook (c-ts-mode . my/treesit-mode)
     :hook (c-ts-mode . (lambda () (run-hooks 'c-mode-hook)))
     :config
+    (append! lspce-server-programs '("C" "clangd" "--all-scopes-completion --clang-tidy --enable-config --header-insertion-decorators=0"))
     (setq-default c-basic-offset 2))
 
   (use-package c++-ts-mode
@@ -2197,10 +2164,11 @@ Git gutter:
      ("\\.cc\\'" . c++-ts-mode)
      ("\\.hh\\'" . c++-ts-mode)
      ("\\.hpp\\'" . c++-ts-mode))
-    :hook (c++-ts-mode . eglot-ensure)
+    :hook (c++-ts-mode . lspce-mode)
     :hook (c++-ts-mode . my/treesit-mode)
     :hook (c++-ts-mode . (lambda () (run-hooks 'c++-mode-hook)))
     :config
+    (append! lspce-server-programs '("C" "clangd" "--all-scopes-completion --clang-tidy --enable-config --header-insertion-decorators=0"))
     (setq-default c-basic-offset 2)))
 #+end_src
 ** Rust
@@ -2215,8 +2183,8 @@ Git gutter:
       (push 'rustic-clippy flycheck-checkers)))
   (add-hook 'rustic-mode-hook #'my/startup-rust)
   :config
-  (setq rustic-lsp-client 'eglot)
-  (add-hook 'rustic-mode-hook 'eglot-ensure)
+  (append! lspce-server-programs '("rust"  "rust-analyzer" "" lspce-ra-initializationOptions))
+  (add-hook 'rustic-mode-hook 'lspce-mode)
   (setq rustic-indent-method-chain t)
   (my/local-leader-def rustic-mode
       "b" '("build" . nil)
@@ -2255,7 +2223,7 @@ Git gutter:
   :mode ("\\.cabal\\'" . haskell-cabal-mode)
   :config
   (use-package haskell :ensure nil)
-  (add-hook 'haskell-mode-hook 'eglot-ensure)
+  (add-hook 'haskell-mode-hook 'lspce-mode)
   (my/local-leader-def haskell-mode
       "b" 'haskell-process-cabal-build
       "c" 'haskell-cabal-visit-file
@@ -2273,7 +2241,7 @@ Git gutter:
 (use-package julia-mode
   :mode ("\\.jl\\'" . julia-mode)
   :config
-  (add-hook 'julia-mode-hook #'eglot-ensure)
+  (add-hook 'julia-mode-hook #'lspce-mode)
   (my/local-leader-def julia-mode
       "b" 'julia-repl-send-buffer
       "r" 'julia-repl-send-region-or-line
@@ -2310,22 +2278,14 @@ Git gutter:
 ** Kotlin
 #+begin_src emacs-lisp
 (use-package kotlin-ts-mode
-  :hook (kotlin-ts-mode . eglot-ensure)
+  :hook (kotlin-ts-mode . lspce-mode)
   :mode "\\.kts?\\'"
   :config
   (setenv "JAVA_OPTS" "-Xmx8g")
   (add-hook 'kotlin-ts-mode-hook
             (defun my/kotlin-ts-setup ()
               (setq-local
-               read-process-output-max (* 16 1024 1024)
-               eglot-autoshutdown t
-               eglot-connect-timeout 300
-               eglot-ignored-server-capabilities '(:documentFormattingProvider
-                                                   :documentRangeFormattingProvider
-                                                   :documentOnTypeFormattingProvider
-                                                   :documentHighlightProvider))))
-  (after! eglot
-          (add-to-list 'eglot-server-programs '(kotlin-ts-mode "kotlin-language-server")))
+               read-process-output-max (* 16 1024 1024))))
   (defun my/gradlew-command (command)
     "Run gradlew in this project."
     (interactive "Command: ")
