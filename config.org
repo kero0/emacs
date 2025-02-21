@@ -1865,6 +1865,7 @@ Do something in other window
   (keymap-unset magit-mode-map "SPC")
   (add-popup! "\\*\\*magit-process:.*\\*\\*")
   (setq magit-buffer-name-format (concat "*" magit-buffer-name-format "*"))
+  (setopt magit-format-file-function #'magit-format-file-nerd-icons)
   (append! magit-status-sections-hook #'magit-insert-modules))
 #+end_src
 *** Colors
