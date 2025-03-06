@@ -74,7 +74,7 @@
             inherit system;
             overlays = [ emacs-overlay.overlay ];
           };
-          basemacs = (import nixpkgs { inherit system; }).emacs29-pgtk;
+          basemacs = pkgs.emacs30-pgtk;
           dependencies = pkgs.symlinkJoin {
             name = "dependnecies";
             paths = import ./dependencies.nix {
