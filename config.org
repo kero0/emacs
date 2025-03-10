@@ -1258,10 +1258,13 @@ Do something in other window
 ** expreg
 #+begin_src emacs-lisp
 (use-package expreg
-  :bind (("C-<tab>" . expreg-expand)
-         :repeat-map expreg-repeat-map
-         ("<tab>" . expreg-expand)
-         ("<backtab>" . expreg-contract)))
+  :bind
+  (("C-<tab>" . expreg-expand))
+  (:map evil-visual-state-map
+        ("<tab>" . expreg-expand))
+  (:repeat-map expreg-repeat-map
+               ("<tab>" . expreg-expand)
+               ("<backtab>" . expreg-contract)))
 #+end_src
 ** evil text obj
 #+begin_src emacs-lisp :tangle no
@@ -1971,6 +1974,9 @@ Git gutter:
   :config
   (my/map-menu! "LSP" "cl"
     "a" #'eglot-code-actions
+    "Q" #'eglot-reconnect
+    "q" #'eglot-shutdown-all
+    "r" #'eglot-rename
     "f" #'eglot-format-buffer)
   (when (featurep 'tempel)
     (use-package eglot-tempel))
