@@ -1498,8 +1498,7 @@ Do something in other window
 #+begin_src emacs-lisp
 (use-package vundo
   :unless noninteractive
-  :bind (:map my/map-Open-map
-              ("u" ("Undo Tree" . vundo)))
+  :bind (:map my/map-Open-map ("u" . vundo))
   :custom
   (vundo-compact-display nil)
   (vundo-glyph-alist vundo-unicode-symbols))
