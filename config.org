@@ -567,6 +567,7 @@ Do something in other window
         evil-want-fine-undo t
         select-enable-clipboard nil)
   :config
+  (use-package goto-chg)
   (evil-mode)
   (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
   (define-key evil-insert-state-map (kbd "C-h") 'evil-delete-backward-char-and-join)
