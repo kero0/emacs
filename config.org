@@ -680,6 +680,7 @@ Do something in other window
     (evil-multiedit-scope 'buffer)
     (evil-multiedit-store-in-search-history t))
   :config
+  (use-package iedit)
   (evil-define-key 'normal 'global
     "gm"  `("Multi-cursor" . ,evil-mc-cursors-map))
   (bind-keys
@@ -735,6 +736,7 @@ Do something in other window
   :unless noninteractive
   :after evil
   :config
+  (use-package lv)
   (defhydra my/zoom-hydra ()
     ("=" text-scale-increase "zoom in")
     ("k" text-scale-increase "zoom in")
@@ -968,7 +970,11 @@ Do something in other window
 #+begin_src emacs-lisp
 (use-package doom-modeline
   :unless noninteractive
-  :config (doom-modeline-mode 1)
+  :config
+  (use-package shrink-path)
+  (use-package s)
+  (use-package f)
+  (doom-modeline-mode 1)
   :custom
   (doom-modeline-height 15)
   (doom-modeline-continuous-word-count-modes '(markdown-mode gfm-mode org-mode)))
@@ -1034,6 +1040,7 @@ Do something in other window
   ;; Show Marks in buffer
   (my/map-Open "`" '("Show marks" . evil-show-marks))
   :config
+  (use-package fringe-helper)
   (setq evil-fringe-mark-show-special t)
   (my/map-Toggle "f" '("Evil Marks" . evil-fringe-mark-mode)))
 #+end_src
@@ -2840,7 +2847,10 @@ Mostly only used for double checking after org export.
          "rl" '("toggle display" . org-roam-buffer-toggle-display)
          "rL" '("display dedicated" . org-roam-buffer-display-dedicated)
          "rs" '("sync" . org-roam-db-sync)
-         "rS" '("server" . org-roam-server-mode)))
+         "rS" '("server" . org-roam-server-mode))
+  :config
+  (use-package llama)
+  (use-package emacsql))
 #+end_src
 **** Templates
 :PROPERTIES:
