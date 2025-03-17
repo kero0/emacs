@@ -1,0 +1,4 @@
+builds:
+  default:
+    include:
+      - packages.*.*

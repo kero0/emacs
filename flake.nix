@@ -74,7 +74,6 @@
             inherit system;
             overlays = [ emacs-overlay.overlay ];
           };
-          basemacs = pkgs.emacs30-pgtk;
           dependencies = pkgs.symlinkJoin {
             name = "dependnecies";
             paths = import ./dependencies.nix {
@@ -83,97 +82,106 @@
               is-personal = true;
             };
           };
-          emacs = pkgs.symlinkJoin rec {
-            name = "emacs";
-            paths = [ basemacs ];
-            nativeBuildInputs = [ pkgs.makeWrapper ];
-            postBuild = ''
-              wrapProgram "$out/bin/emacs" \
-                  --prefix PATH : $out/bin:${dependencies}/bin \
-                  --set MY_TREESIT_PATH "${basemacs.pkgs.treesit-grammars.with-all-grammars}/lib" \
-                  --prefix EMACSLOADPATH : "${dependencies}/share/emacs/site-lisp":$out/share/emacs/${version}/lisp \
-                  --set FONTCONFIG_FILE ${
-                    pkgs.makeFontsConf {
-                      fontDirectories = with pkgs; [
-                        nerd-fonts.jetbrains-mono
-                        noto-fonts
-                      ];
-                    }
-                  } \
-                  --set ASPELL_CONF 'dict-dir ${dependencies}/lib/aspell'
-            '';
-            inherit (basemacs) meta src version;
-          };
-          config' = pkgs.runCommand "config" { } ''
-            mkdir -p $out/
-            cp -r ${./.}/. $out
-            cd $out/
-            ${basemacs}/bin/emacs -Q --batch                     \
-              --eval "(require 'org)
-                      (setq org-use-property-inheritance t)"     \
-              --visit="./config.org"                             \
-              --funcall org-babel-tangle                         \
-              --kill
-          '';
         in
         rec {
           ${system} = import nixpkgs {
             inherit system;
             overlays = [ emacs-overlay.overlay ];
           };
-          packages.${system}.default =
-            (pkgs.emacsWithPackagesFromUsePackage {
-              config = "${config'}/default.el";
-              defaultInitFile = true;
-              package = emacs;
-              alwaysEnsure = true;
-              alwaysTangle = true;
-              extraEmacsPackages =
-                epkgs: with epkgs; [
-                  engrave-faces
-                  ox-chameleon
-                  dependencies
-                ];
-              override = self: super: {
-                eglot-booster = (
-                  mkTrivialPkg {
-                    pkgs = self;
-                    name = "eglot-booster";
-                    buildInputs = with self; [ ];
-                  }
-                );
-                org-src-context = (
-                  mkTrivialPkg {
-                    pkgs = self;
-                    name = "org-src-context";
-                    buildInputs = with self; [ ];
-                  }
-                );
-                ox-chameleon = (
-                  mkTrivialPkg {
-                    pkgs = self;
-                    name = "ox-chameleon";
-                    buildInputs = with self; [ engrave-faces ];
-                  }
-                );
-                targets =
-                  (mkTrivialPkg {
-                    pkgs = self;
-                    name = "targets";
-                    buildInputs = with self; [ evil ];
-                  }).overrideAttrs
-                    (old: {
-                      # fixing a bug in the package when byte compiling
-                      buildPhase = ''
-                        runHook preBuild
-                        runHook postBuild
-                      '';
-                    });
-              };
-            }).overrideAttrs
-              (old: {
+          packages.${system} = {
+            base =
+              let
+                basemacs = pkgs.emacs-unstable-pgtk;
+              in
+              pkgs.symlinkJoin rec {
                 name = "emacs";
-              });
+                paths = [ basemacs ];
+                nativeBuildInputs = [ pkgs.makeWrapper ];
+                postBuild = ''
+                  wrapProgram "$out/bin/emacs" \
+                      --prefix PATH : $out/bin:${dependencies}/bin \
+                      --set MY_TREESIT_PATH "${basemacs.pkgs.treesit-grammars.with-all-grammars}/lib" \
+                      --prefix EMACSLOADPATH : "${dependencies}/share/emacs/site-lisp":$out/share/emacs/${version}/lisp \
+                      --set FONTCONFIG_FILE ${
+                        pkgs.makeFontsConf {
+                          fontDirectories = with pkgs; [
+                            nerd-fonts.jetbrains-mono
+                            noto-fonts
+                          ];
+                        }
+                      } \
+                      --set ASPELL_CONF 'dict-dir ${dependencies}/lib/aspell'
+                '';
+                inherit (basemacs) meta src version;
+              };
+            default =
+              let
+                emacs = self.outputs.packages.${system}.base;
+                config' = pkgs.runCommand "config" { } ''
+                  mkdir -p $out/
+                  cp -r ${./.}/. $out
+                  cd $out/
+                  ${emacs}/bin/emacs -Q --batch                     \
+                    --eval "(require 'org)
+                            (setq org-use-property-inheritance t)"     \
+                    --visit="./config.org"                             \
+                    --funcall org-babel-tangle                         \
+                    --kill
+                '';
+              in
+              (pkgs.emacsWithPackagesFromUsePackage {
+                config = "${config'}/default.el";
+                defaultInitFile = true;
+                package = emacs;
+                alwaysEnsure = true;
+                alwaysTangle = true;
+                extraEmacsPackages =
+                  epkgs: with epkgs; [
+                    engrave-faces
+                    ox-chameleon
+                    dependencies
+                  ];
+                override = self: super: {
+                  eglot-booster = (
+                    mkTrivialPkg {
+                      pkgs = self;
+                      name = "eglot-booster";
+                      buildInputs = with self; [ ];
+                    }
+                  );
+                  org-src-context = (
+                    mkTrivialPkg {
+                      pkgs = self;
+                      name = "org-src-context";
+                      buildInputs = with self; [ ];
+                    }
+                  );
+                  ox-chameleon = (
+                    mkTrivialPkg {
+                      pkgs = self;
+                      name = "ox-chameleon";
+                      buildInputs = with self; [ engrave-faces ];
+                    }
+                  );
+                  targets =
+                    (mkTrivialPkg {
+                      pkgs = self;
+                      name = "targets";
+                      buildInputs = with self; [ evil ];
+                    }).overrideAttrs
+                      (old: {
+                        # fixing a bug in the package when byte compiling
+                        buildPhase = ''
+                          runHook preBuild
+                          runHook postBuild
+                        '';
+                      });
+                };
+              }).overrideAttrs
+                (old: {
+                  name = "emacs";
+                });
+          };
           devShells.${system}.default = pkgs.mkShell {
             inherit (self.checks.${system}.pre-commit-check) shellHook;
             buildInputs = [
