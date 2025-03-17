@@ -1918,48 +1918,6 @@ Do something in other window
     "C-j" 'git-timemachine-show-next-revision
     "q" 'git-timemachine-quit))
 #+end_src
-** Git Gutter
-#+begin_src emacs-lisp
-(use-package git-gutter
-  :unless noninteractive
-  :config
-  (defhydra hydra-git-gutter (:body-pre (git-gutter-mode 1)
-                                        :hint nil)
-    "
-Git gutter:
-  _j_: next hunk        _s_tage hunk     _q_uit
-  _k_: previous hunk    _r_evert hunk    _Q_uit and deactivate git-gutter
-  ^ ^                   _p_opup hunk
-  _h_: first hunk
-  _l_: last hunk        _c_ommit staged hunks
-"
-    ("j" git-gutter:next-hunk)
-    ("k" git-gutter:previous-hunk)
-    ("h" (progn (goto-char (point-min))
-                (git-gutter:next-hunk 1)))
-    ("l" (progn (goto-char (point-min))
-                (git-gutter:previous-hunk 1)))
-    ("s" git-gutter:stage-hunk)
-    ("r" git-gutter:revert-hunk)
-    ("p" git-gutter:popup-hunk)
-    ;; ("R" git-gutter-set-start-revision)
-    ("c" magit-commit)
-    ("q" nil :color blue)
-    ("Q" (progn (git-gutter-mode -1)
-                ;; git-gutter-fringe doesn't seem to
-                ;; clear the markup right away
-                (sit-for 0.1)
-                (git-gutter:clear))
-     :color blue))
-  (my/map-Hydras
-   "g" '("Git" . hydra-git-gutter/body))
-  (global-git-gutter-mode t)
-  (my/map-Git
-   "n" '("next hunk" . git-gutter:next-hunk)
-   "p" '("previous hunk" . git-gutter:previous-hunk)
-   "s" '("stage hunk" . git-gutter:stage-hunk)
-   "r" '("revert hunk" . git-gutter:revert-hunk)))
-#+end_src
 ** Forge
 #+begin_src emacs-lisp
 (use-package forge
