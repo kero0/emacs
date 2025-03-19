@@ -567,7 +567,6 @@ Do something in other window
         evil-want-fine-undo t
         select-enable-clipboard nil)
   :config
-  (use-package goto-chg)
   (evil-mode)
   (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
   (define-key evil-insert-state-map (kbd "C-h") 'evil-delete-backward-char-and-join)
@@ -680,7 +679,6 @@ Do something in other window
     (evil-multiedit-scope 'buffer)
     (evil-multiedit-store-in-search-history t))
   :config
-  (use-package iedit)
   (evil-define-key 'normal 'global
     "gm"  `("Multi-cursor" . ,evil-mc-cursors-map))
   (bind-keys
@@ -698,7 +696,7 @@ Do something in other window
   (global-evil-mc-mode 1))
 #+end_src
 *** Extra Text Objects
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package targets
   :after evil
   :unless noninteractive
@@ -954,9 +952,6 @@ Do something in other window
 (use-package doom-modeline
   :unless noninteractive
   :config
-  (use-package shrink-path)
-  (use-package s)
-  (use-package f)
   (doom-modeline-mode 1)
   :custom
   (doom-modeline-height 15)
@@ -1023,7 +1018,6 @@ Do something in other window
   ;; Show Marks in buffer
   (my/map-Open "`" '("Show marks" . evil-show-marks))
   :config
-  (use-package fringe-helper)
   (setq evil-fringe-mark-show-special t)
   (my/map-Toggle "f" '("Evil Marks" . evil-fringe-mark-mode)))
 #+end_src
@@ -1182,7 +1176,6 @@ Do something in other window
    "D" '("dired other window" . dired-jump-other-window))
   (require 'dired-aux)
   (require 'dired-x)
-  ;; (use-package dired-single)
   (setq dired-listing-switches "-lahFLHvZD --group-directories-first"
         dired-dwim-target t
         dired-recursive-copies 'always
@@ -1877,13 +1870,13 @@ Do something in other window
 #+end_src
 ** ediff
 #+begin_src emacs-lisp
-(after! ediff
-        (after! org
-                (add-hook 'ediff-prepare-buffer-hook #'org-show-all))
-        (setq ediff-diff-options ""
-              ediff-custom-diff-options "-u"
-              ediff-window-setup-function 'ediff-setup-windows-plain
-              ediff-split-window-function 'split-window-vertically))
+(after! org
+        (require 'ediff)
+        (add-hook 'ediff-prepare-buffer-hook #'org-show-all))
+(setq ediff-diff-options ""
+      ediff-custom-diff-options "-u"
+      ediff-window-setup-function 'ediff-setup-windows-plain
+      ediff-split-window-function 'split-window-vertically)
 #+end_src
 ** Time Machine
 #+begin_src emacs-lisp
@@ -1905,9 +1898,9 @@ Do something in other window
 #+begin_src emacs-lisp
 (use-package forge
   :unless noninteractive
-  :custom
-  (forge-add-default-bindings nil)
-  :after magit)
+  :after magit
+  :init
+  (setq forge-add-default-bindings nil))
 #+end_src
 * Eglot
 #+begin_src emacs-lisp
@@ -2391,6 +2384,33 @@ Mostly only used for double checking after org export.
   :after markdown
   :hook (markdown-mode-hook . poly-markdown-mode))
 #+end_src
+** Other
+#+begin_src emacs-lisp
+(use-package yaml-ts-mode :mode "\\.ya?ml\\'"
+  :ensure nil
+  :config
+  (after! org
+   (add-to-list 'org-babel-load-languages '(yaml . t))))
+
+(use-package yaml-pro
+  :hook (yaml-ts-mode . yaml-pro-ts-mode)
+  :config
+  (defun yaml-pro-edit-initialize-buffer-filter-args-advice (args)
+    (if-let ((mode (language-detection-detect-mode (buffer-string))))
+        (cl-destructuring-bind (parent-buffer buffer initial-text type initialize path) args
+          (let ((init-func (lambda ()
+                             (funcall mode)
+                             (when initialize
+                               (call-interactively initialize)))))
+            (list parent-buffer buffer initial-text type init-func path)))
+      args))
+  (advice-add 'yaml-pro-edit-initialize-buffer :filter-args #'yaml-pro-edit-initialize-buffer-filter-args-advice)
+
+  :bind (:map yaml-pro-ts-mode-map
+              ("C-c j" . yaml-pro-ts-move-subtree-down)
+              ("C-c k" . yaml-pro-ts-move-subtree-up)
+              ("C-c f" . yaml-pro-format)))
+#+end_src
 * Mail
 ** mu4e
 #+begin_src emacs-lisp :lexical t
@@ -2788,10 +2808,7 @@ Mostly only used for double checking after org export.
          "rl" '("toggle display" . org-roam-buffer-toggle-display)
          "rL" '("display dedicated" . org-roam-buffer-display-dedicated)
          "rs" '("sync" . org-roam-db-sync)
-         "rS" '("server" . org-roam-server-mode))
-  :config
-  (use-package llama)
-  (use-package emacsql))
+         "rS" '("server" . org-roam-server-mode)))
 #+end_src
 **** Templates
 :PROPERTIES:

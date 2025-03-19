@@ -1,8 +1,15 @@
 {
   nixConfig = {
-    extra-substituters = [ "https://nix-community.cachix.org" ];
+    extra-substituters = [
+      "https://nix-community.cachix.org"
+      "https://kero0.cachix.org"
+      "https://cache.garnix.io"
+    ];
     extra-trusted-public-keys = [
       "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+      "kero0.cachix.org-1:uzu0+ZP6R1U1izim/swa3bfyEiS0TElA8hLrGXQGAbA="
+      "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
+
     ];
     sandbox = false; # sandbox causing issues on darwin
   };
@@ -89,32 +96,8 @@
             overlays = [ emacs-overlay.overlay ];
           };
           packages.${system} = {
-            base =
-              let
-                basemacs = pkgs.emacs-unstable-pgtk;
-              in
-              pkgs.symlinkJoin rec {
-                name = "emacs";
-                paths = [ basemacs ];
-                nativeBuildInputs = [ pkgs.makeWrapper ];
-                postBuild = ''
-                  wrapProgram "$out/bin/emacs" \
-                      --prefix PATH : $out/bin:${dependencies}/bin \
-                      --set MY_TREESIT_PATH "${basemacs.pkgs.treesit-grammars.with-all-grammars}/lib" \
-                      --prefix EMACSLOADPATH : "${dependencies}/share/emacs/site-lisp":$out/share/emacs/${version}/lisp \
-                      --set FONTCONFIG_FILE ${
-                        pkgs.makeFontsConf {
-                          fontDirectories = with pkgs; [
-                            nerd-fonts.jetbrains-mono
-                            noto-fonts
-                          ];
-                        }
-                      } \
-                      --set ASPELL_CONF 'dict-dir ${dependencies}/lib/aspell'
-                '';
-                inherit (basemacs) meta src version;
-              };
-            default =
+            base = pkgs.emacs-unstable-pgtk;
+            emacsWithPkgs =
               let
                 emacs = self.outputs.packages.${system}.base;
                 config' = pkgs.runCommand "config" { } ''
@@ -140,6 +123,19 @@
                     engrave-faces
                     ox-chameleon
                     dependencies
+
+                    elisp-refs
+                    emacsql
+                    epkgs.f
+                    fringe-helper
+                    ghub
+                    goto-chg
+                    iedit
+                    llama
+                    s
+                    shrink-path
+                    treepy
+                    with-editor
                   ];
                 override = self: super: {
                   eglot-booster = (
@@ -177,10 +173,30 @@
                         '';
                       });
                 };
-              }).overrideAttrs
-                (old: {
-                  name = "emacs";
-                });
+              });
+            default =
+              with self.outputs.packages.${system};
+              pkgs.symlinkJoin rec {
+                name = "emacs";
+                paths = [ emacsWithPkgs ];
+                nativeBuildInputs = [ pkgs.makeWrapper ];
+                postBuild = ''
+                  wrapProgram "$out/bin/emacs" \
+                      --prefix PATH : $out/bin:${dependencies}/bin \
+                      --set MY_TREESIT_PATH "${base.pkgs.treesit-grammars.with-all-grammars}/lib" \
+                      --set FONTCONFIG_FILE ${
+                        pkgs.makeFontsConf {
+                          fontDirectories = with pkgs; [
+                            nerd-fonts.jetbrains-mono
+                            noto-fonts
+                          ];
+                        }
+                      } \
+                      --set ASPELL_CONF 'dict-dir ${dependencies}/lib/aspell'
+                      # --prefix EMACSLOADPATH : "${dependencies}/share/emacs/site-lisp":$out/share/emacs/${version}/lisp \
+                '';
+                inherit (base) meta src version;
+              };
           };
           devShells.${system}.default = pkgs.mkShell {
             inherit (self.checks.${system}.pre-commit-check) shellHook;
