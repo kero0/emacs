@@ -2140,13 +2140,17 @@ Do something in other window
   (after! eglot
           (let ((val (list "clangd"
                            "--background-index"
-                           ;; "--compile-commands-dir=build"
+                           "--log=error"
+                           "--completion-style=detailed"
                            "--all-scopes-completion"
                            "--completion-style=detailed"
+                           "--header-insertion-decorators"
+                           "--header-insertion=iwyu"
+                           "--function-arg-placeholders=true"
                            (format "-j=%d" my/available-cores)
                            "-cross-file-rename"
                            "--clang-tidy"
-                           "--clang-tidy-checks=performance-*,bugprone-*")))
+                           "--clang-tidy-checks=*")))
             (setf (alist-get 'c++-ts-mode eglot-server-programs) val)
             (setf (alist-get 'c-ts-mode eglot-server-programs) val)))
   (use-package c-ts-mode

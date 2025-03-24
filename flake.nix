@@ -83,11 +83,7 @@
           };
           dependencies = pkgs.symlinkJoin {
             name = "dependnecies";
-            paths = import ./dependencies.nix {
-              inherit pkgs;
-              is-work = false;
-              is-personal = true;
-            };
+            paths = import ./dependencies.nix pkgs;
           };
         in
         rec {

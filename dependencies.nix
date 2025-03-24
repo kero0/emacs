@@ -1,8 +1,4 @@
-{
-  pkgs,
-  is-work,
-  is-personal,
-}:
+pkgs:
 with pkgs;
 [
   # basics
@@ -22,6 +18,7 @@ with pkgs;
 
   # lsp
   emacs-lsp-booster
+  clang-tools
 
   # grammar
   languagetool
@@ -91,14 +88,13 @@ with pkgs;
 
   # jupyter notebooks
   pandoc
+
+  lilypond
+  mu
+  msmtp
 ]
 ++ lib.optionals (!stdenv.isLinux) [
   coreutils-prefixed
   gnused
 ]
 ++ (if stdenv.isDarwin then [ terminal-notifier ] else [ libnotify ])
-++ lib.optionals is-personal [
-  lilypond
-  mu
-  msmtp
-]
