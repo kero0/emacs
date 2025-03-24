@@ -1950,11 +1950,10 @@ Do something in other window
            'eglot-managed-mode-hook
            (defun my/eglot-managed-mode-hook-completions ()
              (append! completion-category-overrides '((eglot (styles orderless))))
-             (setq completion-category-defaults nil)
+             (setq-local completion-category-defaults nil)
              (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster)
              (advice-add 'eglot-completion-at-point :around #'cape-wrap-noninterruptible)
-             (make-local-variable 'completion-at-point-functions)
-             (append! completion-at-point-functions #'eglot-completion-at-point)))))
+             (setq-local completion-at-point-functions (list #'eglot-completion-at-point))))))
 #+end_src
 ** Eglot Tempel
 #+begin_src emacs-lisp
