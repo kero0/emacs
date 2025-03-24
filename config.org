@@ -1904,6 +1904,28 @@ Do something in other window
   :init
   (setq forge-add-default-bindings nil))
 #+end_src
+** diff-hl
+#+begin_src emacs-lisp
+(use-package diff-hl
+  :custom
+  (vc-handled-backends '(Git))
+  (fringes-outside-margins t)
+  (vc-git-diff-switches '("--histogram"))
+  (diff-hl-flydiff-delay 0.5)
+  (diff-hl-update-async t)
+  (diff-hl-show-staged-changes nil)
+  :bind (:map my/map-Git-map
+              ("r" . diff-hl-revert-hunk))
+  :hook (prog-mode text-mode)
+  :hook (magit-post-refresh . diff-hl-magit-post-refresh))
+
+(use-package diff-hl-margin
+  :ensure diff-hl
+  :hook (diff-hl-mode))
+(use-package diff-hl-dired
+  :ensure diff-hl
+  :hook dired-mode)
+#+end_src
 * Eglot
 #+begin_src emacs-lisp
 (use-package eglot
