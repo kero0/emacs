@@ -1561,6 +1561,8 @@ Do something in other window
 #+begin_src emacs-lisp
 (use-package cape
   :unless noninteractive
+  :custom
+  (text-mode-ispell-word-completion nil)
   :config
   (require 'cape-keyword)
   (my/map-menu! "Completions" "c p"
@@ -1574,14 +1576,14 @@ Do something in other window
     "l" '("Line" . cape-line)
     "w" '("Dict" . cape-dict)
     "\\" '("Tex" . cape-tex))
-  (setopt cape-dict-file (concat (nth 1 (split-string (getenv "ASPELL_CONF") " ")) "/en_US.multi"))
   (append! completion-at-point-functions
     #'cape-abbrev
+    #'cape-dabbrev
+    #'ispell-completion-at-point
     #'cape-file
     #'cape-elisp-block
     #'cape-history
-    #'cape-keyword
-    #'cape-dict))
+    #'cape-keyword))
 #+end_src
 ** Tempel
 #+begin_src emacs-lisp
