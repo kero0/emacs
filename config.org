@@ -1196,6 +1196,7 @@ Do something in other window
         dired-auto-revert-buffer t
         dired-kill-when-opening-new-dired-buffer t)
   (evil-collection-define-key 'normal 'dired-mode-map
+    (kbd "<RET>")  #'dired-find-alternate-file
     "h" 'dired-single-up-directory
     "l" 'dired-single-buffer)
   (add-hook 'dired-mode-hook #'hl-line-mode)
