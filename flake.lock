@@ -174,22 +174,6 @@
         "type": "github"
       }
     },
-    "packages-targets": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1632665603,
-        "narHash": "sha256-kra/VEXBzaxG7TUmilps0ukMOs33wSRbIez5LtxmgWU=",
-        "owner": "noctuid",
-        "repo": "targets.el",
-        "rev": "082bd4f5c10ad85c8e042e67dc54ac57bfb21b1a",
-        "type": "github"
-      },
-      "original": {
-        "owner": "noctuid",
-        "repo": "targets.el",
-        "type": "github"
-      }
-    },
     "root": {
       "inputs": {
         "emacs-overlay": "emacs-overlay",
@@ -197,8 +181,7 @@
         "nixpkgs": "nixpkgs_2",
         "packages-eglot-booster": "packages-eglot-booster",
         "packages-org-src-context": "packages-org-src-context",
-        "packages-ox-chameleon": "packages-ox-chameleon",
-        "packages-targets": "packages-targets"
+        "packages-ox-chameleon": "packages-ox-chameleon"
       }
     }
   },

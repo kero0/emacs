@@ -9,7 +9,6 @@
       "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
       "kero0.cachix.org-1:uzu0+ZP6R1U1izim/swa3bfyEiS0TElA8hLrGXQGAbA="
       "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
-
     ];
     sandbox = false; # sandbox causing issues on darwin
   };
@@ -25,10 +24,6 @@
 
     packages-eglot-booster = {
       url = "github:jdtsmith/eglot-booster";
-      flake = false;
-    };
-    packages-targets = {
-      url = "github:noctuid/targets.el";
       flake = false;
     };
     packages-org-src-context = {
@@ -155,19 +150,6 @@
                       buildInputs = with self; [ engrave-faces ];
                     }
                   );
-                  targets =
-                    (mkTrivialPkg {
-                      pkgs = self;
-                      name = "targets";
-                      buildInputs = with self; [ evil ];
-                    }).overrideAttrs
-                      (old: {
-                        # fixing a bug in the package when byte compiling
-                        buildPhase = ''
-                          runHook preBuild
-                          runHook postBuild
-                        '';
-                      });
                 };
               });
             default =
