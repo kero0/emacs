@@ -696,36 +696,41 @@ Do something in other window
   (global-evil-mc-mode 1))
 #+end_src
 *** Extra Text Objects
-#+begin_src emacs-lisp :tangle no
-(use-package targets
-  :after evil
+#+begin_src emacs-lisp
+(use-package evil-textobj-anyblock
   :unless noninteractive
+  :after evil
   :config
-  (targets-setup t
-                 :next-key "n"
-                 :last-key "l"
-                 :remote-key "r")
-  (targets-define-composite-to pair-delimiter
-    (("(" ")" pair)
-     ("[" "]" pair)
-     ("{" "}" pair)
-     ("</" ">" )
-     ("<" ">" pair))
-    :bind t
-    :next-key "n"
-    :last-key "l"
-    :remote-key "r"
-    :keys "b")
+  (setq evil-textobj-anyblock-blocks
+        '(("(" . ")")
+          ("{" . "}")
+          ("\\[" . "\\]")
+          ("<" . ">")))
+  (define-key evil-inner-text-objects-map "b" 'evil-textobj-anyblock-inner-block)
+  (define-key evil-outer-text-objects-map "b" 'evil-textobj-anyblock-a-block)
 
-  (targets-define-composite-to quote
-    (("\"" "\"" quote)
-     ("'" "'" quote)
-     ("`" "`" quote))
-    :bind t
-    :next-key "n"
-    :last-key "l"
-    :remote-key "r"
-    :keys "q"))
+  (evil-define-text-object my-evil-textobj-anyblock-inner-quote
+    (count &optional beg end type)
+    "Select the closest outer quote."
+    (let ((evil-textobj-anyblock-blocks
+           '(("'" . "'")
+             ("\"" . "\"")
+             ("`" . "'")
+             ("“" . "”"))))
+      (evil-textobj-anyblock--make-textobj beg end type count nil)))
+
+  (evil-define-text-object my-evil-textobj-anyblock-a-quote
+    (count &optional beg end type)
+    "Select the closest outer quote."
+    (let ((evil-textobj-anyblock-blocks
+           '(("'" . "'")
+             ("\"" . "\"")
+             ("`" . "'")
+             ("“" . "”"))))
+      (evil-textobj-anyblock--make-textobj beg end type count t)))
+
+  (define-key evil-inner-text-objects-map "q" 'my-evil-textobj-anyblock-inner-quote)
+  (define-key evil-outer-text-objects-map "q" 'my-evil-textobj-anyblock-a-quote))
 #+end_src
 * Popper
 #+begin_src emacs-lisp
