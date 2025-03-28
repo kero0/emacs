@@ -611,7 +611,11 @@ Do something in other window
 (use-package evil-surround
   :after evil
   :unless noninteractive
-  :config (global-evil-surround-mode 1))
+  :config
+  (global-evil-surround-mode 1)
+  (use-package expand-region)
+  (use-package evil-embrace
+    :config (evil-embrace-enable-evil-surround-integration)))
 #+end_src
 *** evil-commentary
 #+begin_src emacs-lisp
