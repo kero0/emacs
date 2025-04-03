@@ -2,3 +2,5 @@ builds:
   default:
     include:
       - packages.*.*
+    branch:
+      - main
