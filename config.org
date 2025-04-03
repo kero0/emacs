@@ -1112,6 +1112,7 @@ Do something in other window
            ([remap next-buffer] . projectile-next-project-buffer)
            ([remap evil-previous-buffer] . projectile-previous-project-buffer)
            ([remap previous-buffer] . projectile-previous-project-buffer)))
+  (put 'dired-find-alternate-file 'disabled nil)
   (my/leader-def
    "p" '("projectile" . projectile-command-map))
   (after! rg
