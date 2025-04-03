@@ -171,7 +171,6 @@
                         }
                       } \
                       --set ASPELL_CONF 'dict-dir ${dependencies}/lib/aspell'
-                      # --prefix EMACSLOADPATH : "${dependencies}/share/emacs/site-lisp":$out/share/emacs/${version}/lisp \
                 '';
                 inherit (base) meta src version;
               };
