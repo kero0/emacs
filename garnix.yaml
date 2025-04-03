@@ -1,6 +1,6 @@
 builds:
   default:
     include:
-      - packages.*.*
+      - packages.*.default
     branch:
       - main
