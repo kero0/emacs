@@ -1976,6 +1976,8 @@ Do something in other window
 #+begin_src emacs-lisp
 (use-package eglot-booster
   :after eglot
+  :custom
+  (eglot-booster-io-only (not (version< emacs-version "30")))
   :config
   (eglot-booster-mode)
   (setf (car eglot-booster--boost) (executable-find "emacs-lsp-booster")))
