@@ -302,12 +302,12 @@ I want windows that start with '*' to be opened in the lower 1/3 of the frame. T
         w32-rwindow-modifier 'super)))
 ;; Make ESC quit prompts
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
-(setq use-package-always-demand (daemonp)
+(setq use-package-always-demand t
+ use-package-always-defer nil
       use-package-expand-minimally t
       use-package-verbose nil)
 (eval-and-compile
   (require 'use-package))
-(add-hook 'after-init-hook #'repeat-mode)
 #+end_src
 ** which-key
 #+begin_src emacs-lisp
@@ -1617,8 +1617,7 @@ Do something in other window
       (make-local-variable 'completion-at-point-functions)
       (push #'tempel-expand completion-at-point-functions)))
   :hook (prog-mode . tempel-setup-capf)
-  :hook (text-mode . tempel-setup-capf)
-  :defer 1)
+  :hook (text-mode . tempel-setup-capf))
 (use-package tempel-collection
   :after tempel
   :config
@@ -2118,7 +2117,6 @@ Do something in other window
 *** Virtual Environments
 #+begin_src emacs-lisp
 (use-package pyvenv
-  :defer t
   :config
   ;; Display virtual envs in the menu bar
   (setq pyvenv-menu t)
@@ -2569,7 +2567,6 @@ Mostly only used for double checking after org export.
 * Org Mode
 #+begin_src emacs-lisp
 (use-package org
-  :defer 1
   :ensure nil ;; included in emacs
   :commands org-mode
   :mode ("\\.org\\'" . org-mode)
@@ -2924,7 +2921,6 @@ Mostly only used for double checking after org export.
 ** Auto Tangle
 #+begin_src emacs-lisp
 (use-package org-auto-tangle
-  :defer t
   :custom (org-auto-tangle-default t)
   :hook (org-mode . org-auto-tangle-mode))
 #+end_src
