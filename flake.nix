@@ -87,7 +87,7 @@
             overlays = [ emacs-overlay.overlay ];
           };
           packages.${system} = {
-            base = pkgs.emacs-unstable-pgtk;
+            base = pkgs.emacs-unstable-pgtk.override { withNativeCompilation = !pkgs.stdenv.isDarwin; };
             emacsWithPkgs =
               let
                 emacs = self.outputs.packages.${system}.base;
