@@ -2420,7 +2420,7 @@ Mostly only used for double checking after org export.
   :after markdown
   :hook (markdown-mode-hook . poly-markdown-mode))
 #+end_src
-** Other
+** Yaml
 #+begin_src emacs-lisp
 (use-package yaml-ts-mode :mode "\\.ya?ml\\'"
   :ensure nil
@@ -2447,6 +2447,11 @@ Mostly only used for double checking after org export.
               ("C-c k" . yaml-pro-ts-move-subtree-up)
               ("C-c f" . yaml-pro-format)))
 #+end_src
+** CoNLL-U mode
+#+begin_src emacs-lisp
+(use-package conllu-mode
+  :mode "\\.conllu\\'")
+  #+end_src emacs-lisp
 * Mail
 ** mu4e
 #+begin_src emacs-lisp :lexical t
