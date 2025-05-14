@@ -793,12 +793,10 @@ Do something in other window
 (set-face-attribute 'fixed-pitch nil :font my/font/name :height my/font/size)
 (set-face-attribute 'variable-pitch nil :font my/font/name :height my/font/size :weight 'regular)
 
-(set-fontset-font "fontset-default" 'nil (font-spec :name my/font/name)) ; general default
-(set-fontset-font "fontset-default" '(#x1200 . #x137F) (font-spec :name "Noto Sans Ethiopic")) ; ethiopic
-(set-fontset-font "fontset-default" '(#x1380 . #x139F) (font-spec :name "Noto Sans Ethiopic")) ; ethiopic supplement
-(set-fontset-font "fontset-default" '(#x2D80 . #x2DDF) (font-spec :name "Noto Sans Ethiopic")) ; ethiopic extended
-(set-fontset-font "fontset-default" '(#x2C80 . #x2CFF) (font-spec :name "Noto Sans Coptic")) ; coptic
-(set-fontset-font "fontset-default" '(#x13000 . #x1343F) (font-spec :name "Noto Sans Egyptian Hieroglyphs")) ; hieroglyphic
+(set-fontset-font "fontset-default" nil (font-spec :name my/font/name))
+(set-fontset-font "fontset-default" 'ethiopic (font-spec :name "Noto Sans Ethiopic"))
+(set-fontset-font "fontset-default" 'coptic (font-spec :name "Noto Sans Coptic"))
+(set-fontset-font "fontset-default" 'egyptian (font-spec :name "Noto Sans Egyptian Hieroglyphs"))
 
 (my/leader-def "U" '("Insert Unicode char (by name)" . insert-char))
 (my/map-menu! "Input-Language" "I"
