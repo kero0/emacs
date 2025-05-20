@@ -1727,6 +1727,16 @@ Do something in other window
   :after (embark consult)
   :hook (embark-collect-mode . embark-consult-preview-minor-mode))
 #+end_src
+** Prescient
+#+begin_src emacs-lisp
+(use-package prescient
+  :unless noninteractive
+  :config
+  (use-package corfu-prescient
+    :hook corfu-mode)
+  (use-package vertico-prescient
+    :hook vertico-mode))
+#+end_src
 * Terminal
 ** EAT
 #+begin_src emacs-lisp
