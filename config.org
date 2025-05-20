@@ -2067,6 +2067,10 @@ Do something in other window
   :after nix-mode
   :bind (:map my/map-Open-map :filter nix-mode
               ("r" . nix-repl)))
+(use-package agenix
+  :mode ("\\.age\\'" . agenix-mode-if-with-secrets-nix)
+  :config
+  (after! envrc (add-hook 'agenix-pre-mode-hook #'envrc-mode)))
 #+end_src
 ** Python
 #+begin_src emacs-lisp
