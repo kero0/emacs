@@ -86,25 +86,11 @@
           };
           packages.${system} = {
             base = pkgs.emacs-unstable-pgtk.override { withNativeCompilation = !pkgs.stdenv.isDarwin; };
-            emacsWithPkgs =
-              let
-                emacs = self.outputs.packages.${system}.base;
-                config' = pkgs.runCommand "config" { } ''
-                  mkdir -p $out/
-                  cp -r ${./.}/. $out
-                  cd $out/
-                  ${emacs}/bin/emacs -Q --batch                     \
-                    --eval "(require 'org)
-                            (setq org-use-property-inheritance t)"     \
-                    --visit="./config.org"                             \
-                    --funcall org-babel-tangle                         \
-                    --kill
-                '';
-              in
-              (pkgs.emacsWithPackagesFromUsePackage {
-                config = "${config'}/default.el";
+            emacsWithPkgs = (
+              pkgs.emacsWithPackagesFromUsePackage {
+                config = ./config.org;
                 defaultInitFile = true;
-                package = emacs;
+                package = self.outputs.packages.${system}.base;
                 alwaysEnsure = true;
                 alwaysTangle = true;
                 extraEmacsPackages =
@@ -149,7 +135,8 @@
                     }
                   );
                 };
-              });
+              }
+            );
             default =
               with self.outputs.packages.${system};
               pkgs.symlinkJoin rec {

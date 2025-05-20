@@ -1,5 +1,5 @@
 * Setup
-#+property: header-args :tangle default.el :results output silent :noweb yes :lexical t :eval never-export
+#+PROPERTY: header-args :tangle config.el :results output silent :noweb yes :lexical t :eval never-export
 #+startup: fold
 #+auto_tangle: t
 #+begin_src emacs-lisp
