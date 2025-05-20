@@ -1598,6 +1598,7 @@ Do something in other window
 #+begin_src emacs-lisp
 (use-package tempel
   :unless noninteractive
+  :demand (not noninteractive)
   :custom
   (tempel-trigger-prefix "<")
   :config
@@ -1818,7 +1819,11 @@ Do something in other window
 #+begin_src emacs-lisp
 (use-package jinx
   :unless noninteractive
+  :demand (not noninteractive)
   :hook (emacs-startup . global-jinx-mode)
+  :custom
+  (ispell-aspell-dict-dir (cdr (split-string (getenv "ASPELL_CONF"))))
+  (jinx-languages "en_US")
   :config
   (evil-define-key 'normal 'global
     "]s" '("Spelling error" . jinx-next)
