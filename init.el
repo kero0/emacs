@@ -1,2 +1,0 @@
-(require 'default)
-(provide 'init)
