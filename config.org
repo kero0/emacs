@@ -216,7 +216,8 @@
   (setq auto-revert-verbose nil
         auto-revert-interval 2
         auto-revert-check-vc-info t
-        auto-revert-remote-files t)
+        auto-revert-remote-files t
+        global-auto-revert-non-file-buffers t)
   (global-auto-revert-mode +1))
 #+end_src
 ** Yes-or-No
@@ -393,11 +394,12 @@ Do something in other window
 #+end_src
 **** Buffer
 #+begin_src emacs-lisp
+(defvar my/kill-buffer-fun #'kill-buffer)
 (defun my/kill-buffer (&optional buf)
   (interactive)
   (let ((buf (or buf (current-buffer)))
         (kill-buffer-query-functions '()))
-    (kill-buffer buf)))
+    (funcall my/kill-buffer-fun buf)))
 
 (defun my/kill-other-window ()
   (interactive)
@@ -1095,28 +1097,31 @@ Do something in other window
   (projectile-file-exists-remote-cache-expire (* 10 60))
   (projectile-require-project-root t)
   (projectile-per-project-compilation-buffer t)
-  :config
+  :hook after-init
+  :init
   (eval-and-compile
-    (setq projectile-ignored-project-function #'(defun my/projectile-ignore-projects (project-root)
-                                                  "Ignore matching regexes in `my/projectile-ignore-projects'."
-                                                  (cl-some (lambda (regex) (string-match-p regex project-root))
-                                                           my/projectile-ignore-projects))))
-  (my/map-Buffer
-   "]" '("Next Buffer" . projectile-next-project-buffer)
-   "[" '("Previous Buffer" . projectile-previous-project-buffer))
+    (setopt projectile-ignored-project-function
+            #'(defun my/projectile-ignore-projects (project-root)
+                "Ignore matching regexes in `my/projectile-ignore-projects'."
+                (cl-some (lambda (regex) (string-match-p regex project-root))
+                         my/projectile-ignore-projects))))
+  :config
+  (bind-keys
+   ([remap next-buffer] . projectile-next-project-buffer)
+   ([remap previous-buffer] . projectile-previous-project-buffer))
   (after! evil
           (bind-keys
            ([remap evil-next-buffer] . projectile-next-project-buffer)
-           ([remap next-buffer] . projectile-next-project-buffer)
-           ([remap evil-previous-buffer] . projectile-previous-project-buffer)
-           ([remap previous-buffer] . projectile-previous-project-buffer)))
+           ([remap evil-previous-buffer] . projectile-previous-project-buffer)))
+  (my/map-Buffer
+   "]" '("Next Buffer" . projectile-next-project-buffer)
+   "[" '("Previous Buffer" . projectile-previous-project-buffer))
   (put 'dired-find-alternate-file 'disabled nil)
   (my/leader-def
    "p" '("projectile" . projectile-command-map))
   (after! rg
           (add-to-list 'my/rg-project-funcs #'projectile-project-root))
-  (append! projectile-project-root-files-bottom-up "Androib.bp")
-  (projectile-mode +1))
+  (append! projectile-project-root-files-bottom-up "Androib.bp"))
 #+end_src
 ** Perspective
 #+begin_src emacs-lisp
@@ -1126,7 +1131,10 @@ Do something in other window
   (persp-mode-prefix-key nil)
   (persp-suppress-no-prefix-key-warning t)
   (persp-state-default-file  (concat my/local-dir "perspective"))
-  (persp-sort 'created)
+  (persp-sort 'access)
+  (my/kill-buffer-fun #'persp-kill-buffer*)
+  :bind
+  ([remap kill-buffer] . persp-kill-buffer*)
   :hook (after-init . persp-mode)
   :hook (ibuffer . (lambda ()
                      (persp-ibuffer-set-filter-groups)
