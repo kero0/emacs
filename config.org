@@ -1101,7 +1101,7 @@ Do something in other window
   :init
   (eval-and-compile
     (setopt projectile-ignored-project-function
-            #'(defun my/projectile-ignore-projects (project-root)
+            (defun my/projectile-ignore-projects (project-root)
                 "Ignore matching regexes in `my/projectile-ignore-projects'."
                 (cl-some (lambda (regex) (string-match-p regex project-root))
                          my/projectile-ignore-projects))))
