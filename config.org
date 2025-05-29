@@ -1868,11 +1868,12 @@ Do something in other window
 #+begin_src emacs-lisp
 (use-package magit
   :unless noninteractive
-  :commands (magit-status magit-blame bagit-commit magit-status-here magit-stage-buffer-file magit-unstage-file)
-  :init
-  (setq magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
-  (setq magit-log-arguments '("--graph" "--decorate" "--color"))
-  (setq git-commit-fill-column 72)
+  :custom
+  (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
+  (magit-log-arguments '("--graph" "--decorate" "--color"))
+  (magit-format-file-function #'magit-format-file-nerd-icons)
+  (magit-wip-merge-branch nil)
+  :config
   (my/map-Git
    "g" '("Status" . magit-status)
    "b" '("Blame" . magit-blame)
@@ -1881,25 +1882,22 @@ Do something in other window
    "G" '("Status here" . magit-status-here)
    "S" '("Stage file" . magit-stage-buffer-file)
    "U" '("Unstage file" . magit-unstage-file))
-  :config
   (keymap-unset magit-mode-map "SPC")
   (add-popup! "\\*\\*magit-process:.*\\*\\*")
-  (setq magit-buffer-name-format (concat "*" magit-buffer-name-format "*"))
-  (setopt magit-format-file-function #'magit-format-file-nerd-icons)
-  (append! magit-status-sections-hook #'magit-insert-modules))
-#+end_src
-*** Colors
-#+begin_src emacs-lisp
-(after! magit
-        (defun color-buffer (proc &rest args)
-          (interactive)
-          (with-current-buffer (process-buffer proc)
-            (read-only-mode -1)
-            (ansi-color-apply-on-region (point-min) (point-max))
-            (read-only-mode 1)))
+  (append! magit-status-sections-hook #'magit-insert-modules)
 
-        (advice-add 'magit-process-filter :after #'color-buffer))
-#+end_src
+  (require 'magit-wip)
+  (magit-wip-mode)
+
+  (defun my/ansi-color-buffer (proc &rest args)
+    (interactive)
+    (with-current-buffer (process-buffer proc)
+      (read-only-mode -1)
+      (ansi-color-apply-on-region (point-min) (point-max))
+      (read-only-mode 1)))
+
+  (advice-add 'magit-process-filter :after #'my/ansi-color-buffer))
+  #+end_src
 ** ediff
 #+begin_src emacs-lisp
 (after! org
