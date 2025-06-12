@@ -1610,7 +1610,7 @@ Do something in other window
   :custom
   (tempel-trigger-prefix "<")
   :config
-  (define-key tempel-map "TAB" #'tempel-next)
+  (define-key tempel-map (kbd "<TAB>") #'tempel-next)
   ;; Setup completion at point
   (defun tempel-setup-capf ()
     ;; Add the Tempel Capf to `completion-at-point-functions'. `tempel-expand'
