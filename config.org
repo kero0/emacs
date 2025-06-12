@@ -2903,17 +2903,10 @@ Mostly only used for double checking after org export.
 ***** Generic
 ****** Default
 #+begin_src emacs-lisp
-("d" "Default" plain "#+filetags: \"${tags}\"\n\n* %?"
+("d" "Default" plain "#+filetags: \"${mtags}\"\n\n* %?"
  :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n\n")
  :unnarrowed t)
 #+end_src
-****** Note
-#+begin_src emacs-lisp
-("n" "Note" plain "#+filetags: note\n\n* %?"
- :if-new (file+head "notes/%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n\n#+tags: note ${field}\n\n")
- :unnarrowed t)
-#+end_src
-
 ****** Project
 #+begin_src emacs-lisp
 ("p" "Project" plain "#+filetags: project\n\n* %?"
