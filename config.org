@@ -2411,6 +2411,55 @@ Do something in other window
   :custom
   (ktlint-flymake-args '("--android")))
 #+end_src
+** Java
+#+begin_src emacs-lisp
+(use-package java-ts-mode
+  :ensure nil
+  :hook (java-ts-mode . (lambda () (run-hooks 'java-mode-hook)))
+  :hook (java-mode . eglot-ensure)
+  :config
+  (unless noninteractive
+    (after! eglot
+            (let ((args
+                   (format
+                    "--add-modules=ALL-SYSTEM
+                  -data %s
+                  --add-opens java.base/java.util=ALL-UNNAMED
+                  --add-opens java.base/java.lang=ALL-UNNAMED
+                  -XX:+UseAdaptiveSizePolicy
+                  -XX:GCTimeRatio=4
+                  -XX:AdaptiveSizePolicyWeight=90
+                  --jvm-arg=-XX:+UseG1GC
+                  --jvm-arg=-XX:+UseStringDeduplication
+                  -Xmx32G
+                  -Xms2G
+                  -Xverify:none" (expand-file-name "java-worskpace" my/cache-dir)))
+                  (init-options `(:settings
+                                  (:java
+                                   (:imports
+                                    (:gradle
+                                     (:wrapper
+                                      (:checksums
+                                       [
+                                        ]
+                                       ))))
+                                   (:configuration
+                                    :format (:settings (:url ,(expand-file-name (locate-user-emacs-file "cache/eclipse-java-google-style.xml"))
+                                                             :profile "GoogleStyle"))
+                                    :autobuild (:enabled t)
+                                    :contentProvider (:preferred "fernflower"))
+                                   )
+                                  :extendedClientCapabilities (:classFileContentsSupport t)
+                                  :bundles ,(let ((bundles-dir (expand-file-name (locate-user-emacs-file "cache/language-server/java/bundles" user-emacs-directory)))
+                                                  jdtls-bundles)
+                                              (->> (when (file-directory-p bundles-dir)
+                                                     (directory-files bundles-dir t "\\.jar$"))
+                                                   (append jdtls-bundles)
+                                                   (apply #'vector)))
+                                  )))
+              (setf (alist-get 'java-ts-mode eglot-server-programs) `(,(or (executable-find "jdtls") "jdtls")  :initializationOptions ,init-options))
+              (setf (alist-get 'java-mode eglot-server-programs) `(,(or (executable-find "jdtls") "jdtls") :initializationOptions ,init-options))))))
+#+end_src
 ** PDF
 #+begin_src emacs-lisp
 (use-package pdf-tools
