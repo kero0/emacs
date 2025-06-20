@@ -139,23 +139,26 @@
             );
             default =
               with self.outputs.packages.${system};
-              pkgs.symlinkJoin rec {
+              pkgs.symlinkJoin {
                 name = "emacs";
+                pname = "emacs";
                 paths = [ emacsWithPkgs ];
                 nativeBuildInputs = [ pkgs.makeWrapper ];
                 postBuild = ''
-                  wrapProgram "$out/bin/emacs" \
-                      --prefix PATH : $out/bin:${dependencies}/bin \
-                      --set MY_TREESIT_PATH "${base.pkgs.treesit-grammars.with-all-grammars}/lib" \
-                      --set FONTCONFIG_FILE ${
-                        pkgs.makeFontsConf {
-                          fontDirectories = with pkgs; [
-                            nerd-fonts.jetbrains-mono
-                            noto-fonts
-                          ];
-                        }
-                      } \
-                      --set ASPELL_CONF 'dict-dir ${dependencies}/lib/aspell'
+                  for executable in $(ls $out/bin/*); do
+                    wrapProgram "$executable" \
+                        --prefix PATH : ${emacsWithPkgs}/bin:${dependencies}/bin \
+                        --set MY_TREESIT_PATH "${base.pkgs.treesit-grammars.with-all-grammars}/lib" \
+                        --set FONTCONFIG_FILE ${
+                          pkgs.makeFontsConf {
+                            fontDirectories = with pkgs; [
+                              nerd-fonts.jetbrains-mono
+                              noto-fonts
+                            ];
+                          }
+                        } \
+                        --set ASPELL_CONF 'dict-dir ${dependencies}/lib/aspell'
+                  done
                 '';
                 inherit (base) meta src version;
               };
