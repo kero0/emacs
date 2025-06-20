@@ -351,6 +351,18 @@ Macro to define nested keymaps
   #+end_src
 Local bindings
 #+begin_src emacs-lisp :noweb-ref keybindings :tangle no
+(defvar my/major-mode-local-leader-keymap-alist nil)
+
+(which-key-add-keymap-based-replacements my/maps/leader
+  "m" '("<localleader>" .
+        (lambda ()
+          (interactive)
+          (if-let ((map (alist-get major-mode my/major-mode-local-leader-keymap-alist nil nil (lambda (key current-mode) (derived-mode-p key)))))
+              (progn
+                (which-key-show-keymap map t)
+                (set-transient-map (eval map)))
+            (message "No matching map found")))))
+
 (cl-defmacro my/local-leader-def (mode &rest args)
   "Create a definer named +general-global-NAME wrapping global-definer.
    Create prefix map: +general-global-NAME-map. Prefix bindings in BODY
@@ -363,9 +375,7 @@ Local bindings
     `(eval-and-compile
        (defvar-keymap ,prefix-map
          ,@args)
-       (add-hook ',hook (lambda ()
-                          (make-local-variable 'my/maps/leader)
-                          (keymap-set my/maps/leader ,my/local-leader-def-prefix ,prefix-map)))
+       (push (cons ',mode ',prefix-map) my/major-mode-local-leader-keymap-alist)
        (cl-defmacro ,definer (&rest body)
          `(with-eval-after-load 'which-key (which-key-add-keymap-based-replacements ',,prefix-map
                                              ,@body))))))
