@@ -1419,6 +1419,9 @@ Do something in other window
         calc-symbolic-mode t
         calc-undo-length 1000
         calc-window-height 15)
+  (defmath uconvert (v u)
+    "Convert value V to compatible unit U."
+    (math-convert-units v u))
   (add-hook 'calc-mode-hook #'my/disable-line-numbers))
 #+end_src
 * String Inflection
