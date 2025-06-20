@@ -56,7 +56,7 @@
             pname = name;
             ename = name;
             version = "0.0.0";
-            src = src;
+            inherit src;
           }).overrideAttrs
           (old: {
             installPhase =
@@ -86,57 +86,49 @@
           };
           packages.${system} = {
             base = pkgs.emacs-unstable-pgtk.override { withNativeCompilation = !pkgs.stdenv.isDarwin; };
-            emacsWithPkgs = (
-              pkgs.emacsWithPackagesFromUsePackage {
-                config = ./config.org;
-                defaultInitFile = true;
-                package = self.outputs.packages.${system}.base;
-                alwaysEnsure = true;
-                alwaysTangle = true;
-                extraEmacsPackages =
-                  epkgs: with epkgs; [
-                    engrave-faces
-                    ox-chameleon
-                    dependencies
+            emacsWithPkgs = pkgs.emacsWithPackagesFromUsePackage {
+              config = ./config.org;
+              defaultInitFile = true;
+              package = self.outputs.packages.${system}.base;
+              alwaysEnsure = true;
+              alwaysTangle = true;
+              extraEmacsPackages =
+                epkgs: with epkgs; [
+                  engrave-faces
+                  ox-chameleon
+                  dependencies
 
-                    elisp-refs
-                    emacsql
-                    epkgs.f
-                    fringe-helper
-                    ghub
-                    goto-chg
-                    iedit
-                    llama
-                    s
-                    shrink-path
-                    treepy
-                    with-editor
-                  ];
-                override = self: super: {
-                  eglot-booster = (
-                    mkTrivialPkg {
-                      pkgs = self;
-                      name = "eglot-booster";
-                      buildInputs = with self; [ ];
-                    }
-                  );
-                  org-src-context = (
-                    mkTrivialPkg {
-                      pkgs = self;
-                      name = "org-src-context";
-                      buildInputs = with self; [ ];
-                    }
-                  );
-                  ox-chameleon = (
-                    mkTrivialPkg {
-                      pkgs = self;
-                      name = "ox-chameleon";
-                      buildInputs = with self; [ engrave-faces ];
-                    }
-                  );
+                  elisp-refs
+                  emacsql
+                  epkgs.f
+                  fringe-helper
+                  ghub
+                  goto-chg
+                  iedit
+                  llama
+                  s
+                  shrink-path
+                  treepy
+                  with-editor
+                ];
+              override = self: _: {
+                eglot-booster = mkTrivialPkg {
+                  pkgs = self;
+                  name = "eglot-booster";
+                  buildInputs = [ ];
                 };
-              }
-            );
+                org-src-context = mkTrivialPkg {
+                  pkgs = self;
+                  name = "org-src-context";
+                  buildInputs = [ ];
+                };
+                ox-chameleon = mkTrivialPkg {
+                  pkgs = self;
+                  name = "ox-chameleon";
+                  buildInputs = with self; [ engrave-faces ];
+                };
+              };
+            };
             default =
               with self.outputs.packages.${system};
               pkgs.symlinkJoin {
@@ -175,6 +167,16 @@
             pre-commit-check = git-hooks.lib.${system}.run {
               src = ./.;
               hooks = {
+                deadnix.enable = true;
+                statix = {
+                  enable = true;
+                  settings = {
+                    ignore = [
+                      ".direnv"
+                    ];
+                  };
+                };
+
                 nixfmt-rfc-style = {
                   enable = true;
                   package = self.formatter.${system};
