@@ -115,9 +115,6 @@
 #+begin_src emacs-lisp
 (use-package gcmh
   :unless noninteractive
-  :demand
-  :hook
-  (focus-out-hook . gcmh-idle-garbage-collect)
   :config
   (gcmh-mode +1))
 #+end_src
