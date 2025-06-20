@@ -2861,7 +2861,9 @@ Mostly only used for double checking after org export.
 (after! org
         ;; Latex fragments
         (add-hook 'org-mode-hook #'org-latex-preview)
-
+        (setopt org-preview-latex-image-directory (expand-file-name "org-preview-ltximg/" my/cache-dir)
+                org-preview-latex-default-process 'dvisvgm)
+        (plist-put org-format-latex-options :scale 2)
         ;; Images
         (add-hook 'org-mode-hook #'org-display-inline-images)
         (add-hook 'org-babel-after-execute-hook #'org-redisplay-inline-images))
