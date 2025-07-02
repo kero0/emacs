@@ -1981,7 +1981,7 @@ Do something in other window
   (fringes-outside-margins t)
   (vc-git-diff-switches '("--histogram"))
   (diff-hl-flydiff-delay 0.5)
-  (diff-hl-update-async t)
+  (diff-hl-update-async (not IS-MAC))
   (diff-hl-show-staged-changes nil)
   :bind (:map my/map-Git-map
               ("r" . diff-hl-revert-hunk))
