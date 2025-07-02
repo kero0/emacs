@@ -1063,7 +1063,6 @@ Do something in other window
                      (wgrep-rg-setup)
                      (define-key rg-mode-map (kbd "n") 'evil-search-next)
                      (define-key rg-mode-map (kbd "N") 'evil-search-previous)))
-  :hook (after-init . rg-enable-default-bindings)
   :custom
   (rg-custom-type-aliases nil)
   (rg-default-alias-fallback "everything")
@@ -1073,23 +1072,18 @@ Do something in other window
   (rg-show-columns nil)
   :init
   (use-package wgrep)
-  (defvar my/rg-project-funcs (list #'vc-root-dir))
-  (defun my/rg-project-func-fallback ()
-    default-directory)
+  (my/map-Search
+   "p" '("Project Search" . my/grep-project)
+   "S" '("Ripgrep menu" . rg-menu))
   :config
-  (setq rg-executable (executable-find "rg"))
   (add-popup! "^\\*eshell.*\\*$" 'rg-mode)
   (rg-define-search my/grep-project
     :query ask
     :format regexp
-    :files "everything"
-    :dir (or (-first #'identity (-map #'funcall my/rg-project-funcs)) (my/rg-project-func-fallback))
+    :files ask
+    :dir project
     :confirm prefix
-    :flags ("--hidden -g !.git")
-    :menu ("Search" "p" "Project"))
-  (my/map-Search
-   "p" '("Project Search" . my/grep-project)
-   "S" '("Ripgrep menu" . rg-menu)))
+    :flags ("--hidden -g !.git")))
 #+end_src
 * Project management
 ** Projectile
@@ -1126,8 +1120,6 @@ Do something in other window
   (put 'dired-find-alternate-file 'disabled nil)
   (my/leader-def
    "p" '("projectile" . projectile-command-map))
-  (after! rg
-          (add-to-list 'my/rg-project-funcs #'projectile-project-root))
   (append! projectile-project-root-files-bottom-up "Androib.bp"))
 #+end_src
 ** Perspective
