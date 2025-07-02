@@ -85,7 +85,7 @@
             overlays = [ emacs-overlay.overlay ];
           };
           packages.${system} = {
-            base = pkgs.emacs-unstable-pgtk.override { withNativeCompilation = !pkgs.stdenv.isDarwin; };
+            base = pkgs.emacs-unstable-pgtk;
             emacsWithPkgs = pkgs.emacsWithPackagesFromUsePackage {
               config = ./config.org;
               defaultInitFile = true;
