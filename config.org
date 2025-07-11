@@ -1781,9 +1781,13 @@ Do something in other window
   :unless noninteractive
   :config
   (use-package corfu-prescient
-    :hook corfu-mode)
+    :after corfu
+    :config
+    (corfu-prescient-mode))
   (use-package vertico-prescient
-    :hook vertico-mode))
+    :after vertico
+    :config
+    (vertico-prescient-mode)))
 #+end_src
 * Terminal
 ** EAT
