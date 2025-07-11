@@ -1240,9 +1240,8 @@ Do something in other window
               (add-hook 'dired-mode-hook #'dired-hist--update)
             (remove-hook 'dired-mode-hook #'dired-hist--update)))
 
-        (message "%s" dired-hist-mode)
-
-        (bind-key "_"  #'dired-hist-recent 'evil-normal-state-map (lambda () dired-hist-mode))
+        (after! evil
+                (bind-key "_"  #'dired-hist-recent 'evil-normal-state-map (lambda () dired-hist-mode)))
 
         (dired-hist-mode 1))
 #+end_src
@@ -1967,8 +1966,9 @@ Do something in other window
         ("C-j" . git-timemachine-show-next-revision)
         ("q"   . git-timemachine-quit-to-invoking-buffer))
   :config
-  (add-hook 'git-timemachine-mode-hook 'evil-normalize-keymaps))
-#+end_src
+  (after! evil
+          (add-hook 'git-timemachine-mode-hook 'evil-normalize-keymaps)))
+  #+end_src
 ** Forge
 #+begin_src emacs-lisp
 (use-package forge
@@ -2687,6 +2687,10 @@ Mostly only used for double checking after org export.
 #+end_src
 * Org Mode
 #+begin_src emacs-lisp
+(defun my/relative-org (dir)
+  "Makes a sting representing a directory relative to my org base directory"
+  (setq my-org-base-dir "~/org")
+  (concat (file-name-as-directory my-org-base-dir) dir))
 (use-package org
   :ensure nil ;; included in emacs
   :commands org-mode
@@ -2699,10 +2703,6 @@ Mostly only used for double checking after org export.
                              `(lambda (url arg)
                                 (browse-url (concat ,scheme ":" url) arg))))
   :init
-  (defun my/relative-org (dir)
-    "Makes a sting representing a directory relative to my org base directory"
-    (setq my-org-base-dir "~/org")
-    (concat (file-name-as-directory my-org-base-dir) dir))
   (setq org-src-preserve-indentation nil
         org-edit-src-content-indentation 0
         org-directory (my/relative-org "general/")
@@ -3105,11 +3105,17 @@ Mostly only used for double checking after org export.
             (mapc (lambda (s)
                     (insert (format "(load \"%s\")\n" s)))
                   (-select #'identity
-                           (list
-                            (my/get-loaded-nix-file "site-start")
-                            (my/get-loaded-nix-file "subdirs")
-                            (my/get-loaded-nix-file "default")
-                            (my/get-loaded-nix-file "init"))))
+                           (mapcar #'locate-library
+                            (append
+                             (cl-mapcar
+                              (lambda (backend) (concat "ox-" (symbol-name backend)))
+                              org-export-backends)
+                             (list
+                              "site-start"
+                              "subdirs"
+                              "default"
+                              "org"
+                              "init")))))
             (insert (format "(setq engrave-faces-preset-styles '%S)\n" engrave-faces-preset-styles))
             (insert (format "(setq engrave-faces-themes '%S)\n" engrave-faces-themes))
             (insert (format "(setq load-path '%S)\n" load-path))
