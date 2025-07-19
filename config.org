@@ -2906,8 +2906,22 @@ Mostly only used for double checking after org export.
 (after! org
         ;; Latex fragments
         (add-hook 'org-mode-hook #'org-latex-preview)
-        (setopt org-preview-latex-image-directory (expand-file-name "org-preview-ltximg/" my/cache-dir)
-                org-preview-latex-default-process 'dvisvgm)
+        (setopt org-preview-latex-image-directory (expand-file-name "org-preview-ltximg/" my/cache-dir))
+
+
+        (add-to-list 'org-preview-latex-process-alist
+                     '(luamagick :programs ("lualatex" "convert")
+                                 :description "pdf > png"
+                                 :message "you need to install lualatex and imagemagick."
+                                 :use-xcolor t
+                                 :image-input-type "pdf"
+                                 :image-output-type "png"
+                                 :image-size-adjust (1.0 . 1.0)
+                                 :latex-compiler ("lualatex -interaction nonstopmode -output-directory %o %f")
+                                 :image-converter ("convert -density %D -trim -antialias %f -quality 100 %O")))
+
+        (setq org-preview-latex-default-process 'luamagick)
+
         (plist-put org-format-latex-options :scale 2)
         ;; Images
         (add-hook 'org-mode-hook #'org-display-inline-images)
@@ -3047,7 +3061,10 @@ Mostly only used for double checking after org export.
   :ensure nil
   :after org
   :config
-  (setq org-latex-compiler "xelatex")
+  (setq org-latex-pdf-process
+        '("lualatex -shell-escape -interaction nonstopmode %f"
+          "lualatex -shell-escape -interaction nonstopmode %f"))
+
   (add-to-list 'org-latex-logfiles-extensions "tex")
   (add-to-list 'org-latex-packages-alist '("" "siunitx"))
   (add-to-list 'org-latex-packages-alist '("" "amsmath"))

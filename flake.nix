@@ -84,12 +84,36 @@
             inherit system;
             overlays = [ emacs-overlay.overlay ];
           };
-          packages.${system} = {
+          packages.${system} = rec {
             base = pkgs.emacs-unstable-pgtk;
+            fonts = pkgs.symlinkJoin {
+              name = "fonts";
+              pname = "fonts";
+              paths = with pkgs; [
+                nerd-fonts.jetbrains-mono
+                noto-fonts
+
+                freefont_ttf
+                (pkgs.stdenvNoCC.mkDerivation {
+                  pname = "Free Serif Avva Shenouda";
+                  version = "1.0";
+                  src = fetchurl {
+                    url = "https://st-takla.org/Dlds/fonts/webfont/FreeSerifAvvaShenouda.ttf";
+                    hash = "sha256-KU1AY68Mlht+6dKEgJirKqvGrm/gqV8C6vQoLIfzilY=";
+                  };
+                  dontConfigure = true;
+                  dontUnpack = true;
+                  installPhase = ''
+                    mkdir -p $out/share/fonts/truetype
+                    cp $src $out/share/fonts/truetype/FreeSerifAvvaShenouda.ttf
+                  '';
+                })
+              ];
+            };
             emacsWithPkgs = pkgs.emacsWithPackagesFromUsePackage {
               config = ./config.org;
               defaultInitFile = true;
-              package = self.outputs.packages.${system}.base;
+              package = base;
               alwaysEnsure = true;
               alwaysTangle = true;
               extraEmacsPackages =
@@ -129,31 +153,28 @@
                 };
               };
             };
-            default =
-              with self.outputs.packages.${system};
-              pkgs.symlinkJoin {
-                name = "emacs";
-                pname = "emacs";
-                paths = [ emacsWithPkgs ];
-                nativeBuildInputs = [ pkgs.makeWrapper ];
-                postBuild = ''
-                  for executable in $(ls $out/bin/*); do
-                    wrapProgram "$executable" \
-                        --prefix PATH : ${emacsWithPkgs}/bin:${dependencies}/bin \
-                        --set MY_TREESIT_PATH "${base.pkgs.treesit-grammars.with-all-grammars}/lib" \
-                        --set FONTCONFIG_FILE ${
-                          pkgs.makeFontsConf {
-                            fontDirectories = with pkgs; [
-                              nerd-fonts.jetbrains-mono
-                              noto-fonts
-                            ];
-                          }
-                        } \
-                        --set ASPELL_CONF 'dict-dir ${dependencies}/lib/aspell'
-                  done
-                '';
-                inherit (base) meta src version;
-              };
+            default = pkgs.symlinkJoin {
+              name = "emacs";
+              pname = "emacs";
+              paths = [ emacsWithPkgs ];
+              nativeBuildInputs = [ pkgs.makeWrapper ];
+              postBuild = ''
+                for executable in $(ls $out/bin/*); do
+                  wrapProgram "$executable" \
+                      --prefix PATH : ${emacsWithPkgs}/bin:${dependencies}/bin \
+                      --set MY_TREESIT_PATH "${base.pkgs.treesit-grammars.with-all-grammars}/lib" \
+                      --set FONTCONFIG_FILE ${
+                        pkgs.makeFontsConf {
+                          fontDirectories = [
+                            fonts
+                          ];
+                        }
+                      } \
+                      --set ASPELL_CONF 'dict-dir ${dependencies}/lib/aspell'
+                done
+              '';
+              inherit (base) meta src version;
+            };
           };
           devShells.${system}.default = pkgs.mkShell {
             inherit (self.checks.${system}.pre-commit-check) shellHook;

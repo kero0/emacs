@@ -2,6 +2,7 @@ pkgs:
 with pkgs;
 [
   # basics
+  fontconfig
   bashInteractive
   binutils
   curl
@@ -43,10 +44,13 @@ with pkgs;
         latexmk
         ;
       inherit
+        babel
         capt-of
         environ
+        everypage
         float
         fvextra
+        needspace
         pdfcol
         siunitx
         standalone
