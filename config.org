@@ -607,6 +607,18 @@ Do something in other window
   (evil-define-key 'normal minibuffer-local-map
     [escape] 'abort-recursive-edit))
 #+end_src
+*** evil-numbers
+#+begin_src emacs-lisp
+(use-package evil-numbers
+  :after evil
+  :unless noninteractive
+  :bind (:map evil-normal-state-map
+              ("g C-a" . evil-numbers/inc-at-pt)
+              ("g C-x" . evil-numbers/dec-at-pt))
+  :bind (:map evil-visual-state-map
+              ("g C-a" . evil-numbers/inc-at-pt)
+              ("g C-x" . evil-numbers/dec-at-pt)))
+#+end_src
 *** evil-lion
 #+begin_src emacs-lisp
 (use-package evil-lion
