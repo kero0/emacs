@@ -166,10 +166,12 @@
                       --set FONTCONFIG_FILE ${
                         pkgs.makeFontsConf {
                           fontDirectories = [
-                            fonts
+                            "${fonts}/share/fonts"
                           ];
                         }
                       } \
+                      --set OSFONTDIR "${fonts}/share/fonts" \
+                      --set TYPST_FONT_PATHS "${fonts}/share/fonts" \
                       --set ASPELL_CONF 'dict-dir ${dependencies}/lib/aspell'
                 done
               '';

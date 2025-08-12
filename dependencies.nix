@@ -93,6 +93,9 @@ with pkgs;
   # jupyter notebooks
   pandoc
 
+  # typst
+  typst
+
   lilypond
   mu
   msmtp
