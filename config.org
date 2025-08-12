@@ -286,8 +286,7 @@ I want windows that start with '*' to be opened in the lower 1/3 of the frame. T
 * Keybindings
 ** Basics
 #+begin_src emacs-lisp
-(cond
- (IS-MAC
+(when IS-MAC
   (define-key key-translation-map [S-iso-lefttab] [backtab])
   (setq mac-command-modifier      'meta
         ns-command-modifier       'meta
@@ -295,13 +294,10 @@ I want windows that start with '*' to be opened in the lower 1/3 of the frame. T
         ns-option-modifier        'meta
         mac-right-option-modifier 'super
         ns-right-option-modifier  'super))
- (IS-WINDOWS
-  (setq w32-lwindow-modifier 'super
-        w32-rwindow-modifier 'super)))
 ;; Make ESC quit prompts
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 (setq use-package-always-demand t
- use-package-always-defer nil
+      use-package-always-defer nil
       use-package-expand-minimally t
       use-package-verbose nil)
 (eval-and-compile
@@ -370,7 +366,6 @@ Local bindings
   (declare (indent 2))
   (let* ((n  (symbol-name mode))
          (definer (intern (concat "my/local-leader-def-" n)))
-         (hook (intern (concat n "-hook")))
          (prefix-map (intern (concat "my/maps/" (symbol-name mode)))))
     `(eval-and-compile
        (defvar-keymap ,prefix-map
@@ -735,7 +730,7 @@ Do something in other window
   (define-key evil-outer-text-objects-map "b" 'evil-textobj-anyblock-a-block)
 
   (evil-define-text-object my-evil-textobj-anyblock-inner-quote
-    (count &optional beg end type)
+    (count &optional beg end)
     "Select the closest outer quote."
     (let ((evil-textobj-anyblock-blocks
            '(("'" . "'")
@@ -745,7 +740,7 @@ Do something in other window
       (evil-textobj-anyblock--make-textobj beg end type count nil)))
 
   (evil-define-text-object my-evil-textobj-anyblock-a-quote
-    (count &optional beg end type)
+    (count &optional beg end)
     "Select the closest outer quote."
     (let ((evil-textobj-anyblock-blocks
            '(("'" . "'")
@@ -762,6 +757,7 @@ Do something in other window
 (use-package popper
   :unless noninteractive
   :demand t
+  :functions (popper-select-popup-at-bottom popper-toggle popper-cycle)
   :init
   (setq popper-reference-buffers
         '("\\*Messages\\*"
@@ -791,7 +787,7 @@ Do something in other window
   (bind-key "C-M-`" #'popper-toggle-type)
   (defun my/popper-display-function (buffer &optional alist)
     "my display function for popper"
-    (if (-any (lambda (regex) (string-match regex (buffer-name buffer))) my/special-window-no-cursor-manage-alist)
+    (if (cl-find-if (lambda (regex) (string-match regex (buffer-name buffer))) my/special-window-no-cursor-manage-alist)
         (popper-display-popup-at-bottom buffer alist)
       (popper-select-popup-at-bottom buffer alist)))
   (setopt popper-display-function #'my/popper-display-function)
@@ -863,8 +859,6 @@ Do something in other window
                           (bookmarks . 5)
                           (projects . 5)
                           (registers . 5))
-        dashboard-set-navigator t
-        dashboard-set-init-info t
         inhibit-startup-screen t)
   :config
   (dashboard-setup-startup-hook)
@@ -874,94 +868,44 @@ Do something in other window
 #+end_src
 ** Theme
 #+begin_src emacs-lisp
-(setq
- modus-themes-italic-constructs t
- modus-themes-bold-constructs t
- modus-themes-subtle-line-numbers nil
- modus-themes-tabs-accented t
- modus-themes-variable-pitch-ui t
- modus-themes-inhibit-reload t ; only applies to `customize-set-variable' and related
+(use-package modus-themes
+  :custom
+  (modus-themes-italic-constructs t)
+  (modus-themes-bold-constructs t)
+  (modus-themes-subtle-line-numbers nil)
+  (modus-themes-tabs-accented t)
+  (modus-themes-variable-pitch-ui t)
+  (modus-themes-inhibit-reload t)
+  (modus-themes-prompts '(background bold intense italic))
+  (modus-themes-mixed-fonts t)
+  (modus-themes-variable-pitch-ui t)
+  (modus-themes-custom-auto-reload nil)
+  (modus-themes-disable-other-themes t)
 
- ;; Options for `modus-themes-prompts' are either nil (the
- ;; default), or a list of properties that may include any of those
- ;; symbols: `background', `bold', `gray', `intense', `italic'
- modus-themes-prompts '(background bold intense italic)
+  (modus-themes-completions
+   '((matches . (semibold))
+     (selection . (extrabold accented))
+     (popup . (extrabold accented))))
 
- ;; The `modus-themes-completions' is an alist that reads three
- ;; keys: `matches', `selection', `popup'.  Each accepts a nil
- ;; value (or empty list) or a list of properties that can include
- ;; any of the following (for WEIGHT read further below):
- ;;
- ;; `matches' - `background', `intense', `underline', `italic', WEIGHT
- ;; `selection' - `accented', `intense', `underline', `italic', `text-also', WEIGHT
- ;; `popup' - same as `selected'
- ;; `t' - applies to any key not explicitly referenced (check docs)
- ;;
- ;; WEIGHT is a symbol such as `semibold', `light', or anything
- ;; covered in `modus-themes-weights'.  Bold is used in the absence
- ;; of an explicit WEIGHT.
- modus-themes-completions
- '((matches . (semibold))
-   (selection . (extrabold accented))
-   (popup . (extrabold accented)))
+  (modus-themes-common-palette-overrides
+   '((bg-prose-block-contents bg-magenta-nuanced)
+     (bg-prose-block-delimiter bg-lavender)
+     (fg-prose-block-delimiter fg-main)))
 
- modus-themes-org-blocks 'tinted-background ; {nil,'gray-background,'tinted-background}
+  (modus-themes-prompts '(italic bold))
 
- ;; The `modus-themes-headings' is an alist with lots of possible
- ;; combinations, include per-heading-level tweaks: read the
- ;; manual or its doc string
- modus-themes-headings
- '((0 . (variable-pitch light (height 2.2)))
-   (1 . (rainbow variable-pitch light (height 1.6)))
-   (2 . (rainbow variable-pitch light (height 1.4)))
-   (3 . (rainbow variable-pitch regular (height 1.3)))
-   (4 . (rainbow regular (height 1.2)))
-   (5 . (rainbow (height 1.1)))
-   (t . (variable-pitch extrabold))))
+  (modus-themes-headings
+   '((1 . (variable-pitch 1.5))
+     (2 . (1.3))
+     (agenda-date . (1.3))
+     (agenda-structure . (variable-pitch light 1.8))
+     (t . (1.1))))
 
-(setq modus-themes-italic-constructs t
-      modus-themes-bold-constructs t
-      modus-themes-mixed-fonts t
-      modus-themes-variable-pitch-ui t
-      modus-themes-custom-auto-reload nil
-      modus-themes-disable-other-themes t
-
-      ;; Options for `modus-themes-prompts' are either nil (the
-      ;; default), or a list of properties that may include any of those
-      ;; symbols: `italic', `WEIGHT'
-      modus-themes-prompts '(italic bold)
-
-      ;; The `modus-themes-completions' is an alist that reads two
-      ;; keys: `matches', `selection'.  Each accepts a nil value (or
-      ;; empty list) or a list of properties that can include any of
-      ;; the following (for WEIGHT read further below):
-      ;;
-      ;; `matches'   :: `underline', `italic', `WEIGHT'
-      ;; `selection' :: `underline', `italic', `WEIGHT'
-      modus-themes-completions
-      '((matches . (semibold))
-        (selection . (extrabold accented)))
-
-      modus-themes-common-palette-overrides
-      '((bg-prose-block-contents bg-magenta-nuanced)
-        (fg-prose-block-delimiter fg-main))
-
-      ;; The `modus-themes-headings' is an alist: read the manual's
-      ;; node about it or its doc string.  Basically, it supports
-      ;; per-level configurations for the optional use of
-      ;; `variable-pitch' typography, a height value as a multiple of
-      ;; the base font size (e.g. 1.5), and a `WEIGHT'.
-      modus-themes-headings
-      '((1 . (variable-pitch 1.5))
-        (2 . (1.3))
-        (agenda-date . (1.3))
-        (agenda-structure . (variable-pitch light 1.8))
-        (t . (1.1))))
-
-(load-theme 'modus-operandi t)
-(setq modus-themes-to-toggle '(modus-operandi modus-vivendi))
-(my/map-Toggle
- "t" '("theme" . modus-themes-toggle))
+  (modus-themes-to-toggle '(modus-operandi modus-vivendi))
+  :config
+  (load-theme 'modus-operandi t)
+  (my/map-Toggle
+   "t" '("theme" . modus-themes-toggle)))
 #+end_src
 
 ** Indent guides
@@ -1052,20 +996,20 @@ Do something in other window
 
 ** Bookmark
 #+begin_src emacs-lisp
-(use-package emacs
+(use-package bookmark
   :ensure nil
   :unless noninteractive
   :after evil
+  :custom
+  (bookmark-default-file (concat my/cache-dir "bookmarks"))
+  (bookmark-save-flag 1)
   :config (my/map-menu! "Bookmarks" "B"
             "b" '("Jump" . bookmark-jump)
             "l" '("List" . bookmark-bmenu-list)
             "s" '("Set" . bookmark-set)
             "r" '("Rename" . bookmark-rename)
             "d" '("Delete" . bookmark-delete)
-            "a" '("Add" . bookmark-set))
-  :init
-  (setq bookmark-default-file (concat my/cache-dir "bookmarks")
-        bookmark-save-flag 1))
+            "a" '("Add" . bookmark-set)))
 #+end_src
 * Ripgrep
 #+begin_src emacs-lisp
@@ -1297,12 +1241,12 @@ Do something in other window
   (treesit-auto-install nil)
   (treesit-font-lock-level 4)
   :config
-  (define-minor-mode my/treesit-mode "My treesit mode. For easily binding keys"
-    :interactive nil)
   (if-let ((path (getenv "MY_TREESIT_PATH")))
       (add-to-list 'treesit-extra-load-path path))
   (treesit-auto-add-to-auto-mode-alist 'all)
   (global-treesit-auto-mode))
+(define-minor-mode my/treesit-mode "My treesit mode. For easily binding keys"
+  :interactive nil)
 #+end_src
 ** expreg
 #+begin_src emacs-lisp
@@ -1491,9 +1435,7 @@ Do something in other window
   :config
   (evil-define-key 'normal 'global
     "K" #'helpful-at-point)
-  (append! my/special-window-no-cursor-manage-alist "^\\*helpful .*\\*$")
-  (after! undo-tree
-          (append! undo-tree-incompatible-major-modes #'helpful-mode)))
+  (append! my/special-window-no-cursor-manage-alist "^\\*helpful .*\\*$"))
 #+end_src
 ** Man & TLDR
 #+begin_src emacs-lisp
@@ -1528,7 +1470,7 @@ Do something in other window
   (use-package undo-fu-session
     :after undo-fu
     :demand t
-    :hook (after-init . global-undo-fu-session-mode)
+    :hook (after-init . undo-fu-session-global-mode)
     :bind
     ("C-x r u"    . undo-fu-session-save)
     ("C-x r U"    . undo-fu-session-recover)
@@ -1660,6 +1602,9 @@ Do something in other window
   :demand (not noninteractive)
   :custom
   (tempel-trigger-prefix "<")
+  (tempel-path
+   (list (concat my/emacs-dir "templates.eld")
+         (concat my/emacs-dir "templates-local.eld")))
   :config
   (define-key tempel-map (kbd "<TAB>") #'tempel-next)
   ;; Setup completion at point
@@ -1675,10 +1620,6 @@ Do something in other window
       (push #'tempel-expand completion-at-point-functions)))
   :hook (prog-mode . tempel-setup-capf)
   :hook (text-mode . tempel-setup-capf))
-(use-package tempel-collection
-  :after tempel
-  :config
-  (tempel-collection))
 #+end_src
 ** Marginalia
 #+begin_src emacs-lisp
@@ -1847,16 +1788,17 @@ Do something in other window
   (setq my/repl-fallback #'eshell)
   (my/map-Open
    "e" '("eshell" . eshell))
-  (setq eshell-aliases-file (concat my/cache-dir "eshell/alias")
-        eshell-history-file-name (concat my/cache-dir "eshell/history")
-        eshell-buffer-maximum-lines 10000
-        eshell-hist-ignoredups t
-        eshell-scroll-to-bottom-on-input 'all
-        eshell-error-if-no-glob t
-        eshell-glob-case-insensitive t
-        eshell-scroll-show-maximum-output nil)
-  (make-directory (concat my/cache-dir "eshell") t)
+  :custom
+  (eshell-aliases-file (concat my/cache-dir "eshell/alias"))
+  (eshell-history-file-name (concat my/cache-dir "eshell/history"))
+  (eshell-buffer-maximum-lines 10000)
+  (eshell-hist-ignoredups t)
+  (eshell-scroll-to-bottom-on-input 'all)
+  (eshell-error-if-no-glob t)
+  (eshell-glob-case-insensitive t)
+  (eshell-scroll-show-maximum-output nil)
   :config
+  (make-directory (concat my/cache-dir "eshell") t)
   (add-popup! "^\\*eshell.*\\*$" 'eshell-mode)
   (add-hook 'eshell-mode-hook #'my/disable-line-numbers)
   (after! corfu (add-hook 'eshell-mode-hook #'corfu-mode)))
@@ -1944,7 +1886,7 @@ Do something in other window
   (require 'magit-wip)
   (magit-wip-mode)
 
-  (defun my/ansi-color-buffer (proc &rest args)
+  (defun my/ansi-color-buffer (proc &rest _)
     (interactive)
     (with-current-buffer (process-buffer proc)
       (read-only-mode -1)
@@ -1957,11 +1899,15 @@ Do something in other window
 #+begin_src emacs-lisp
 (after! org
         (require 'ediff)
-        (add-hook 'ediff-prepare-buffer-hook #'org-show-all))
-(setq ediff-diff-options ""
-      ediff-custom-diff-options "-u"
-      ediff-window-setup-function 'ediff-setup-windows-plain
-      ediff-split-window-function 'split-window-vertically)
+        (add-hook 'ediff-prepare-buffer-hook #'org-fold-show-all))
+(use-package ediff
+  :ensure nil
+  :after magit
+  :custom
+  (ediff-diff-options "")
+  (ediff-custom-diff-options "-u")
+  (ediff-window-setup-function 'ediff-setup-windows-plain)
+  (ediff-split-window-function 'split-window-vertically))
 #+end_src
 ** Time Machine
 #+begin_src emacs-lisp
@@ -2019,7 +1965,7 @@ Do something in other window
   :commands (eglot eglot-ensure)
   :init
   (use-package markdown-mode) ;; Better formatting eldoc
-  (setq eglot-events-buffer-size 0) ;; don't log events
+  (setq eglot-events-buffer-config '(:size 0 :format full)) ;; don't log events
   (setq eglot-extend-to-xref t)
   :config
   (my/map-menu! "LSP" "cl"
@@ -2082,7 +2028,7 @@ Do something in other window
 #+begin_src emacs-lisp
 (use-package eldoc-box
   :hook (emacs-lisp-mode . eldoc-box-hover-at-point-mode)
-  :hook (eglot--managed-mode . eldoc-box-hover-at-point-mode))
+  :hook (eglot-managed-mode . eldoc-box-hover-at-point-mode))
 #+end_src
 
 ** dape
@@ -2106,7 +2052,7 @@ Do something in other window
   ;; (add-hook 'dape-compile-compile-hooks 'kill-buffer)
 
   ;; Save buffers on startup, useful for interpreted languages
-  (add-hook 'dape-on-start-hooks
+  (add-hook 'dape-start-hook
             (defun dape--save-on-start ()
               (save-some-buffers t t))))
 #+end_src
@@ -2115,10 +2061,8 @@ Do something in other window
 #+begin_src emacs-lisp
 (use-package nix-ts-mode
   :mode "\\.nix\\'"
+  :hook (nix-ts-mode . my/treesit-mode)
   :config
-  (define-minor-mode nix-mode "Fake `nix-mode'. Used with `nix-ts-mode'")
-  (add-hook 'nix-ts-mode-hook #'nix-mode)
-  (add-hook 'nix-ts-mode-hook #'my/treesit-mode)
   (after! apheleia
           (setf (alist-get 'nixfmt apheleia-formatters)
                 '("nixfmt"))
@@ -2126,7 +2070,7 @@ Do something in other window
                 '(nixfmt)))
   (after! eglot
           (setf (alist-get 'nix-ts-mode eglot-server-programs) (alist-get 'nix-mode eglot-server-programs))
-          (add-hook 'nix-mode-hook #'eglot-ensure))
+          (add-hook 'nix-ts-mode-hook #'eglot-ensure))
   (provide 'nix-mode))
 
 (use-package nix-drv-mode
@@ -2138,7 +2082,7 @@ Do something in other window
 (use-package nix-repl
   :ensure nix-mode
   :after nix-mode
-  :bind (:map my/map-Open-map :filter nix-mode
+  :bind (:map my/map-Open-map :filter nix-ts-mode
               ("r" . nix-repl)))
 (use-package agenix
   :mode ("\\.age\\'" . agenix-mode-if-with-secrets-nix)
@@ -2189,7 +2133,7 @@ Do something in other window
   :ensure nil
   :after org
   :commands org-babel-execute:python
-  :init
+  :config
   (add-to-list 'org-babel-load-languages '(python . t))
   (setq org-babel-python-command "python3"))
 #+end_src
@@ -2246,7 +2190,7 @@ Do something in other window
     :ensure nil
     :mode
     (("\\.c\\'" . c-ts-mode)
-     ("\\.h\\'" . c-or-c++-ts-mode))
+     ("\\.h\\'" . c-or-c++-mode))
     :hook (c-ts-mode . eglot-ensure)
     :hook (c-ts-mode . my/treesit-mode)
     :hook (c-ts-mode . (lambda () (run-hooks 'c-mode-hook)))
@@ -2329,7 +2273,7 @@ Do something in other window
   :ensure nil
   :after org
   :commands org-babel-execute:haskell
-  :init
+  :config
   (add-to-list 'org-babel-load-languages '(haskell . t)))
 #+end_src
 ** Julia
@@ -2368,7 +2312,7 @@ Do something in other window
 (use-package ob-julia-vterm
   :after org
   :commands org-babel-execute:julia-vterm
-  :init
+  :config
   (add-to-list 'org-babel-load-languages '(julia-vterm . t)))
 #+end_src
 ** Kotlin
@@ -2377,9 +2321,9 @@ Do something in other window
   :hook (kotlin-ts-mode . eglot-ensure)
   :mode "\\.kts?\\'"
   :config
-  (setenv "JAVA_OPTS" "-Xmx8g")
   (add-hook 'kotlin-ts-mode-hook
             (defun my/kotlin-ts-setup ()
+              (setenv "JAVA_OPTS" "-Xmx8g")
               (setq-local
                read-process-output-max (* 16 1024 1024)
                eglot-autoshutdown t
@@ -2419,55 +2363,6 @@ Do something in other window
   :custom
   (ktlint-flymake-args '("--android")))
 #+end_src
-** Java
-#+begin_src emacs-lisp
-(use-package java-ts-mode
-  :ensure nil
-  :hook (java-ts-mode . (lambda () (run-hooks 'java-mode-hook)))
-  :hook (java-mode . eglot-ensure)
-  :config
-  (unless noninteractive
-    (after! eglot
-            (let ((args
-                   (format
-                    "--add-modules=ALL-SYSTEM
-                  -data %s
-                  --add-opens java.base/java.util=ALL-UNNAMED
-                  --add-opens java.base/java.lang=ALL-UNNAMED
-                  -XX:+UseAdaptiveSizePolicy
-                  -XX:GCTimeRatio=4
-                  -XX:AdaptiveSizePolicyWeight=90
-                  --jvm-arg=-XX:+UseG1GC
-                  --jvm-arg=-XX:+UseStringDeduplication
-                  -Xmx32G
-                  -Xms2G
-                  -Xverify:none" (expand-file-name "java-worskpace" my/cache-dir)))
-                  (init-options `(:settings
-                                  (:java
-                                   (:imports
-                                    (:gradle
-                                     (:wrapper
-                                      (:checksums
-                                       [
-                                        ]
-                                       ))))
-                                   (:configuration
-                                    :format (:settings (:url ,(expand-file-name (locate-user-emacs-file "cache/eclipse-java-google-style.xml"))
-                                                             :profile "GoogleStyle"))
-                                    :autobuild (:enabled t)
-                                    :contentProvider (:preferred "fernflower"))
-                                   )
-                                  :extendedClientCapabilities (:classFileContentsSupport t)
-                                  :bundles ,(let ((bundles-dir (expand-file-name (locate-user-emacs-file "cache/language-server/java/bundles" user-emacs-directory)))
-                                                  jdtls-bundles)
-                                              (->> (when (file-directory-p bundles-dir)
-                                                     (directory-files bundles-dir t "\\.jar$"))
-                                                   (append jdtls-bundles)
-                                                   (apply #'vector)))
-                                  )))
-              (setf (alist-get 'java-ts-mode eglot-server-programs) `(,(or (executable-find "jdtls") "jdtls")  :initializationOptions ,init-options))
-              (setf (alist-get 'java-mode eglot-server-programs) `(,(or (executable-find "jdtls") "jdtls") :initializationOptions ,init-options))))))
-#+end_src
 ** PDF
 #+begin_src emacs-lisp
 (use-package pdf-tools
@@ -2475,9 +2370,7 @@ Do something in other window
   :config
   (setq pdf-view-use-scaling t)
   (add-hook 'pdf-view-mode-hook #'my/disable-line-numbers)
-  (add-to-list 'recentf-exclude "/**/*.pdf")
-  (after! undo-tree
-          (add-to-list 'undo-tree-incompatible-major-modes 'pdf-view-mode)))
+  (add-to-list 'recentf-exclude "/**/*.pdf"))
 #+end_src
 ** Shell
 #+begin_src emacs-lisp
@@ -2488,8 +2381,7 @@ Do something in other window
   :mode ("\\.sh\\'" . (lambda () (sh-mode) (sh-set-shell "bash")))
   :mode ("\\.bashrc\\'" . (lambda () (sh-mode) (sh-set-shell "bash")))
   :config
-  (setq sh-basic-offset 4
-        sh-indentation 4))
+  (setq sh-basic-offset 4))
 #+end_src
 *** Org Babel
 #+begin_src emacs-lisp
@@ -2515,7 +2407,6 @@ Do something in other window
   :init (my/map-Open "!" '("Container" . docker)))
 #+end_src
 ** Latex
-Mostly only used for double checking after org export.
 #+begin_src emacs-lisp
 (use-package auctex
   :after org
@@ -2532,6 +2423,15 @@ Mostly only used for double checking after org export.
 (use-package cdlatex
   :hook (org-mode . org-cdlatex-mode)
   :hook (LaTeX-mod . turn-on-cdlatex))
+#+end_src
+** Typst
+#+begin_src emacs-lisp
+(use-package typst-ts-mode
+  :custom
+  (typst-ts-watch-options "--open")
+  (typst-ts-mode-enable-raw-blocks-highlight t)
+  :config
+  (keymap-set typst-ts-mode-map "C-c C-c" #'typst-ts-tmenu))
 #+end_src
 ** Markdown Mode
 #+begin_src emacs-lisp
@@ -2559,17 +2459,6 @@ Mostly only used for double checking after org export.
 (use-package yaml-pro
   :hook (yaml-ts-mode . yaml-pro-ts-mode)
   :config
-  (defun yaml-pro-edit-initialize-buffer-filter-args-advice (args)
-    (if-let ((mode (language-detection-detect-mode (buffer-string))))
-        (cl-destructuring-bind (parent-buffer buffer initial-text type initialize path) args
-          (let ((init-func (lambda ()
-                             (funcall mode)
-                             (when initialize
-                               (call-interactively initialize)))))
-            (list parent-buffer buffer initial-text type init-func path)))
-      args))
-  (advice-add 'yaml-pro-edit-initialize-buffer :filter-args #'yaml-pro-edit-initialize-buffer-filter-args-advice)
-
   :bind (:map yaml-pro-ts-mode-map
               ("C-c j" . yaml-pro-ts-move-subtree-down)
               ("C-c k" . yaml-pro-ts-move-subtree-up)
@@ -2642,7 +2531,6 @@ Mostly only used for double checking after org export.
   (setq
    mail-user-agent 'mu4e-user-agent
    read-mail-command 'mu4e
-   mu4e-maildir my/mail-dir
    mu4e-confirm-quit nil
    ;; This is set to 't' to avoid mail syncing issues when using mbsync
    mu4e-change-filenames-when-moving t
@@ -2699,9 +2587,9 @@ Mostly only used for double checking after org export.
 #+end_src
 * Org Mode
 #+begin_src emacs-lisp
+(defconst my-org-base-dir "~/org")
 (defun my/relative-org (dir)
   "Makes a sting representing a directory relative to my org base directory"
-  (setq my-org-base-dir "~/org")
   (concat (file-name-as-directory my-org-base-dir) dir))
 (use-package org
   :ensure nil ;; included in emacs
@@ -2724,11 +2612,11 @@ Mostly only used for double checking after org export.
         org-pretty-entities t
         org-pretty-entities-include-sub-superscripts t
         org-list-allow-alphabetical t
-        org-catch-invisible-edits 'smart
+        org-fold-catch-invisible-edits 'smart
         org-special-ctrl-a/e t
         org-return-follows-link t
-        org-export-backends '(latex beamer html ascii)
-
+        org-export-backends '(latex beamer typst md html)
+        org-export-allow-bind-keywords t
         browse-url-browser-function (cond
                                      (IS-MAC #'browse-url-default-macosx-browser)
                                      (IS-LINUX #'browse-url-xdg-open))))
@@ -2741,14 +2629,6 @@ Mostly only used for double checking after org export.
         (sp-local-pair 'org-mode "\\(" "\\)")
         (sp-local-pair 'org-mode "$" "$"))
 #+end_src
-** Org Modern
-#+begin_src emacs-lisp
-(use-package org-modern
-  :hook (org-mode . org-modern-mode)
-  :custom
-  (org-modern-star 'replace)
-  (org-modern-replace-stars "◉○◈◇✳"))
-#+end_src
 ** Keybindings
 #+begin_src emacs-lisp
 (use-package org
@@ -2760,8 +2640,6 @@ Mostly only used for double checking after org export.
       "+" #'org-ctrl-c-minus
       "," #'org-switchb
       "@" #'org-cite-insert
-      "." #'consult-org-heading
-      "/" #'counsel-org-goto-all
       "A" #'org-archive-subtree
       "e" #'org-export-dispatch
       "f" #'org-footnote-action
@@ -2841,30 +2719,6 @@ Mostly only used for double checking after org export.
       "s N" 'widen
       "s S" 'org-sort))
 #+end_src
-** Agenda
-#+begin_src emacs-lisp
-(use-package org-gcal
-  :after org-agenda
-  :unless noninteractive
-  :if (and IS-PERSONAL (executable-find "pass") (file-exists-p (concat (getenv "PASSWORD_STORE_DIR") "/google.com/api/client_secret.gpg")))
-  :commands (org-gcal-sync)
-  :init (my/map-Open
-         "a" '("agenda" . org-gcal-sync))
-  :custom
-  (org-gcal-client-id (auth-source-pass-get 'secret "google.com/api/client_id"))
-  (org-gcal-client-secret (auth-source-pass-get 'secret "google.com/api/client_secret"))
-  (org-gcal-fetch-file-alist `(("kbakheat@gmail.com" . ,(my/relative-org "/agenda/google.org"))))
-  (org-gcal-notify-p t)
-  (org-gcal-recurring-events-mode 'nested)
-  (oauth2-auto-plstore (concat my/etc-dir "oauth2-auto.plist"))
-  :config
-  (cl-loop for (key . value) in org-gcal-file-alist
-           do (append! org-agenda-files value))
-  (unless (file-exists-p oauth2-auto-plstore) (f-touch oauth2-auto-plstore))
-  (use-package plstore
-    :ensure nil
-    :config (add-to-list 'plstore-encrypt-to "kbakheat@gmail.com")))
-#+end_src
 ** Presenting
 #+begin_src emacs-lisp
 (use-package visual-fill-column
@@ -2917,6 +2771,14 @@ Mostly only used for double checking after org export.
         ;; Images
         (add-hook 'org-mode-hook #'org-display-inline-images)
         (add-hook 'org-babel-after-execute-hook #'org-redisplay-inline-images))
+#+end_src
+** Org typst
+#+begin_src emacs-lisp
+(use-package ox-typst
+  :custom
+  (org-typst-from-latex-environment #'org-typst-from-latex-with-naive)
+  (org-typst-from-latex-fragment #'org-typst-from-latex-with-naive)
+  :after org)
 #+end_src
 ** Notes
 #+begin_src emacs-lisp
@@ -3124,7 +2986,7 @@ Mostly only used for double checking after org export.
                               "default"
                               "org"
                               "init")))))
-            (insert (format "(setq engrave-faces-preset-styles '%S)\n" engrave-faces-preset-styles))
+            (insert (format "(setq engrave-faces-current-preset-style '%S)\n" engrave-faces-current-preset-style))
             (insert (format "(setq engrave-faces-themes '%S)\n" engrave-faces-themes))
             (insert (format "(setq load-path '%S)\n" load-path))
             (insert (format "(setq exec-path '%S)\n" exec-path)))))
@@ -3155,7 +3017,7 @@ DOCSTRING and BODY are as in `defun'.
          (dolist (targets (list ,@(nreverse where-alist)))
            (dolist (target (cdr targets))
              (advice-add target (car targets) #',symbol))))))
-  (defvar-local org-export-has-code-p nil)
+  (defvar org-export-has-code-p nil)
 
   (defadvice! org-export-expect-no-code (&rest _)
     :before #'org-export-as
@@ -3163,7 +3025,7 @@ DOCSTRING and BODY are as in `defun'.
 
   (defadvice! org-export-register-code (&rest _)
     :after #'org-latex-src-block
-    :after #'org-latex-inline-src-block-engraved
+    :after #'org-latex-inline-src-block--engraved
     (setq org-export-has-code-p t))
 
   (defadvice! org-latex-example-block-engraved (orig-fn example-block contents info)
@@ -3181,13 +3043,13 @@ DOCSTRING and BODY are as in `defun'.
   :after org
   :config
   <<engrave-faces-init>>
-  (setq org-latex-listings 'engraved))
+  (setq org-latex-src-block-backend 'engraved))
 (use-package engrave-faces-html
   :ensure engrave-faces
   :after org
   :config
   <<engrave-faces-init>>
-  (setq org-latex-listings 'engraved))
+  (setq org-latex-src-block-backend 'engraved))
 #+end_src
 ** Nix Shell
 #+begin_src emacs-lisp

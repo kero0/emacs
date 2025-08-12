@@ -161,15 +161,18 @@
               postBuild = ''
                 for executable in $(ls $out/bin/*); do
                   wrapProgram "$executable" \
+                      --set MY_EMACS_PATH ${./.} \
                       --prefix PATH : ${emacsWithPkgs}/bin:${dependencies}/bin \
                       --set MY_TREESIT_PATH "${base.pkgs.treesit-grammars.with-all-grammars}/lib" \
                       --set FONTCONFIG_FILE ${
                         pkgs.makeFontsConf {
                           fontDirectories = [
-                            fonts
+                            "${fonts}/share/fonts"
                           ];
                         }
                       } \
+                      --set OSFONTDIR "${fonts}/share/fonts" \
+                      --set TYPST_FONT_PATHS "${fonts}/share/fonts" \
                       --set ASPELL_CONF 'dict-dir ${dependencies}/lib/aspell'
                 done
               '';
