@@ -1,6 +1,5 @@
 * Setup
 #+PROPERTY: header-args :tangle config.el :results output silent :noweb yes :lexical t :eval never-export
-#+startup: fold
 #+auto_tangle: t
 #+begin_src emacs-lisp
 ;; -*- lexical-binding: t; -*-
@@ -19,16 +18,13 @@
 (eval-and-compile
   (defconst IS-MAC      (eq system-type 'darwin))
   (defconst IS-LINUX    (memq system-type '(gnu gnu/linux gnu/kfreebsd berkeley-unix)))
-  (defconst IS-WINDOWS  (memq system-type '(cygwin windows-nt ms-dos)))
-  (defconst IS-BSD      (memq system-type '(darwin berkeley-unix gnu/kfreebsd)))
-  ;; personal or work
   (defconst IS-PERSONAL t)
-  (defconst IS-WORK     (not IS-PERSONAL))
   (defconst my/available-cores
     (string-to-number
-     (shell-command-to-string (if (eq system-type 'darwin)
-                                  "sysctl -n hw.ncpu"
-                                "nproc --all")))))
+     (shell-command-to-string
+      (cond
+       (IS-MAC "sysctl -n hw.ncpu")
+       (IS-LINUX "nproc --all"))))))
 #+end_src
 *** Directories
 #+begin_src emacs-lisp
@@ -1999,8 +1995,7 @@ Do something in other window
   :custom
   (eglot-booster-io-only (not (version< emacs-version "30")))
   :config
-  (eglot-booster-mode)
-  (setf (car eglot-booster--boost) (executable-find "emacs-lsp-booster")))
+  (eglot-booster-mode))
 #+end_src
 ** Flycheck Eglot
 #+begin_src emacs-lisp
@@ -2951,7 +2946,6 @@ Do something in other window
 *** =ox-chameleon=
 #+begin_src emacs-lisp
 (use-package ox-chameleon
-  :ensure nil
   :after org
   :config
   (add-to-list 'org-latex-packages-alist '("" "scrextend" nil))
@@ -2961,8 +2955,8 @@ Do something in other window
 #+end_src
 *** Async patch
 #+begin_src emacs-lisp
-(when (not noninteractive)
-  (after! ox
+(unless noninteractive
+  (after! (ox engrave-faces)
           (setq org-export-async-init-file (make-temp-file "org-export-async-init-file" nil ".el"))
           (defun my/get-loaded-nix-file (name)
             (car (load-history-filename-element
@@ -2992,64 +2986,54 @@ Do something in other window
             (insert (format "(setq exec-path '%S)\n" exec-path)))))
 #+end_src
 *** Syntax Highlighting
-#+name: engrave-faces-init
-#+begin_src emacs-lisp :tangle no
-;;; Definers
-(eval-and-compile
-  (defmacro defadvice! (symbol arglist &optional docstring &rest body)
-    "Define an advice called SYMBOL and add it to PLACES.
+#+begin_src emacs-lisp
+(use-package engrave-faces
+  :after org
+  :custom
+  (org-latex-src-block-backend 'engraved)
+  :config
+  (require 'engrave-faces-html)
+  (require 'engrave-faces-latex)
+  (eval-and-compile
+    (defmacro defadvice! (symbol arglist &optional docstring &rest body)
+      "Define an advice called SYMBOL and add it to PLACES.
 
 ARGLIST is as in `defun'. WHERE is a keyword as passed to `advice-add', and
 PLACE is the function to which to add the advice, like in `advice-add'.
 DOCSTRING and BODY are as in `defun'.
 
 \(fn SYMBOL ARGLIST &optional DOCSTRING &rest [WHERE PLACES...] BODY\)"
-    (declare (doc-string 3) (indent defun))
-    (unless (stringp docstring)
-      (push docstring body)
-      (setq docstring nil))
-    (let (where-alist)
-      (while (keywordp (car body))
-        (push `(cons ,(pop body) (ensure-list ,(pop body)))
-              where-alist))
-      `(progn
-         (defun ,symbol ,arglist ,docstring ,@body)
-         (dolist (targets (list ,@(nreverse where-alist)))
-           (dolist (target (cdr targets))
-             (advice-add target (car targets) #',symbol))))))
-  (defvar org-export-has-code-p nil)
+      (declare (doc-string 3) (indent defun))
+      (unless (stringp docstring)
+        (push docstring body)
+        (setq docstring nil))
+      (let (where-alist)
+        (while (keywordp (car body))
+          (push `(cons ,(pop body) (ensure-list ,(pop body)))
+                where-alist))
+        `(progn
+           (defun ,symbol ,arglist ,docstring ,@body)
+           (dolist (targets (list ,@(nreverse where-alist)))
+             (dolist (target (cdr targets))
+               (advice-add target (car targets) #',symbol))))))
+    (defvar org-export-has-code-p nil)
 
-  (defadvice! org-export-expect-no-code (&rest _)
-    :before #'org-export-as
-    (setq org-export-has-code-p nil))
+    (defadvice! org-export-expect-no-code (&rest _)
+      :before #'org-export-as
+      (setq org-export-has-code-p nil))
 
-  (defadvice! org-export-register-code (&rest _)
-    :after #'org-latex-src-block
-    :after #'org-latex-inline-src-block--engraved
-    (setq org-export-has-code-p t))
+    (defadvice! org-export-register-code (&rest _)
+      :after #'org-latex-src-block
+      :after #'org-latex-inline-src-block--engraved
+      (setq org-export-has-code-p t))
 
-  (defadvice! org-latex-example-block-engraved (orig-fn example-block contents info)
-    "Like `org-latex-example-block', but supporting an engraved backend"
-    :around #'org-latex-example-block
-    (let ((output-block (funcall orig-fn example-block contents info)))
-      (if (eq 'engraved (plist-get info :latex-listings))
-          (format "\\begin{Code}[alt]\n%s\n\\end{Code}" output-block)
-        output-block))))
-#+end_src
-#+begin_src emacs-lisp
-;; both installed by engrave-faces
-(use-package engrave-faces-latex
-  :ensure engrave-faces
-  :after org
-  :config
-  <<engrave-faces-init>>
-  (setq org-latex-src-block-backend 'engraved))
-(use-package engrave-faces-html
-  :ensure engrave-faces
-  :after org
-  :config
-  <<engrave-faces-init>>
-  (setq org-latex-src-block-backend 'engraved))
+    (defadvice! org-latex-example-block-engraved (orig-fn example-block contents info)
+      "Like `org-latex-example-block', but supporting an engraved backend"
+      :around #'org-latex-example-block
+      (let ((output-block (funcall orig-fn example-block contents info)))
+        (if (eq 'engraved (plist-get info :latex-listings))
+            (format "\\begin{Code}[alt]\n%s\n\\end{Code}" output-block)
+          output-block)))))
 #+end_src
 ** Nix Shell
 #+begin_src emacs-lisp
@@ -3070,13 +3054,6 @@ DOCSTRING and BODY are as in `defun'.
               (evil-org-set-key-theme)))
   (use-package evil-org-agenda :ensure nil)
   (evil-org-agenda-set-keys))
-#+end_src
-** Org Src
-#+begin_src emacs-lisp
-(use-package org-src-context
-  :after org
-  :init (my/local-leader-def-org-mode
-         "S" '("src LSP" . org-src-context-mode)))
 #+end_src
 ** Poly Org
 #+begin_src emacs-lisp
