@@ -1,5 +1,6 @@
 .DS_STORE
 result
+templates-local.eld
 
 eln-cache
 elpa

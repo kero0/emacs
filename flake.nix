@@ -161,6 +161,7 @@
               postBuild = ''
                 for executable in $(ls $out/bin/*); do
                   wrapProgram "$executable" \
+                      --set MY_EMACS_PATH ${./.} \
                       --prefix PATH : ${emacsWithPkgs}/bin:${dependencies}/bin \
                       --set MY_TREESIT_PATH "${base.pkgs.treesit-grammars.with-all-grammars}/lib" \
                       --set FONTCONFIG_FILE ${

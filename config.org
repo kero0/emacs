@@ -1602,6 +1602,9 @@ Do something in other window
   :demand (not noninteractive)
   :custom
   (tempel-trigger-prefix "<")
+  (tempel-path
+   (list (concat my/emacs-dir "templates.eld")
+         (concat my/emacs-dir "templates-local.eld")))
   :config
   (define-key tempel-map (kbd "<TAB>") #'tempel-next)
   ;; Setup completion at point
@@ -1617,10 +1620,6 @@ Do something in other window
       (push #'tempel-expand completion-at-point-functions)))
   :hook (prog-mode . tempel-setup-capf)
   :hook (text-mode . tempel-setup-capf))
-(use-package tempel-collection
-  :after tempel
-  :config
-  (tempel-collection))
 #+end_src
 ** Marginalia
 #+begin_src emacs-lisp
