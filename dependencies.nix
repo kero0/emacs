@@ -96,7 +96,6 @@ with pkgs;
   # typst
   typst
 
-  lilypond
   mu
   msmtp
 ]

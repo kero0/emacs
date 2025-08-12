@@ -2397,9 +2397,9 @@ Do something in other window
 (use-package dockerfile-mode
   :mode ("Dockerfile.*\\'" . dockerfile-mode))
 
-(use-package docker
-  :commands docker
-  :init (my/map-Open "!" '("Container" . docker)))
+;; (use-package docker
+;;   :commands docker
+;;   :init (my/map-Open "!" '("Container" . docker)))
 #+end_src
 ** Latex
 #+begin_src emacs-lisp
@@ -2740,28 +2740,6 @@ Do something in other window
               (org-remove-inline-images)
               (org-present-show-cursor)
               (org-present-read-write))))
-#+end_src
-** LilyPond
-#+begin_src emacs-lisp
-(use-package lilypond-mode
-  :ensure nil ;; Comes with lilypond, installed with nix
-  :preface (defvar my/lilypond (executable-find "lilypond"))
-  :mode ("\\.ly\\'" . LilyPond-mode)
-  :commands (LilyPond-mode)
-  :if my/lilypond
-  :init (defalias 'lilypond-mode 'LilyPond-mode))
-(use-package ob-lilypond
-  :ensure nil
-  :after (org lilypond-mode)
-  :commands (org-babel-lilypond-tangle org-babel-execute:lilypond)
-  :if my/lilypond
-  :config
-  (require 'ob-yaml)
-  ;; org-babel-lilypond-commands is a list of strings. We set just the first one to lilypond
-  (setf (car org-babel-lilypond-commands) (executable-find "lilypond"))
-  (setopt org-babel-lilypond-commands org-babel-lilypond-commands)
-  (add-to-list 'org-babel-load-languages '(lilypond . t))
-  (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages))
 #+end_src
 ** Org Previews
 #+begin_src emacs-lisp
