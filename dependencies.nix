@@ -7,6 +7,7 @@ with pkgs;
   binutils
   curl
   fd
+  fontconfig
   gitFull
   gnutls
   imagemagick
@@ -19,10 +20,6 @@ with pkgs;
 
   # lsp
   emacs-lsp-booster
-  clang-tools
-
-  # grammar
-  languagetool
 
   # spell
   enchant

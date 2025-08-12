@@ -808,12 +808,14 @@ Do something in other window
 
 (set-fontset-font "fontset-default" nil (font-spec :name my/font/name))
 (set-fontset-font "fontset-default" 'ethiopic (font-spec :name "Noto Sans Ethiopic"))
+(set-fontset-font "fontset-default" 'greek (font-spec :name "Noto Sans"))
 (set-fontset-font "fontset-default" 'coptic (font-spec :name "Noto Sans Coptic"))
 (set-fontset-font "fontset-default" 'egyptian (font-spec :name "Noto Sans Egyptian Hieroglyphs"))
 
 (my/leader-def "U" '("Insert Unicode char (by name)" . insert-char))
 (my/map-menu! "Input-Language" "I"
-  "C"   '("Coptic" . (lambda () (interactive) (set-input-method "coptic")))
+  "c"   '("Coptic" . (lambda () (interactive) (set-input-method "coptic")))
+  "g"   '("Greek" . (lambda () (interactive) (set-input-method "greek")))
   "d"   '("Default" . (lambda () (interactive) (set-input-method nil)))
   "ESC" '("Default" . (lambda () (interactive) (set-input-method nil))))
 (keymap-set global-map "C-c l" (cons "Input-Language" my/map-Input-Language-map))
@@ -2743,6 +2745,18 @@ Do something in other window
 #+end_src
 ** Org Previews
 #+begin_src emacs-lisp
+(define-minor-mode my/org-display
+          "display latex previews and images"
+          :lighter nil
+          :keymap nil
+          (if my/org-display
+              (progn
+                (org-latex-preview)
+                (org-display-inline-images)
+                (add-hook 'org-babel-after-execute-hook #'org-redisplay-inline-images nil t))
+            (progn
+              (org-remove-inline-images)
+              (remove-hook 'org-babel-after-execute-hook #'org-redisplay-inline-images t))))
 (after! org
         ;; Latex fragments
         (add-hook 'org-mode-hook #'org-latex-preview)
@@ -2763,9 +2777,8 @@ Do something in other window
         (setq org-preview-latex-default-process 'luamagick)
 
         (plist-put org-format-latex-options :scale 2)
-        ;; Images
-        (add-hook 'org-mode-hook #'org-display-inline-images)
-        (add-hook 'org-babel-after-execute-hook #'org-redisplay-inline-images))
+        (my/local-leader-def-org-mode
+         "d" '("Toggle image display" . my/org-display)))
 #+end_src
 ** Org typst
 #+begin_src emacs-lisp
@@ -2809,6 +2822,7 @@ Do something in other window
   (org-roam-v2-ack t)
   (org-roam-directory (my/relative-org "roam"))
   (org-roam-completion-everywhere t)
+  (org-roam-db-location (expand-file-name "org-roam.db" my/cache-dir))
   (org-roam-capture-templates
    '(
      <<roam-templates>>
@@ -2941,6 +2955,11 @@ Do something in other window
 #+begin_src emacs-lisp
 (use-package ox-html
   :ensure nil
+  :after org)
+#+end_src
+*** =ox-hugo=
+#+begin_src emacs-lisp
+(use-package ox-hugo
   :after org)
 #+end_src
 *** =ox-chameleon=
