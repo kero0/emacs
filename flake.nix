@@ -24,10 +24,6 @@
       url = "github:jdtsmith/eglot-booster";
       flake = false;
     };
-    packages-org-src-context = {
-      url = "github:karthink/org-src-context";
-      flake = false;
-    };
     packages-ox-chameleon = {
       url = "github:tecosaur/ox-chameleon";
       flake = false;
@@ -116,34 +112,13 @@
               package = base;
               alwaysEnsure = true;
               alwaysTangle = true;
-              extraEmacsPackages =
-                epkgs: with epkgs; [
-                  engrave-faces
-                  ox-chameleon
-                  dependencies
-
-                  elisp-refs
-                  emacsql
-                  epkgs.f
-                  fringe-helper
-                  ghub
-                  goto-chg
-                  iedit
-                  llama
-                  s
-                  shrink-path
-                  treepy
-                  with-editor
-                ];
+              extraEmacsPackages = _: [
+                dependencies
+              ];
               override = self: _: {
                 eglot-booster = mkTrivialPkg {
                   pkgs = self;
                   name = "eglot-booster";
-                  buildInputs = [ ];
-                };
-                org-src-context = mkTrivialPkg {
-                  pkgs = self;
-                  name = "org-src-context";
                   buildInputs = [ ];
                 };
                 ox-chameleon = mkTrivialPkg {

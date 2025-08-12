@@ -142,22 +142,6 @@
         "type": "github"
       }
     },
-    "packages-org-src-context": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1708417134,
-        "narHash": "sha256-znfBXCWpooZTOMuP4ap2wjUsSpaz41NS2h9YSdgZacQ=",
-        "owner": "karthink",
-        "repo": "org-src-context",
-        "rev": "625fc800950ed16dbf77c666e5129087b2315e2a",
-        "type": "github"
-      },
-      "original": {
-        "owner": "karthink",
-        "repo": "org-src-context",
-        "type": "github"
-      }
-    },
     "packages-ox-chameleon": {
       "flake": false,
       "locked": {
@@ -180,7 +164,6 @@
         "git-hooks": "git-hooks",
         "nixpkgs": "nixpkgs_2",
         "packages-eglot-booster": "packages-eglot-booster",
-        "packages-org-src-context": "packages-org-src-context",
         "packages-ox-chameleon": "packages-ox-chameleon"
       }
     }
