@@ -2397,9 +2397,9 @@ Do something in other window
 (use-package dockerfile-mode
   :mode ("Dockerfile.*\\'" . dockerfile-mode))
 
-(use-package docker
-  :commands docker
-  :init (my/map-Open "!" '("Container" . docker)))
+;; (use-package docker
+;;   :commands docker
+;;   :init (my/map-Open "!" '("Container" . docker)))
 #+end_src
 ** Latex
 #+begin_src emacs-lisp
