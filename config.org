@@ -989,7 +989,7 @@ Do something in other window
   (my/map-Open "`" '("Show marks" . evil-show-marks))
   :config
   (setq evil-fringe-mark-show-special t)
-  (my/map-Toggle "f" '("Evil Marks" . evil-fringe-mark-mode)))
+  (my/map-Toggle "m" '("Evil Marks" . evil-fringe-mark-mode)))
 #+end_src
 
 ** Bookmark
@@ -1495,6 +1495,20 @@ Do something in other window
   (vundo-compact-display nil)
   (vundo-glyph-alist vundo-unicode-symbols))
 #+end_src
+* File templates
+#+begin_src emacs-lisp
+(use-package autoinsert
+  :ensure nil
+  :custom
+  (auto-insert-alist '(("." . my/auto-insert)))
+  (auto-insert-query nil)
+  (auto-insert-directory (expand-file-name "file-templates/" my/emacs-dir))
+  :hook (after-init . auto-insert-mode)
+  :config
+  (defun my/auto-insert ()
+    (interactive)
+    (tempel-insert 'auto-insert)))
+#+end_src
 * Completion
 ** Corfu
 #+begin_src emacs-lisp
@@ -1603,6 +1617,7 @@ Do something in other window
   (tempel-path
    (list (concat my/emacs-dir "templates.eld")
          (concat my/emacs-dir "templates-local.eld")))
+  (tempel-user-elements (list #'my/tempel-include))
   :config
   (define-key tempel-map (kbd "<TAB>") #'tempel-next)
   ;; Setup completion at point
@@ -1616,8 +1631,18 @@ Do something in other window
     (unless (member #'tempel-expand completion-at-point-functions)
       (make-local-variable 'completion-at-point-functions)
       (push #'tempel-expand completion-at-point-functions)))
+  (defun my/tempel-include (elt)
+    (when (eq (car-safe elt) 'i)
+      (if-let (template (alist-get (cadr elt) (tempel--templates)))
+          (cons 'l template)
+        (message "Template %s not found" (cadr elt))
+        nil)))
   :hook (prog-mode . tempel-setup-capf)
   :hook (text-mode . tempel-setup-capf))
+(use-package eglot-tempel
+  :unless noninteractive
+  :after eglot
+  :hook eglot-mode)
 #+end_src
 ** Marginalia
 #+begin_src emacs-lisp
@@ -1810,7 +1835,10 @@ Do something in other window
   :unless noninteractive
   :custom
   (apheleia-remote-algorithm 'local)
-  :config (apheleia-global-mode +1))
+  :commands (apheleia-mode)
+  :init
+  (my/map-Toggle
+   "f" '("autoformatting" . apheleia-mode)))
 #+end_src
 ** Linting
 #+begin_src emacs-lisp
@@ -1982,7 +2010,11 @@ Do something in other window
              (setq-local completion-category-defaults nil)
              (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster)
              (advice-add 'eglot-completion-at-point :around #'cape-wrap-noninterruptible)
-             (setq-local completion-at-point-functions (list #'eglot-completion-at-point))))))
+             (setq-local completion-at-point-functions
+                         (list (cape-capf-super
+                                #'eglot-completion-at-point
+                                #'tempel-expand
+                                #'cape-keyword)))))))
 #+end_src
 ** Eglot Tempel
 #+begin_src emacs-lisp
@@ -1997,6 +2029,8 @@ Do something in other window
   :custom
   (eglot-booster-io-only (not (version< emacs-version "30")))
   :config
+  (setf (car eglot-booster--boost) (executable-find "emacs-lsp-booster"))
+  (setf (car eglot-booster--boost-io-only) (executable-find "emacs-lsp-booster"))
   (eglot-booster-mode))
 #+end_src
 ** Flycheck Eglot
@@ -2593,30 +2627,29 @@ Do something in other window
   :commands org-mode
   :mode ("\\.org\\'" . org-mode)
   :config
-  (require 'org-tempo)
   (dolist (scheme '("ftp" "http" "https" "mailto" "news"))
     (org-link-set-parameters scheme
                              :follow
                              `(lambda (url arg)
                                 (browse-url (concat ,scheme ":" url) arg))))
-  :init
-  (setq org-src-preserve-indentation nil
-        org-edit-src-content-indentation 0
-        org-directory (my/relative-org "general/")
-        org-insert-heading-respect-content t
-        org-export-in-background t
-        org-export-with-sub-superscripts '{}
-        org-pretty-entities t
-        org-pretty-entities-include-sub-superscripts t
-        org-list-allow-alphabetical t
-        org-fold-catch-invisible-edits 'smart
-        org-special-ctrl-a/e t
-        org-return-follows-link t
-        org-export-backends '(latex beamer typst md html)
-        org-export-allow-bind-keywords t
-        browse-url-browser-function (cond
-                                     (IS-MAC #'browse-url-default-macosx-browser)
-                                     (IS-LINUX #'browse-url-xdg-open))))
+  :custom
+  (org-src-preserve-indentation nil)
+  (org-edit-src-content-indentation 0)
+  (org-directory (my/relative-org "general/"))
+  (org-insert-heading-respect-content t)
+  (org-export-in-background t)
+  (org-export-with-sub-superscripts '{})
+  (org-pretty-entities t)
+  (org-pretty-entities-include-sub-superscripts nil)
+  (org-list-allow-alphabetical t)
+  (org-fold-catch-invisible-edits 'smart)
+  (org-special-ctrl-a/e t)
+  (org-return-follows-link t)
+  (org-export-backends '(latex beamer typst md html))
+  (org-export-allow-bind-keywords t)
+  (browse-url-browser-function (cond
+                                (IS-MAC #'browse-url-default-macosx-browser)
+                                (IS-LINUX #'browse-url-xdg-open))))
 #+end_src
 ** Smartparens
 #+begin_src emacs-lisp
