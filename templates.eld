@@ -117,7 +117,7 @@ org-mode
  "#+TITLE: " (file-name-base (or (buffer-file-name) (buffer-name))) n
  "#+AUTHOR: " user-full-name n
  "#+EMAIL: " user-mail-address n
- "#+OPTIONS:" "toc:nil ^:t _:t {}:t author:nil title:nil timestamp:nil html-postamble:nil float:nil" n
+ "#+OPTIONS: " "toc:nil ^:t _:t {}:t author:nil title:nil timestamp:nil html-postamble:nil float:nil" n
  n n p q)
 
 ;; Local Variables:
