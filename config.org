@@ -2199,6 +2199,23 @@ Do something in other window
   :config (my/local-leader-def-python-mode
            "d" '("generate docstring" . numpydoc-generate)))
 #+end_src
+*** ein
+#+begin_src emacs-lisp
+(use-package ein
+  :mode ("\\.ipynb\\'" . ein:notebook-mode)
+  :commands ein:run
+  :init
+  (defalias 'pm--visible-buffer-name 'pm--buffer-name)
+  :config
+  (use-package polymode
+   :config
+   (require 'polymode-core))
+  (require 'ein-jupyter)
+  (require 'ein-log)
+  :custom
+  (ein:output-type-preference 'ein:output-type-prefer-pretty-text-over-html)
+  (ein:worksheet-enable-undo t))
+#+end_src
 ** C/C++
 #+begin_src emacs-lisp
 (unless noninteractive
