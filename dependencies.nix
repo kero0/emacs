@@ -8,7 +8,6 @@ with pkgs;
   curl
   fd
   fontconfig
-  gitFull
   gnutls
   imagemagick
   nodePackages.prettier
