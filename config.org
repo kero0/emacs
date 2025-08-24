@@ -2553,11 +2553,11 @@ Do something in other window
      (concat
       "\n*" user-full-name "*\n"
       "Email: " name "@gmail.com\n")))
-  (defun my/udmercy-signature ()
+  (defun my/gatech-signature ()
     (my/wrap-signature
      (concat
       "\n*" user-full-name "*\n"
-      "Email: bakheakm@udmercy.edu")))
+      "Email: kbakheat3@gatech.edu")))
 
   (setq
    mail-user-agent 'mu4e-user-agent
@@ -2576,7 +2576,7 @@ Do something in other window
    mu4e-contexts (list
                   (my/create-mu4e-context "kbakheat-gmail" "kbakheat@gmail.com" (my/gmail-signature "kbakheat") "smtp.gmail.com")
                   (my/create-mu4e-context "kirolsb5-gmail" "kirolsb5@gmail.com" (my/gmail-signature "kirolsb5") "smtp.gmail.com" "a")
-                  (my/create-mu4e-context "bakheakm-udmercy" "bakheakm@udmercy.edu" (my/udmercy-signature) "smtp.office365.com"))))
+                  (my/create-mu4e-context "kbakheat3-gatech" "kbakheat3@gatech.edu" (my/gatech-signature) "smtp.office365.com" "s"))))
 
 
 (use-package mu4e-alert
