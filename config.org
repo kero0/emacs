@@ -792,6 +792,11 @@ Do something in other window
 * UI
 ** Fancy Compile
 #+begin_src emacs-lisp
+(use-package compile
+  :unless noninteractive
+  :ensure nil
+  :custom
+  (compilation-scroll-output 'first-error))
 (use-package ansi-color
   :unless noninteractive
   :ensure nil
