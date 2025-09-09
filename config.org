@@ -1263,25 +1263,12 @@ Do something in other window
                ("<backtab>" . expreg-contract)))
 #+end_src
 ** evil text obj
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
 (use-package evil-textobj-tree-sitter
   :after (evil treesit)
   :unless noninteractive
   :config
   (require 'evil-textobj-tree-sitter-core)
-  (defun meain/fancy-narrow-to-thing (thing)
-    (interactive)
-    (if (buffer-narrowed-p) (fancy-widen))
-    (let ((range (evil-textobj-tree-sitter--range 1 (list (intern thing)))))
-      (fancy-narrow-to-region (car range) (cdr range))))
-  (my/map-menu! "Narrow" "N"
-    "n" `("widen" . ,(lambda () (interactive) (fancy-widen)))
-    "f" `("function" . ,(lambda () (interactive) (meain/fancy-narrow-to-thing "function.outer")))
-    "c" `("class" . ,(lambda () (interactive) (meain/fancy-narrow-to-thing "class.outer")))
-    "C" `("comment" . ,(lambda () (interactive) (meain/fancy-narrow-to-thing "comment.outer")))
-    "o" `("loop" . ,(lambda () (interactive) (meain/fancy-narrow-to-thing "loop.outer")))
-    "i" `("conditional" . ,(lambda () (interactive) (meain/fancy-narrow-to-thing "conditional.outer")))
-    "a" `("parameter" . ,(lambda () (interactive) (meain/fancy-narrow-to-thing "parameter.outer"))))
   ;; copied from doomemacs
   (defvar +tree-sitter-inner-text-objects-map (make-sparse-keymap))
   (defvar +tree-sitter-outer-text-objects-map (make-sparse-keymap))
@@ -1295,7 +1282,7 @@ Do something in other window
     "[g" +tree-sitter-goto-previous-map
     "]g" +tree-sitter-goto-next-map)
   (which-key-add-keymap-based-replacements +tree-sitter-inner-text-objects-map
-    "A" `("call" . ,(evil-textobj-tree-sitter-get-textobj ("parameter.inner" "call.inner")))
+    "a" `("argument" . ,(evil-textobj-tree-sitter-get-textobj "parameter.inner"))
     "f" `("function" . ,(evil-textobj-tree-sitter-get-textobj "function.inner"))
     "F" `("call" . ,(evil-textobj-tree-sitter-get-textobj "call.inner"))
     "C" `("class" . ,(evil-textobj-tree-sitter-get-textobj "class.inner"))
@@ -1303,7 +1290,7 @@ Do something in other window
     "l" `("loop" . ,(evil-textobj-tree-sitter-get-textobj "loop.inner"))
     "c" `("comment" . ,(evil-textobj-tree-sitter-get-textobj "comment.inner")))
   (which-key-add-keymap-based-replacements +tree-sitter-outer-text-objects-map
-    "A" `("call" . ,(evil-textobj-tree-sitter-get-textobj ("parameter.outer" "call.outer")))
+    "a" `("argument" . ,(evil-textobj-tree-sitter-get-textobj "parameter.outer"))
     "f" `("function" . ,(evil-textobj-tree-sitter-get-textobj "function.outer"))
     "F" `("call" . ,(evil-textobj-tree-sitter-get-textobj "call.outer"))
     "C" `("class" . ,(evil-textobj-tree-sitter-get-textobj "class.outer"))
@@ -1311,7 +1298,7 @@ Do something in other window
     "l" `("loop" . ,(evil-textobj-tree-sitter-get-textobj "loop.outer"))
     "c" `("comment" . ,(evil-textobj-tree-sitter-get-textobj "comment.outer")))
   (which-key-add-keymap-based-replacements +tree-sitter-goto-previous-map
-    "A" `("call" . ,(evil-textobj-tree-sitter-get-textobj ("parameter.outer" "call.outer") t))
+    "a" `("argument" . ,(evil-textobj-tree-sitter-get-textobj "parameter.outer"))
     "f" `("function" . ,(evil-textobj-tree-sitter-get-textobj "function.outer" t))
     "F" `("call" . ,(evil-textobj-tree-sitter-get-textobj "call.outer" t))
     "C" `("class" . ,(evil-textobj-tree-sitter-get-textobj "class.outer" t))
@@ -1319,7 +1306,7 @@ Do something in other window
     "v" `("conditional" . ,(evil-textobj-tree-sitter-get-textobj "conditional.outer" t))
     "l" `("loop" . ,(evil-textobj-tree-sitter-get-textobj "loop.outer" t)))
   (which-key-add-keymap-based-replacements +tree-sitter-goto-next-map
-    "A" `("call" . ,(evil-textobj-tree-sitter-get-textobj ("parameter.outer" "call.outer")))
+    "a" `("argument" . ,(evil-textobj-tree-sitter-get-textobj "parameter.outer"))
     "f" `("function" . ,(evil-textobj-tree-sitter-get-textobj "function.outer"))
     "F" `("call" . ,(evil-textobj-tree-sitter-get-textobj "call.outer"))
     "C" `("class" . ,(evil-textobj-tree-sitter-get-textobj "class.outer"))
