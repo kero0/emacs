@@ -1690,6 +1690,7 @@ Do something in other window
   :unless noninteractive
   :custom
   (consult-line-start-from-top t)
+  (consult-preview-key "M-.")
   :bind
   (:map my/maps/leader
         ("/" . consult-ripgrep))
@@ -1739,8 +1740,7 @@ Do something in other window
 (use-package embark-consult
   :if (and (featurep 'embark)
            (featurep 'consult))
-  :after (embark consult)
-  :hook (embark-collect-mode . embark-consult-preview-minor-mode))
+  :after (embark consult))
 #+end_src
 ** Prescient
 #+begin_src emacs-lisp
