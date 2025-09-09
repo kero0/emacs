@@ -50,6 +50,7 @@ with pkgs;
         pdfcol
         siunitx
         standalone
+        subfiles
         tcolorbox
         wrapfig
         xcolor
