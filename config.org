@@ -1965,12 +1965,15 @@ Do something in other window
   (diff-hl-show-staged-changes nil)
   :bind (:map my/map-Git-map
               ("r" . diff-hl-revert-hunk))
+  :bind (:map evil-motion-state-map
+              ("]h" . diff-hl-next-hunk)
+              ("[h" . diff-hl-previous-hunk))
   :hook (prog-mode text-mode)
   :hook (magit-post-refresh . diff-hl-magit-post-refresh))
 
 (use-package diff-hl-margin
   :ensure diff-hl
-  :hook (diff-hl-mode))
+  :hook diff-hl-mode)
 (use-package diff-hl-dired
   :ensure diff-hl
   :hook dired-mode)
