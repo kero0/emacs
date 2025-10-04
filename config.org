@@ -517,7 +517,7 @@ Do something in other window
                  (list (line-beginning-position) (line-end-position))))
   (comment-or-uncomment-region beg end))
 (my/map-menu! "Toggle" "t"
-  "d" '("debug" . toggle-debug-on-error)
+  "D" '("debug" . toggle-debug-on-error)
   "/" '("comment" . comment-or-uncomment-region))
 #+end_src
 **** Search
@@ -1891,6 +1891,7 @@ Do something in other window
 (use-package envrc
   :hook (after-init . envrc-global-mode))
 (use-package editorconfig
+  :unless noninteractive
   :config
   (editorconfig-mode 1))
 #+end_src
@@ -2069,8 +2070,19 @@ Do something in other window
 *** eldoc-box
 #+begin_src emacs-lisp
 (use-package eldoc-box
-  :hook (emacs-lisp-mode . eldoc-box-hover-at-point-mode)
-  :hook (eglot-managed-mode . eldoc-box-hover-at-point-mode))
+  :hook (emacs-lisp-mode . eldoc-box-hover-mode)
+  :hook (eglot-managed-mode . eldoc-box-hover-mode)
+  :custom
+  (eldoc-box-max-pixel-height #'my/eldoc-box-height)
+  :init
+  (defun my/eldoc-box-height ()
+    (round (* 0.3 (frame-pixel-height))))
+  :config
+  (my/map-Toggle "d" '("Doc tooltip" . eldoc-box-hover-mode))
+  (evil-define-key '(normal insert) prog-mode-map
+    "C-j" eldoc-box-hover-mode-map 'eldoc-box-scroll-down)
+  (evil-define-key '(normal insert) prog-mode-map
+    "C-k" eldoc-box-hover-mode-map 'eldoc-box-scroll-up))
 #+end_src
 
 ** dape
