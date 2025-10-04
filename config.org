@@ -804,7 +804,7 @@ Do something in other window
 #+end_src
 ** Fonts
 #+begin_src emacs-lisp
-(defconst my/font/name "JetBrainsMono Nerd Font Mono") ;; ligatures assumes this font
+(defconst my/font/name "JetBrainsMono Nerd Font Mono")
 (defvar my/font/size 180)
 
 (set-face-attribute 'default nil :font my/font/name :height my/font/size)
@@ -817,8 +817,10 @@ Do something in other window
 (set-fontset-font "fontset-default" 'coptic (font-spec :name "Noto Sans Coptic"))
 (set-fontset-font "fontset-default" 'egyptian (font-spec :name "Noto Sans Egyptian Hieroglyphs"))
 
-(my/leader-def "U" '("Insert Unicode char (by name)" . insert-char))
-(my/map-menu! "Input-Language" "I"
+(my/leader-def
+ "U" '("Insert Unicode char (by name)" . insert-char)
+ "=" '("Font size" . global-text-scale-adjust))
+(my/map-menu! "Input-Language" "l"
   "c"   '("Coptic" . (lambda () (interactive) (set-input-method "coptic")))
   "g"   '("Greek" . (lambda () (interactive) (set-input-method "greek")))
   "d"   '("Default" . (lambda () (interactive) (set-input-method nil)))
