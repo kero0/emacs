@@ -1757,6 +1757,21 @@ Do something in other window
     :config
     (vertico-prescient-mode)))
 #+end_src
+** Copilot
+#+begin_src emacs-lisp
+(use-package copilot
+  :bind (:map my/map-Toggle-map
+              ("c" . copilot-mode))
+  :bind (:map copilot-completion-map
+              ("<right>" . 'copilot-accept-completion)
+              ("C-f" . 'copilot-accept-completion)
+              ("M-<right>" . 'copilot-accept-completion-by-word)
+              ("M-f" . 'copilot-accept-completion-by-word)
+              ("C-e" . 'copilot-accept-completion-by-line)
+              ("<end>" . 'copilot-accept-completion-by-line)
+              ("M-n" . 'copilot-next-completion)
+              ("M-p" . 'copilot-previous-completion)))
+#+end_src
 * Terminal
 ** EAT
 #+begin_src emacs-lisp
