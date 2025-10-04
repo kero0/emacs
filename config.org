@@ -936,7 +936,6 @@ Do something in other window
   #+end_src
 ** Word Wrapping
 #+begin_src emacs-lisp
-(global-visual-line-mode t)
 (my/map-Toggle
  "w" '("Word wrap" . visual-line-mode))
 #+end_src
