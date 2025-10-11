@@ -186,11 +186,7 @@
 ** Backup files
 #+begin_src emacs-lisp
 (setopt backup-directory-alist `(("." . ,(expand-file-name "backups" my/local-dir)))
-        auto-save-file-name-transforms `((".*" ,(expand-file-name "auto-save/" my/local-dir) t))
-        tramp-backup-directory-alist nil
-        tramp-verbose 0
-        tramp-chunksize 2000
-        tramp-use-ssh-controlmaster-options nil)
+        auto-save-file-name-transforms `((".*" ,(expand-file-name "auto-save/" my/local-dir) t)))
 #+end_src
 ** Lockfiles
 #+begin_src emacs-lisp
@@ -278,6 +274,40 @@ I want windows that start with '*' to be opened in the lower 1/3 of the frame. T
 
 (set-frame-parameter (selected-frame) 'fullscreen 'maximized)
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
+#+end_src
+* TRAMP
+#+begin_src emacs-lisp
+(after! tramp
+        (add-hook 'find-file-hook (defun my/disable-vc-remote ()
+                                    (when (file-remote-p (buffer-file-name))
+                                      (setq-local vc-handled-backends nil))))
+
+        (connection-local-set-profile-variables
+         'remote-direct-async-process
+         '((tramp-direct-async-process . t)))
+
+        (connection-local-set-profiles
+         '(:application tramp :protocol "scp")
+         'remote-direct-async-process)
+
+        (remove-hook 'find-file-hook #'doom-modeline-update-buffer-file-name)
+        (remove-hook 'find-file-hook 'forge-bug-reference-setup)
+
+        (after! compile
+                (remove-hook 'compilation-mode-hook #'tramp-compile-disable-ssh-controlmaster-options))
+        (setq
+         remote-file-name-inhibit-locks t
+         tramp-use-scp-direct-remote-copying t
+         remote-file-name-inhibit-auto-save-visited t
+         tramp-copy-size-limit (* 1024 1024)
+         tramp-verbose 1
+         tramp-backup-directory-alist nil
+         tramp-verbose 0
+         tramp-chunksize 2000
+         tramp-use-ssh-controlmaster-options nil)
+
+        (add-hook 'tramp-file-local-hook
+                  (lambda () (vc-mode -1))))
 #+end_src
 * Keybindings
 ** Basics
