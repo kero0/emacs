@@ -4,7 +4,6 @@ with pkgs;
   # basics
   fontconfig
   bashInteractive
-  binutils
   curl
   fd
   fontconfig
@@ -93,7 +92,6 @@ with pkgs;
   # typst
   typst
 
-  mu
   msmtp
 ]
 ++ lib.optionals (!stdenv.isLinux) [
