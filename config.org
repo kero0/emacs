@@ -2003,6 +2003,7 @@ Do something in other window
 ** diff-hl
 #+begin_src emacs-lisp
 (use-package diff-hl
+  :unless noninteractive
   :custom
   (vc-handled-backends '(Git))
   (fringes-outside-margins t)
@@ -2100,6 +2101,7 @@ Do something in other window
 *** eldoc-box
 #+begin_src emacs-lisp
 (use-package eldoc-box
+  :unless noninteractive
   :hook (emacs-lisp-mode . eldoc-box-hover-mode)
   :hook (eglot-managed-mode . eldoc-box-hover-mode)
   :custom
@@ -2996,10 +2998,6 @@ Do something in other window
   :ensure nil
   :after org
   :config
-  (setq org-latex-pdf-process
-        '("lualatex -shell-escape -interaction nonstopmode %f"
-          "lualatex -shell-escape -interaction nonstopmode %f"))
-
   (add-to-list 'org-latex-logfiles-extensions "tex")
   (add-to-list 'org-latex-packages-alist '("" "siunitx"))
   (add-to-list 'org-latex-packages-alist '("" "amsmath"))
