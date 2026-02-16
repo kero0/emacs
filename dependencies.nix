@@ -55,7 +55,7 @@ with pkgs;
   ))
   poetry
 
-  pyright
+  pyrefly
   ruff
 
   # jupyter notebooks
