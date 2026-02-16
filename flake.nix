@@ -79,7 +79,7 @@
             paths = import ./dependencies.nix pkgs;
           };
         in
-        rec {
+        {
           ${system} = import nixpkgs {
             inherit system;
             overlays = [ emacs-overlay.overlay ];
@@ -164,12 +164,13 @@
               self.checks.${system}.pre-commit-check.enabledPackages
             ];
           };
-          formatter.${system} = nixpkgs.legacyPackages.${system}.nixfmt-rfc-style;
+          formatter.${system} = nixpkgs.legacyPackages.${system}.nixfmt;
           checks.${system} = {
             pre-commit-check = git-hooks.lib.${system}.run {
               src = ./.;
               hooks = {
                 deadnix.enable = true;
+                flake-checker.enable = true;
                 statix = {
                   enable = true;
                   settings = {
