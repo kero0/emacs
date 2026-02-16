@@ -3010,6 +3010,13 @@ Do something in other window
                  ("\\paragraph{%s}" . "\\paragraph*{%s}")
                  ("\\subparagraph{%s}" .    "\\subparagraph*{%s}")))
   (add-to-list 'org-latex-classes
+               '("jdf" "\\documentclass{jdf}"
+                 ("\\section{%s}" . "\\section*{%s}")
+                 ("\\subsection{%s}" . "\\subsection*{%s}")
+                 ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+                 ("\\paragraph{%s}" . "\\paragraph*{%s}")
+                 ("\\subparagraph{%s}" .    "\\subparagraph*{%s}")))
+  (add-to-list 'org-latex-classes
                '("exam"
                  "\\documentclass{exam}"
                  ("\\begin{questions} %% %s"
