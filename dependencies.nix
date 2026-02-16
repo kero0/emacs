@@ -28,34 +28,6 @@ with pkgs;
     ]
   ))
 
-  # latex but mostly for ox-latex
-  (
-    with texlive;
-    texlive.combine {
-      inherit
-        scheme-small
-        biblatex
-        dvisvgm
-        latexmk
-        ;
-      inherit
-        babel
-        capt-of
-        environ
-        everypage
-        float
-        fvextra
-        needspace
-        pdfcol
-        siunitx
-        standalone
-        subfiles
-        tcolorbox
-        wrapfig
-        xcolor
-        ;
-    }
-  )
   ghostscript
 
   # nix
