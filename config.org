@@ -2108,37 +2108,7 @@ Do something in other window
   (defun my/eldoc-box-height ()
     (round (* 0.3 (frame-pixel-height))))
   :config
-  (my/map-Toggle "d" '("Doc tooltip" . eldoc-box-hover-mode))
-  (evil-define-key '(normal insert) prog-mode-map
-    "C-j" eldoc-box-hover-mode-map 'eldoc-box-scroll-down)
-  (evil-define-key '(normal insert) prog-mode-map
-    "C-k" eldoc-box-hover-mode-map 'eldoc-box-scroll-up))
-#+end_src
-
-** dape
-#+begin_src emacs-lisp
-(use-package dape
-  ;; To use window configuration like gud (gdb-mi)
-  :bind
-  (:map my/map-Open-map
-        ("?" . dape))
-  :custom
-  (dape-buffer-window-arrangment 'gud)
-  (dape-buffer-window-arrangment 'right)
-  (dape-adapter-dir (concat my/local-dir "dape-adapters/"))
-  :config
-  (my/leader-def
-   "d" (cons "Debug" dape-global-map))
-  ;; By default dape uses gdb keybinding prefix
-  (setq dape-key-prefix "\C-x\C-a")
-
-  ;; Kill compile buffer on build success
-  ;; (add-hook 'dape-compile-compile-hooks 'kill-buffer)
-
-  ;; Save buffers on startup, useful for interpreted languages
-  (add-hook 'dape-start-hook
-            (defun dape--save-on-start ()
-              (save-some-buffers t t))))
+  (my/map-Toggle "d" '("Doc tooltip" . eldoc-box-hover-mode)))
 #+end_src
 * Languages
 ** Nix
