@@ -2139,8 +2139,10 @@ Do something in other window
   (setq python-check-command "pyflakes")
   :config
   (after! apheleia
-          (add-hook 'python-mode-hook (lambda ()
-                                        (setq-local apheleia-formatter '(ruff ruff-isort)))))
+          (setf (alist-get 'python-mode apheleia-mode-alist)
+                '(ruff-isort ruff))
+          (setf (alist-get 'python-ts-mode apheleia-mode-alist)
+                '(ruff-isort ruff)))
   (after! treesit-auto
           (add-to-list 'major-mode-remap-alist '(python-mode . python-ts-mode)))
 
@@ -2155,17 +2157,11 @@ Do something in other window
   (my/local-leader-def python-mode
       "r" '("repl/python" . run-python)
       "b" '("send buffer to repl" . python-shell-send-buffer))
-  (after! dape
-          ;; for some reason "python" doesn't find the module "debugpy". It seems that dape
-          ;; uses a strange way to lookup in path. This lets it find the installed debugger
-          ;; when I'm using my global python env and can be reset in dir locals or direnv
-          ;; otherwise
-          (plist-put (alist-get 'debugpy dape-configs) 'command (executable-find "python3")))
   (add-hook 'python-mode-hook 'eglot-ensure))
 
 (use-package flymake-ruff
   :unless noninteractive
-  :hook (eglot-managed-mode . flymake-ruff-load))
+  :hook (python . flymake-ruff-load))
 
 (use-package ob-python
   :ensure nil
