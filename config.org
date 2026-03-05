@@ -1619,7 +1619,6 @@ Do something in other window
   :unless noninteractive
   :demand (not noninteractive)
   :custom
-  (tempel-trigger-prefix "<")
   (tempel-path
    (list (concat my/emacs-dir "templates.eld")
          (concat my/emacs-dir "templates-local.eld")))
@@ -1634,9 +1633,9 @@ Do something in other window
     ;; often when you don't expect it.
     ;; NOTE: We add `tempel-expand' *before* the main programming mode Capf,
     ;; such that it will be tried first.
-    (unless (member #'tempel-expand completion-at-point-functions)
-      (make-local-variable 'completion-at-point-functions)
-      (push #'tempel-expand completion-at-point-functions)))
+    (setq-local completion-at-point-functions
+                (cons (cape-capf-trigger #'tempel-complete ?<)
+                      completion-at-point-functions)))
   (defun my/tempel-include (elt)
     (when (eq (car-safe elt) 'i)
       (if-let (template (alist-get (cadr elt) (tempel--templates)))
