@@ -142,6 +142,23 @@
         "type": "github"
       }
     },
+    "packages-logview": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1771445602,
+        "narHash": "sha256-85yVGP2Q5+gJoXm17EHRtTqHGaKcMMH5Q6uPA7fiaSc=",
+        "owner": "doublep",
+        "repo": "logview",
+        "rev": "b74cc5c24de325da80bb07ea3b2e7e0afcddb24a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "doublep",
+        "ref": "android-mode",
+        "repo": "logview",
+        "type": "github"
+      }
+    },
     "packages-ox-chameleon": {
       "flake": false,
       "locked": {
@@ -164,6 +181,7 @@
         "git-hooks": "git-hooks",
         "nixpkgs": "nixpkgs_2",
         "packages-eglot-booster": "packages-eglot-booster",
+        "packages-logview": "packages-logview",
         "packages-ox-chameleon": "packages-ox-chameleon"
       }
     }

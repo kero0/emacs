@@ -23,6 +23,10 @@
       url = "github:jdtsmith/eglot-booster";
       flake = false;
     };
+    packages-logview = {
+      url = "github:doublep/logview/android-mode";
+      flake = false;
+    };
     packages-ox-chameleon = {
       url = "github:tecosaur/ox-chameleon";
       flake = false;
@@ -119,12 +123,13 @@
               extraEmacsPackages = _: [
                 dependencies
               ];
-              override = self: _: {
+              override = self: super: {
                 eglot-booster = mkTrivialPkg {
                   pkgs = self;
                   name = "eglot-booster";
                   buildInputs = [ ];
                 };
+                logview = super.logview.overrideAttrs { src = inputs.packages-logview; };
                 ox-chameleon = mkTrivialPkg {
                   pkgs = self;
                   name = "ox-chameleon";

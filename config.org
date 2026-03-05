@@ -2541,7 +2541,27 @@ Do something in other window
 #+begin_src emacs-lisp
 (use-package conllu-mode
   :mode "\\.conllu\\'")
-  #+end_src emacs-lisp
+#+end_src
+** Logs
+#+begin_src emacs-lisp
+(use-package logview
+  :config
+  (evil-set-initial-state 'logview-mode 'emacs)
+  (add-to-list 'logview-additional-submodes
+               '("Android" .
+                 ((format . "TIMESTAMP THREAD IGNORED LEVEL NAME: MESSAGE")
+                  (levels . "AndroidLevels")
+                  (timestamp . "AndroidTimestamp"))))
+  (add-to-list 'logview-additional-level-mappings
+               '("AndroidLevels"
+                 (error "E")
+                 (warning "W")
+                 (information "I")
+                 (debug "D")
+                 (trace "V")))
+  (add-to-list 'logview-additional-timestamp-formats
+               '("AndroidTimestamp" (java-pattern . "MM-dd HH:mm:ss.SSS"))))
+#+end_src
 * Mail
 ** mu4e
 #+begin_src emacs-lisp :lexical t
