@@ -938,7 +938,13 @@ Do something in other window
 
   (modus-themes-to-toggle '(modus-operandi modus-vivendi))
   :config
-  (load-theme 'modus-operandi t)
+  (defun my/set-theme-per-frame (frame)
+    (with-selected-frame frame
+      (unless (display-graphic-p frame)
+        (make-local-variable 'modus-themes-common-palette-overrides)
+        (append! modus-themes-common-palette-overrides '(bg-main unspecified)))
+      (load-theme 'modus-operandi t)))
+  (my/set-theme-per-frame (selected-frame))
   (my/map-Toggle
    "t" '("theme" . modus-themes-toggle)))
 #+end_src
