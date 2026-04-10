@@ -9,7 +9,7 @@ with pkgs;
   fontconfig
   gnutls
   imagemagick
-  nodePackages.prettier
+  prettier
   (ripgrep.override { withPCRE2 = true; })
   unzip
   wget
