@@ -100,7 +100,7 @@ org-mode
 (si "src_" p "{" q "}")
 (s "#+begin_src " q n r n "#+end_src" :post (org-edit-src-code))
 (sp "#+begin_src python" n r n "#+end_src" :post (org-edit-src-code))
-(sl "#+begin_src log" n r n "#+end_src" :post (org-edit-src-code))
+(sl "#+begin_src logview" n r "#+end_src" :post (evil-paste-from-register ?+))
 (sel "#+begin_src emacs-lisp" n r n "#+end_src" :post (org-edit-src-code))
 (babel
  "#+LaTeX_HEADER: \\usepackage[english]{babel}" n
@@ -113,12 +113,15 @@ org-mode
  "#+LaTeX_HEADER: \\babelfont[coptic]{sf}{Free Serif Avva Shenouda}" n
  "#+LaTeX_HEADER: \\babelfont[coptic]{tt}{Free Serif Avva Shenouda}" n
  n)
+(title "#+TITLE: " (file-name-base (or (buffer-file-name) (buffer-name))) n)
 (auto-insert
- "#+TITLE: " (file-name-base (or (buffer-file-name) (buffer-name))) n
  "#+AUTHOR: " user-full-name n
  "#+EMAIL: " user-mail-address n
  "#+OPTIONS: " "toc:nil ^:t _:t {}:t author:nil title:nil timestamp:nil html-postamble:nil float:nil" n
  n n p q)
+
+python-mode
+(main "def main():" n r> q n n "if __name__ == \"__main__\":" n> r> "main()")
 
 ;; Local Variables:
 ;; mode: lisp-data

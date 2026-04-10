@@ -32,7 +32,7 @@ with pkgs;
 
   # nix
   nil
-  nixfmt-rfc-style
+  nixfmt
 
   # python
   (python3.withPackages (
