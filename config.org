@@ -2988,6 +2988,8 @@ Do something in other window
 (use-package ox-latex
   :ensure nil
   :after org
+  :custom
+  (org-latex-prefer-user-labels t)
   :config
   (add-to-list 'org-latex-logfiles-extensions "tex")
   (add-to-list 'org-latex-packages-alist '("" "siunitx"))
