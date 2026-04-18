@@ -1,4 +1,7 @@
 name: "Build Check"
+permissions:
+  contents: write
+  pull-requests: write
 on:
   workflow_dispatch:
   pull_request:
@@ -25,19 +28,40 @@ jobs:
       - name: Diff profile
         id: diff
         run: |
-          echo "# $RUNNER_OS changes" > message-body
-          nix store diff-closures --accept-flake-config --derivation \
-              "github:${{ github.repository }}/${{ github.event.before }}" \
-              "." | sed 's/\x1b\[[0-9;]*m//g' >> message-body
+          {
+            echo 'body<<EOF'
+            echo "# $RUNNER_OS changes"
 
-      - name: Comment PR
-        uses: peter-evans/create-or-update-comment@v4
+            nix store diff-closures --accept-flake-config --derivation \
+                "github:${{ github.repository }}/${{ github.event.before }}" \
+                "." | sed 's/\x1b\[[0-9;]*m//g'
+
+            echo 'EOF'
+          } >> $GITHUB_OUTPUT
+      - name: Comment on PR
         if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
         with:
-          body-path: message-body
-          issue-number: ${{ github.event.pull_request.number }}
-      - name: Comment Commit
-        uses: peter-evans/commit-comment@v3
+          script: |
+            const body = `${{ steps.diff.outputs.body }}`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
+
+      - name: Comment on commit
         if: github.event_name == 'push'
+        uses: actions/github-script@v7
         with:
-          body-path: message-body
+          script: |
+            const body = `${{ steps.diff.outputs.body }}`;
+
+            await github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body
+            });
