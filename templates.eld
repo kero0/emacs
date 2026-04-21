@@ -1,10 +1,14 @@
+fundamental-mode
+
+(shebang "")
+
 fundamental-mode :when IS-PERSONAL
 
 (copyright "")
 
 fundamental-mode
 
-(auto-insert (i copyright))
+(auto-insert (i shebang) (i copyright))
 (today (format-time-string "%Y-%m-%d"))
 
 (fixme (if (derived-mode-p 'emacs-lisp-mode) ";; " comment-start) "FIXME ")
@@ -63,7 +67,7 @@ c-mode c++-mode c-ts-mode c++-ts-mode
 (main "int main(int argc, char **argv) {" n>
       "return 0;" n
       "}")
-(guard-h "#ifndef "
+(guard "#ifndef "
    (upcase (file-name-nondirectory (file-name-sans-extension buffer-file-name)))
    "_H" n
    "#define "
@@ -78,7 +82,7 @@ c-mode c++-mode c-ts-mode c++-ts-mode
  (let* ((file-name (or (buffer-file-name) (buffer-name)))
        (extension (file-name-extension file-name)))
    (when (string-prefix-p "h" extension t)
-     (tempel-insert (if (derived-mode-p 'c++-mode) 'guard-hpp 'guard-h)))))
+     (tempel-insert (if (derived-mode-p 'c++-mode) 'guard-hpp 'guard)))))
 
 org-mode
 
@@ -86,8 +90,8 @@ org-mode
 (drawer ":" p ":" n r ":end:")
 (begin "#+begin_" (s name) n> r> n "#+end_" name)
 (q "#+begin_quote" n> r> n "#+end_quote")
-(sidenote "#+begin_sidenote" n> r> n "#+end_sidenote")
-(marginnote "#+begin_marginnote" n> r> n "#+end_marginnote")
+(side "#+begin_sidenote" n> r> n "#+end_sidenote")
+(margin "#+begin_marginnote" n> r> n "#+end_marginnote")
 (e "#+begin_example" n> r> n "#+end_example")
 (c "#+begin_center" n> r> n "#+end_center")
 (ea "#+begin_export ascii" n> r> n "#+end_export")
@@ -121,7 +125,12 @@ org-mode
  n n p q)
 
 python-mode
+(shebang "#!/usr/bin/env python3" n n)
 (main "def main():" n r> q n n "if __name__ == \"__main__\":" n> r> "main()")
+
+sh-mode
+(shebang "#!/usr/bin/env bash" n n)
+
 
 ;; Local Variables:
 ;; mode: lisp-data
