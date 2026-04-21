@@ -1712,6 +1712,7 @@ Do something in other window
   (:map my/maps/leader
         ("/" . consult-ripgrep))
   (:map my/map-Search-map
+        ("b" . consult-bookmark)
         ("s" . consult-line))
   (:map my/map-Buffer-map
         ("b" . consult-buffer))
@@ -1726,6 +1727,11 @@ Do something in other window
   (after! flycheck
           (my/map-menu! "Errors" "c e"
             "f" '("Consult Flymake" . consult-flymake))))
+(use-package consult-compile
+  :ensure consult
+  :bind
+  (:map my/map-Search-map
+        ("e" . consult-compile-error)))
 #+end_src
 ** Embark
 #+begin_src emacs-lisp
