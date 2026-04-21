@@ -1084,7 +1084,7 @@ Do something in other window
 * Project management
 ** Projectile
 #+begin_src emacs-lisp
-(defvar my/projectile-ignore-projects '("^/sudo:" "^/docker:" "^/nix/store"))
+(defvar my/ignore-projects '("^/sudo:" "^/docker:" "^/nix/store"))
 (use-package projectile
   :diminish
   :unless noninteractive
@@ -1098,10 +1098,10 @@ Do something in other window
   :init
   (eval-and-compile
     (setopt projectile-ignored-project-function
-            (defun my/projectile-ignore-projects (project-root)
-                "Ignore matching regexes in `my/projectile-ignore-projects'."
+            (defun my/ignore-projects (project-root)
+                "Ignore matching regexes in `my/ignore-projects'."
                 (cl-some (lambda (regex) (string-match-p regex project-root))
-                         my/projectile-ignore-projects))))
+                         my/ignore-projects))))
   :config
   (bind-keys
    ([remap next-buffer] . projectile-next-project-buffer)
@@ -1122,36 +1122,35 @@ Do something in other window
 #+begin_src emacs-lisp
 (use-package perspective
   :unless noninteractive
+  :config
+  (my/leader-def
+   "TAB" '("Workspaces" . perspective-map))
+  (which-key-add-keymap-based-replacements perspective-map
+    "TAB" '("Switch" . persp-switch))
+  (after! projectile
+          (use-package persp-projectile
+            :demand
+            :bind ([remap projectile-switch-project] . projectile-persp-switch-project))))
+(use-package persp-mode
+  :unless noninteractive
   :custom
   (persp-mode-prefix-key nil)
   (persp-suppress-no-prefix-key-warning t)
   (persp-state-default-file  (concat my/local-dir "perspective"))
   (persp-sort 'access)
   (my/kill-buffer-fun #'persp-kill-buffer*)
-  :bind
-  ([remap kill-buffer] . persp-kill-buffer*)
+  (persp-add-buffer-on-after-change-major-mode t)
+  (persp-save-dir (expand-file-name ".persp-confs/" my/local-dir))
+  :bind ([remap kill-buffer] . persp-kill-buffer*)
   :hook (after-init . persp-mode)
   :hook (ibuffer . (lambda ()
                      (persp-ibuffer-set-filter-groups)
                      (unless (eq ibuffer-sorting-mode 'alphabetic)
                        (ibuffer-do-sort-by-alphabetic))))
-  :hook (kill-emacs . persp-state-save)
-  :unless noninteractive
-  :config
-  (my/leader-def
-   "TAB" '("Workspaces" . perspective-map))
-  (which-key-add-keymap-based-replacements perspective-map
-    "TAB" '("Switch" . persp-switch))
-  (if (package-installed-p 'projectile)
-      (after! projectile
-              (use-package persp-projectile
-                :demand
-                :bind ([remap projectile-switch-project] . projectile-persp-switch-project))))
   :hook (ibuffer . (lambda ()
                      (persp-ibuffer-set-filter-groups)
                      (unless (eq ibuffer-sorting-mode 'alphabetic)
-                       (ibuffer-do-sort-by-alphabetic))))
-  :hook (kill-emacs . persp-state-save))
+                       (ibuffer-do-sort-by-alphabetic)))))
 #+end_src
 * Buffer management
 #+begin_src emacs-lisp
@@ -1169,7 +1168,6 @@ Do something in other window
   (define-ibuffer-column size
     (:name "Size" :inline t)
     (file-size-human-readable (buffer-size))))
-                                        ; next/prev buffer skip special buffers
 (setq switch-to-prev-buffer-skip-regexp '("^\\*.*\\*$"))
 #+end_src
 * Dired
