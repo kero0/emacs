@@ -1744,7 +1744,7 @@ Do something in other window
                '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
                  nil
                  (window-parameters (mode-line-format . none))))
-  (setq embark-prompter 'embark-completing-read-prompter)
+  (setq embark-prompter 'embark-keymap-prompter)
   (add-popup! #'embark-collect-mode)
   :init
   (my/map-menu! "Embark" "e"
