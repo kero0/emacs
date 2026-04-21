@@ -185,7 +185,7 @@
                   };
                 };
 
-                nixfmt-rfc-style = {
+                nixfmt = {
                   enable = true;
                   package = self.formatter.${system};
                 };
