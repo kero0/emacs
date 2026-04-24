@@ -20,10 +20,6 @@ jobs:
         uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@92148bb48b9a0c5458c53dd0b368fbfbfbaa3210
-      - uses: cachix/cachix-action@a593539ec5b1ba1eb95f89a396efd45ca2cdaf5d
-        with:
-          name: kero0
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
       - name: Build
         shell: bash
         run: nix build --accept-flake-config --show-trace -L .#
