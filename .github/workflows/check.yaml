@@ -63,3 +63,32 @@ jobs:
               commit_sha: context.sha,
               body
             });
+  builds-passed:
+    name: All builds succeeded
+    needs: build-check
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check test results
+        run: |
+          if [ "${{ needs.build-check.result }}" != "success" ]; then
+            echo "Some tests failed"
+            exit 1
+          fi
+          echo "All tests passed"
+  auto-close-dependabot:
+    name: Auto close dependabot failed PRs
+    needs: builds-passed
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    steps:
+      - name: Check test results
+        run: |
+          if [ "${{ needs.builds-passed.result }}" != "success" ]; then
+            gh pr close -d -c 'Closing failed dependabot update' "$PR_URL"
+            echo "Some tests failed"
+          fi
+          echo "All tests passed"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
