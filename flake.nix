@@ -143,7 +143,7 @@
               paths = [ emacsWithPkgs ];
               nativeBuildInputs = [ pkgs.makeWrapper ];
               postBuild = ''
-                for executable in $(ls $out/bin/*); do
+                for executable in $(ls $out/bin/* $out/Applications/*.app/Contents/MacOS/*); do
                   wrapProgram "$executable" \
                       --set MY_EMACS_PATH ${./.} \
                       --prefix PATH : ${emacsWithPkgs}/bin:${dependencies}/bin \
