@@ -136,19 +136,21 @@
   :unless noninteractive
   :ensure nil
   :config
-  (dolist (dir `("/nix/store/.*"
-                 "/tmp/.*"
-                 "/var/tmp/.*"
-                 "/var/folders/.*"
-                 "/private/tmp/.*"
-                 "/private/var/.*"
-                 "/Applications/Xcode.app/.*"
-                 "/Library/.*"
-                 "~/\\.cache.*"
-                 ,(concat my/etc-dir ".*")
-                 ,(concat my/local-dir ".*")
-                 ,(concat my/cache-dir ".*")))
-    (add-to-list 'recentf-exclude dir))
+  (let ((home (getenv "HOME")))
+    (dolist (dir `("/nix/store/.*"
+                   "/tmp/.*"
+                   "/var/tmp/.*"
+                   "/var/folders/.*"
+                   "/private/tmp/.*"
+                   "/private/var/.*"
+                   "/Applications/Xcode.app/.*"
+                   "/Library/.*"
+                   "~/\\.cache.*"
+                   ,(concat my/etc-dir ".*")
+                   ,(concat my/local-dir ".*")
+                   ,(concat my/cache-dir ".*")))
+      (add-to-list 'recentf-exclude dir)
+      (add-to-list 'recentf-exclude (string-replace home "~" dir))))
   (when-let ((dir (getenv "XDG_DATA_HOME")))
     (add-to-list 'recentf-exclude (concat dir "/.*")))
   (setq recentf-max-menu-items 100
