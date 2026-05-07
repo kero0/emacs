@@ -19,7 +19,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@900f2210b1d28bbbd0bd22d17926b9e224e8f231
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@92148bb48b9a0c5458c53dd0b368fbfbfbaa3210
+        uses: DeterminateSystems/nix-installer-action@4a754ab0c192f4d12cf88b5954b9dd13fd2d612e
       - name: Build
         shell: bash
         run: nix build --accept-flake-config --show-trace -L .#
