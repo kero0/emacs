@@ -2253,6 +2253,24 @@ Do something in other window
 #+end_src
 ** C/C++
 #+begin_src emacs-lisp
+(use-package cmake-ts-mode
+  :ensure nil
+  :mode ("CMakeLists\\.txt\\'" "\\.cmake\\'"))
+(use-package c-ts-mode
+  :ensure nil
+  :mode
+  (("\\.c\\'" . c-ts-mode)
+   ("\\.h\\'" . c-or-c++-mode))
+  :hook (c-ts-mode . (lambda () (run-hooks 'c-mode-hook)))
+  :config
+  (setq-default c-basic-offset 2))
+
+(use-package c++-ts-mode
+  :ensure nil
+  :mode ("\\.cpp\\'" "\\.cc\\'" "\\.hh\\'" "\\.hpp\\'")
+  :hook (c++-ts-mode . (lambda () (run-hooks 'c++-mode-hook)))
+  :config
+  (setq-default c-basic-offset 2))
 (unless noninteractive
   (after! eglot
           (let ((val (list "clangd"
@@ -2269,30 +2287,13 @@ Do something in other window
             (setf (alist-get 'c++-ts-mode eglot-server-programs) val)
             (setf (alist-get 'c-ts-mode eglot-server-programs) val)))
   (use-package c-ts-mode
-    ;; builtin
     :ensure nil
-    :mode
-    (("\\.c\\'" . c-ts-mode)
-     ("\\.h\\'" . c-or-c++-mode))
     :hook (c-ts-mode . eglot-ensure)
-    :hook (c-ts-mode . my/treesit-mode)
-    :hook (c-ts-mode . (lambda () (run-hooks 'c-mode-hook)))
-    :config
-    (setq-default c-basic-offset 2))
-
-  (use-package c++-ts-mode
-    ;; builtin
+    :hook (c-ts-mode . my/treesit-mode))
+  (use-package c-ts-mode
     :ensure nil
-    :mode
-    (("\\.cpp\\'" . c++-ts-mode)
-     ("\\.cc\\'" . c++-ts-mode)
-     ("\\.hh\\'" . c++-ts-mode)
-     ("\\.hpp\\'" . c++-ts-mode))
     :hook (c++-ts-mode . eglot-ensure)
-    :hook (c++-ts-mode . my/treesit-mode)
-    :hook (c++-ts-mode . (lambda () (run-hooks 'c++-mode-hook)))
-    :config
-    (setq-default c-basic-offset 2)))
+    :hook (c++-ts-mode . my/treesit-mode)))
 #+end_src
 ** Rust
 #+begin_src emacs-lisp
