@@ -1,6 +1,7 @@
 * Setup
 #+PROPERTY: header-args :tangle config.el :results output silent :noweb yes :lexical t :eval never-export
 #+auto_tangle: t
+#+startup: fold
 #+begin_src emacs-lisp
 ;; -*- lexical-binding: t; -*-
 <<variables>>
