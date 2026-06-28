@@ -2882,6 +2882,16 @@ Do something in other window
   (org-typst-from-latex-fragment #'org-typst-from-latex-with-naive)
   :after org)
 #+end_src
+** Revealjs
+#+begin_src emacs-lisp
+(use-package ox-reveal
+  :after org
+  :custom
+  (org-reveal-root (getenv "ORG_REVEAL_ROOT"))
+  (org-reveal-hlevel 1)
+  (org-reveal-theme "simple")
+  (org-reveal-mathjax t))
+#+end_src
 ** Notes
 #+begin_src emacs-lisp
 (my/map-menu! "Notes" "n")

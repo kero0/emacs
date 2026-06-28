@@ -31,6 +31,10 @@
       url = "github:tecosaur/ox-chameleon";
       flake = false;
     };
+    packages-revealjs = {
+      url = "github:hakimel/reveal.js/5.2.1";
+      flake = false;
+    };
   };
   outputs =
     inputs@{
@@ -157,7 +161,9 @@
                       } \
                       --set OSFONTDIR "${fonts}/share/fonts" \
                       --set TYPST_FONT_PATHS "${fonts}/share/fonts" \
-                      --set ASPELL_CONF 'dict-dir ${dependencies}/lib/aspell'
+                      --set ASPELL_CONF 'dict-dir ${dependencies}/lib/aspell' \
+                      --set ORG_REVEAL_ROOT '${inputs.packages-revealjs}'
+
                 done
               '';
               inherit (base) meta src version;

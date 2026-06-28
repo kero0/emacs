@@ -175,6 +175,23 @@
         "type": "github"
       }
     },
+    "packages-revealjs": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1743166283,
+        "narHash": "sha256-f5g09Xj4XF+v6Y6zW13R4PUTWkAt3wwGpa9nSypUV6w=",
+        "owner": "hakimel",
+        "repo": "reveal.js",
+        "rev": "25e52e26af09933a98afb24cfdd3574e9055034d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hakimel",
+        "ref": "5.2.1",
+        "repo": "reveal.js",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "emacs-overlay": "emacs-overlay",
@@ -182,7 +199,8 @@
         "nixpkgs": "nixpkgs_2",
         "packages-eglot-booster": "packages-eglot-booster",
         "packages-logview": "packages-logview",
-        "packages-ox-chameleon": "packages-ox-chameleon"
+        "packages-ox-chameleon": "packages-ox-chameleon",
+        "packages-revealjs": "packages-revealjs"
       }
     }
   },
