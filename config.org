@@ -3029,6 +3029,7 @@ Do something in other window
   :after org
   :custom
   (org-latex-prefer-user-labels t)
+  (org-export-with-drawers nil)
   :config
   (add-to-list 'org-latex-logfiles-extensions "tex")
   (add-to-list 'org-latex-packages-alist '("" "siunitx"))
@@ -3059,7 +3060,74 @@ Do something in other window
                  ("\\begin{parts} %s"
                   "\\end{parts}"
                   "\\begin{parts} %s"
-                  "\\end{parts}"))))
+                  "\\end{parts}")))
+  (defun my/org-latex-item (item contents info)
+    "Export ITEM as exam-class choices."
+    (let* ((parent (org-element-property :parent item))
+           (env (org-export-read-attribute :attr_latex parent :environment))
+           (checkbox (org-element-property :checkbox item))
+           (text (org-trim (or contents ""))))
+      (if (member env '("choices" "oneparchoices" "checkboxes"))
+          (concat
+           (cond
+            ((eq checkbox 'on) "\\CorrectChoice ")
+            ((eq checkbox 'trans) "\\CorrectChoice ")
+            (t "\\choice "))
+           text)
+        nil)))
+
+  (advice-add 'org-latex-item :before-until #'my/org-latex-item)
+
+  (defun my/quiz-export (add-answers-p)
+    "Export the current Org quiz with or without answers."
+    (interactive "P")
+    (let* ((src-buf      (current-buffer))
+           (src-file     (buffer-file-name))
+           (keywords     (with-current-buffer src-buf
+                           (org-element-map (org-element-parse-buffer)
+                               '(keyword)
+                             (lambda (k) (cons (org-element-property :key k)
+                                               (org-element-property :value k))))))
+           (orig-title   (or (cdr (assoc "TITLE" keywords)) "Quiz"))
+           (orig-fname   (or (cdr (assoc "EXPORT_FILE_NAME" keywords))
+                             (file-name-sans-extension
+                              (file-name-nondirectory src-file))))
+           (orig-class   (or (cdr (assoc "LATEX_CLASS" keywords)) "exam"))
+           (orig-opts    (or (cdr (assoc "LATEX_CLASS_OPTIONS" keywords)) "[]"))
+
+           (new-title    (if add-answers-p
+                             (concat orig-title " (answers)")
+                           orig-title))
+           (new-fname    (if add-answers-p
+                             (concat orig-fname " answers")
+                           orig-fname))
+           (new-opts     (if add-answers-p
+                             (if (string-match-p "\\[.*answers.*\\]" orig-opts)
+                                 orig-opts
+                               (replace-regexp-in-string
+                                "\\[\\(.*\\)\\]" "[\\1,answers]" orig-opts))
+                           (replace-regexp-in-string ",answers" ""
+                                                     (replace-regexp-in-string "\\[answers\\]" "[]" orig-opts))))
+           (tmp-buf      (generate-new-buffer "*quiz-export*")))
+      (with-current-buffer tmp-buf
+        (insert (format "#+LATEX_CLASS: %s\n" orig-class)
+                (format "#+LATEX_CLASS_OPTIONS: %s\n" new-opts)
+                (format "#+EXPORT_FILE_NAME: %s\n" new-fname)
+                (format "#+INCLUDE: \"%s\" :minlevel 1 :only-contents t\n" src-file)
+                (format "#+TITLE: %s\n" new-title))
+        ;; Strip every drawer at level-0 *in the included file*
+        (add-hook 'org-export-before-processing-hook
+                  (lambda (_)
+                    (org-element-map (org-element-parse-buffer) 'drawer
+                      (lambda (d)
+                        (when (= (org-element-property :level d) 0)
+                          (org-element-extract-element d)))))
+                  nil t)
+        (org-latex-export-to-pdf)
+        (kill-buffer))))
+
+  (defun my/quiz-export-answers ()   (interactive) (my/quiz-export t))
+  (defun my/quiz-export-no-answers () (interactive) (my/quiz-export nil)))
 #+end_src
 *** =ox-html=
 #+begin_src emacs-lisp
