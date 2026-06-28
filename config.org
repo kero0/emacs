@@ -255,6 +255,7 @@ I want windows that start with '*' to be opened in the lower 1/3 of the frame. T
 :header-args: :tangle early-init.el :noweb yes :lexical t :eval never-export
 :END:
 #+begin_src emacs-lisp
+;; -*- lexical-binding: t; -*-
 
 <<variables>>
 
