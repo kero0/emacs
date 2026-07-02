@@ -178,16 +178,16 @@
     "packages-revealjs": {
       "flake": false,
       "locked": {
-        "lastModified": 1743166283,
-        "narHash": "sha256-f5g09Xj4XF+v6Y6zW13R4PUTWkAt3wwGpa9nSypUV6w=",
+        "lastModified": 1775891818,
+        "narHash": "sha256-J0CeWxL0Gs/1pOgszHUYgSl1+9nXibgb3fNyDVMr2OQ=",
         "owner": "hakimel",
         "repo": "reveal.js",
-        "rev": "25e52e26af09933a98afb24cfdd3574e9055034d",
+        "rev": "52c6c8b2a9626915cfaa8a87ae47add261f282be",
         "type": "github"
       },
       "original": {
         "owner": "hakimel",
-        "ref": "5.2.1",
+        "ref": "6.0.1",
         "repo": "reveal.js",
         "type": "github"
       }
