@@ -107,11 +107,11 @@
     "packages-eglot-booster": {
       "flake": false,
       "locked": {
-        "lastModified": 1752690112,
-        "narHash": "sha256-xUBQrQpw+JZxcqT1fy/8C2tjKwa7sLFHXamBm45Fa4Y=",
+        "lastModified": 1782829258,
+        "narHash": "sha256-HhWR40j/WFcorp8QttXtOz5yxL1B4JUXL+9IuNpoND0=",
         "owner": "jdtsmith",
         "repo": "eglot-booster",
-        "rev": "cab7803c4f0adc7fff9da6680f90110674bb7a22",
+        "rev": "510f579409627c333ef0e9157db713b1004da842",
         "type": "github"
       },
       "original": {
