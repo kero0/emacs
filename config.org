@@ -2574,6 +2574,7 @@ Do something in other window
 
 (use-package mu4e
   :if my/enable/mu4e
+  :ensure nil
   :commands mu4e
   :init
   (add-to-list 'recentf-exclude my/mail-dir)
@@ -2639,19 +2640,6 @@ Do something in other window
                   (my/create-mu4e-context "kbakheat-gmail" "kbakheat@gmail.com" (my/gmail-signature "kbakheat") "smtp.gmail.com")
                   (my/create-mu4e-context "kirolsb5-gmail" "kirolsb5@gmail.com" (my/gmail-signature "kirolsb5") "smtp.gmail.com" "a")
                   (my/create-mu4e-context "kbakheat3-gatech" "kbakheat3@gatech.edu" (my/gatech-signature) "smtp.office365.com" "s"))))
-
-
-(use-package mu4e-alert
-  :if my/enable/mu4e
-  :after mu4e
-  :config
-  (when IS-LINUX
-    (progn (mu4e-alert-set-default-style 'libnotify)
-           (add-hook 'after-init-hook #'mu4e-alert-enable-notifications)))
-  (when IS-MAC
-    (progn (mu4e-alert-set-default-style 'notifier)
-           (add-hook 'after-init-hook #'mu4e-alert-enable-notifications)))
-  (add-hook 'after-init-hook #'mu4e-alert-enable-mode-line-display))
 #+end_src
 ** msmtp
 #+begin_src emacs-lisp
@@ -2661,22 +2649,6 @@ Do something in other window
               send-mail-function #'smtpmail-send-it
               message-sendmail-f-is-evil t
               message-sendmail-extra-arguments '("--read-envelope-from")))
-#+end_src
-** Compose mail with org mode
-#+begin_src emacs-lisp
-(use-package org-msg
-  :if my/enable/mu4e
-  :after (org mu4e)
-  :config (setq org-msg-options "html-postamble:nil H:5 num:nil ^:{} toc:nil author:nil email:nil \\n:t"
-                org-msg-startup "hidestars indent inlineimages"
-                org-msg-greeting-fmt "\nHey%s,\n\n"
-                org-msg-greeting-name-limit 3
-                org-msg-default-alternatives '((new             . (text html))
-                                               (reply-to-html   . (text html))
-                                               (reply-to-text   . (text)))
-                org-msg-convert-citation t
-                org-msg-signature "")
-  (org-msg-mode))
 #+end_src
 * Org Mode
 #+begin_src emacs-lisp
