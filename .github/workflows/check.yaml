@@ -22,20 +22,47 @@ jobs:
         uses: DeterminateSystems/nix-installer-action@1d87d45818068401a10cf16bdc5f00b24994a83f
       - name: Build
         shell: bash
-        run: nix build --accept-flake-config --show-trace -L .#
+        run: |
+          result=$(nix build --accept-flake-config --show-trace --print-out-paths --no-link -L .#)
+          res=$?
+
+          echo "result=$result" >> $GITHUB_OUTPUT
+          if [ $res -eq 0 ]; then
+            echo "build_result=success" >> $GITHUB_OUTPUT
+          else
+            echo "build_result=failure" >> $GITHUB_OUTPUT
+            exit $res
+          fi
       - name: Diff profile
         id: diff
         run: |
           {
+            new_path="${{ steps.build.outputs.result }}"
+            echo "new_path=$new_path" >> $GITHUB_OUTPUT
+            old_path=$(nix eval --accept-flake-config --raw ".#")
+            res=$?
+            if [ $res -ne 0 ]; then
+              echo "Failed to get old path for $RUNNER_OS" >> $GITHUB_OUTPUT
+              exit 0
+            fi
             echo 'body<<EOF'
             echo "# $RUNNER_OS changes"
 
             nix store diff-closures --accept-flake-config --derivation \
                 "github:${{ github.repository }}/${{ github.event.before }}" \
                 "." | sed 's/\x1b\[[0-9;]*m//g'
+                "$old_path" \
+                "$new_path" | sed 's/\x1b\[[0-9;]*m//g'
+            res=$?
 
             echo 'EOF'
           } >> $GITHUB_OUTPUT
+          if [ $res -eq 0 ]; then
+            echo "diff_result=success" >> $GITHUB_OUTPUT
+          else
+            echo "diff_result=failure" >> $GITHUB_OUTPUT
+            exit $res
+          fi
       - name: Comment on PR
         if: github.event_name == 'pull_request'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
@@ -76,19 +103,3 @@ jobs:
             exit 1
           fi
           echo "All tests passed"
-  auto-close-dependabot:
-    name: Auto close dependabot failed PRs
-    needs: builds-passed
-    runs-on: ubuntu-latest
-    if: github.event.pull_request.user.login == 'dependabot[bot]'
-    steps:
-      - name: Check test results
-        run: |
-          if [ "${{ needs.builds-passed.result }}" != "success" ]; then
-            gh pr close -d -c 'Closing failed dependabot update' "$PR_URL"
-            echo "Some tests failed"
-          fi
-          echo "All tests passed"
-        env:
-          PR_URL: ${{github.event.pull_request.html_url}}
-          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
