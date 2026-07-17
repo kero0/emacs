@@ -3084,12 +3084,16 @@ Do something in other window
                                '(keyword)
                              (lambda (k) (cons (org-element-property :key k)
                                                (org-element-property :value k))))))
+           (orig-title   (or (cdr (assoc "TITLE" keywords)) "Quiz"))
            (orig-fname   (or (cdr (assoc "EXPORT_FILE_NAME" keywords))
                              (file-name-sans-extension
                               (file-name-nondirectory src-file))))
            (orig-class   (or (cdr (assoc "LATEX_CLASS" keywords)) "exam"))
            (orig-opts    (or (cdr (assoc "LATEX_CLASS_OPTIONS" keywords)) "[]"))
 
+           (new-title    (if add-answers-p
+                             (concat orig-title " (answers)")
+                           orig-title))
            (new-fname    (if add-answers-p
                              (concat orig-fname " answers")
                            orig-fname))
@@ -3105,7 +3109,8 @@ Do something in other window
         (insert (format "#+LATEX_CLASS: %s\n" orig-class)
                 (format "#+LATEX_CLASS_OPTIONS: %s\n" new-opts)
                 (format "#+EXPORT_FILE_NAME: %s\n" new-fname)
-                (format "#+INCLUDE: \"%s\" :minlevel 1 :only-contents t\n" src-file))
+                (format "#+INCLUDE: \"%s\" :minlevel 1 :only-contents t\n" src-file)
+                (format "#+TITLE: %s\n" new-title))
         ;; Strip every drawer at level-0 *in the included file*
         (add-hook 'org-export-before-processing-hook
                   (lambda (_)
