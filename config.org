@@ -1133,7 +1133,10 @@ Do something in other window
   (after! evil
           (bind-keys
            ([remap evil-next-buffer] . projectile-next-project-buffer)
-           ([remap evil-prev-buffer] . projectile-previous-project-buffer)))
+           ([remap evil-prev-buffer] . projectile-previous-project-buffer))
+          (evil-define-key 'normal 'global
+            "] b" 'projectile-next-project-buffer
+            "[ b" 'projectile-previous-project-buffer))
   (my/map-Buffer
    "]" '("Next Buffer" . projectile-next-project-buffer)
    "[" '("Previous Buffer" . projectile-previous-project-buffer))
