@@ -1951,6 +1951,14 @@ Do something in other window
   (magit-log-arguments '("--graph" "--decorate" "--color"))
   (magit-format-file-function #'magit-format-file-nerd-icons)
   (magit-wip-merge-branch nil)
+  (magit-bury-buffer-function
+   (defun my/kill-window-and-buffer (&optional kill-buffer)
+     "Always kill the current buffer. If multiple windows are open then also kill the window."
+     (interactive "P")
+     (if (one-window-p)
+         (kill-buffer kill-buffer)
+       (kill-buffer kill-buffer)
+       (delete-window))))
   :config
   (my/map-Git
    "g" '("Status" . magit-status)
@@ -1966,6 +1974,19 @@ Do something in other window
 
   (require 'magit-wip)
   (magit-wip-mode)
+
+  (defun my/magit-killall ()
+    "Kill all magit buffers."
+    (interactive)
+    (dolist (buffer (buffer-list))
+      (when (or
+             (string-match-p "^\\*magit" (buffer-name buffer))
+             (string-match-p "^magit:" (buffer-name buffer))
+             (string-match-p "^magit-.*:" (buffer-name buffer)))
+        (kill-buffer buffer))))
+
+  (my/map-Buffer
+   "G" '("Kill magit" . my/magit-killall))
 
   (defun my/ansi-color-buffer (proc &rest _)
     (interactive)
