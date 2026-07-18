@@ -3109,8 +3109,8 @@ Do something in other window
         (insert (format "#+LATEX_CLASS: %s\n" orig-class)
                 (format "#+LATEX_CLASS_OPTIONS: %s\n" new-opts)
                 (format "#+EXPORT_FILE_NAME: %s\n" new-fname)
-                (format "#+INCLUDE: \"%s\" :minlevel 1 :only-contents t\n" src-file)
-                (format "#+TITLE: %s\n" new-title))
+                (format "#+TITLE: %s\n" new-title)
+                (format "#+INCLUDE: \"%s::Quiz\" :minlevel 1 :only-contents t\n" src-file))
         ;; Strip every drawer at level-0 *in the included file*
         (add-hook 'org-export-before-processing-hook
                   (lambda (_)
