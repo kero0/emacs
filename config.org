@@ -2998,11 +2998,12 @@ Do something in other window
         org-src-strip-leading-and-trailing-blank-lines t
         org-src-ask-before-returning-to-edit-buffer nil
         org-babel-load-languages '((emacs-lisp . t))
+        org-babel-header-args:emacs-lisp '((:session "none"))
         org-babel-default-header-args '((:session . "default")
                                         (:results . "replace")
                                         (:mkdirp . "yes")
                                         (:exports . "both")
-                                        (:cache . "yes")
+                                        (:cache . "no")
                                         (:noweb . "yes")
                                         (:hlines . "no")
                                         (:tangle . "no")
