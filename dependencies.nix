@@ -9,6 +9,7 @@ with pkgs;
   fontconfig
   gnutls
   imagemagick
+  plantuml
   prettier
   (ripgrep.override { withPCRE2 = true; })
   unzip
