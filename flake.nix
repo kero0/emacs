@@ -82,10 +82,6 @@
                 "copilot-language-server"
               ];
           };
-          dependencies = pkgs.symlinkJoin {
-            name = "dependnecies";
-            paths = import ./dependencies.nix pkgs;
-          };
         in
         {
           ${system} = import nixpkgs {
@@ -118,56 +114,90 @@
                 })
               ];
             };
-            emacsWithPkgs = pkgs.emacsWithPackagesFromUsePackage {
-              config = ./config.org;
-              defaultInitFile = true;
-              package = base;
-              alwaysEnsure = true;
-              alwaysTangle = true;
-              extraEmacsPackages = _: [
-                dependencies
-              ];
-              override = self: super: {
-                eglot-booster = mkTrivialPkg {
-                  pkgs = self;
-                  name = "eglot-booster";
-                  buildInputs = [ ];
+            mkEmacs =
+              {
+                patches ? [ ],
+              }:
+              let
+                src = pkgs.stdenv.mkDerivation {
+                  pname = "emacs-config";
+                  version = "1.0.0";
+                  src = ./.;
+                  inherit patches;
+                  installPhase = ''
+                    mkdir -p $out
+                    cp -r ${./.}/* $out/
+                  '';
                 };
-                logview = super.logview.overrideAttrs { src = inputs.packages-logview; };
-                ox-chameleon = mkTrivialPkg {
-                  pkgs = self;
-                  name = "ox-chameleon";
-                  buildInputs = with self; [ engrave-faces ];
+                dependencies = pkgs.symlinkJoin {
+                  name = "dependnecies";
+                  paths = import "${src}/dependencies.nix" pkgs;
                 };
-              };
-            };
-            default = pkgs.symlinkJoin {
-              name = "emacs";
-              pname = "emacs";
-              paths = [ emacsWithPkgs ];
-              nativeBuildInputs = [ pkgs.makeWrapper ];
-              postBuild = ''
-                for executable in $(ls $out/bin/* $out/Applications/*.app/Contents/MacOS/*); do
-                  wrapProgram "$executable" \
-                      --set MY_EMACS_PATH ${./.} \
-                      --prefix PATH : ${emacsWithPkgs}/bin:${dependencies}/bin \
-                      --set MY_TREESIT_PATH "${base.pkgs.treesit-grammars.with-all-grammars}/lib" \
-                      --set FONTCONFIG_FILE ${
-                        pkgs.makeFontsConf {
-                          fontDirectories = [
-                            "${fonts}/share/fonts"
-                          ];
-                        }
-                      } \
-                      --set OSFONTDIR "${fonts}/share/fonts" \
-                      --set TYPST_FONT_PATHS "${fonts}/share/fonts" \
-                      --set ASPELL_CONF 'dict-dir ${dependencies}/lib/aspell' \
-                      --set ORG_REVEAL_ROOT '${inputs.packages-revealjs}'
+                early-default = mkTrivialPkg {
+                  pkgs = pkgs.emacsPackagesFor base;
+                  name = "early-default";
+                  src = pkgs.runCommandLocal "early-default" { } ''
+                    mkdir -p $out
+                    cp ${src}/config.org $out/config.org
+                    ${base}/bin/emacs -Q --batch $out/config.org -f org-babel-tangle
+                    mv $out/early-init.el $out/early-default.el
+                    rm $out/config.org
+                  '';
+                };
+                emacsWithPkgs = pkgs.emacsWithPackagesFromUsePackage {
+                  config = "${src}/config.org";
+                  defaultInitFile = true;
+                  package = base;
+                  alwaysEnsure = true;
+                  alwaysTangle = true;
+                  extraEmacsPackages = _: [
+                    dependencies
+                    early-default
+                  ];
+                  override = self: super: {
+                    eglot-booster = mkTrivialPkg {
+                      pkgs = self;
+                      name = "eglot-booster";
+                      buildInputs = [ ];
+                    };
+                    logview = super.logview.overrideAttrs { src = inputs.packages-logview; };
+                    ox-chameleon = mkTrivialPkg {
+                      pkgs = self;
+                      name = "ox-chameleon";
+                      buildInputs = with self; [ engrave-faces ];
+                    };
+                    inherit early-default;
+                  };
+                };
+              in
+              pkgs.symlinkJoin {
+                name = "emacs";
+                pname = "emacs";
+                paths = [ emacsWithPkgs ];
+                nativeBuildInputs = [ pkgs.makeWrapper ];
+                postBuild = ''
+                  for executable in $(ls $out/bin/* $out/Applications/*.app/Contents/MacOS/*); do
+                    wrapProgram "$executable" \
+                        --set MY_EMACS_PATH ${./.} \
+                        --prefix PATH : ${emacsWithPkgs}/bin:${dependencies}/bin \
+                        --set MY_TREESIT_PATH "${base.pkgs.treesit-grammars.with-all-grammars}/lib" \
+                        --set FONTCONFIG_FILE ${
+                          pkgs.makeFontsConf {
+                            fontDirectories = [
+                              "${fonts}/share/fonts"
+                            ];
+                          }
+                        } \
+                        --set OSFONTDIR "${fonts}/share/fonts" \
+                        --set TYPST_FONT_PATHS "${fonts}/share/fonts" \
+                        --set ASPELL_CONF 'dict-dir ${dependencies}/lib/aspell' \
+                        --set ORG_REVEAL_ROOT '${inputs.packages-revealjs}'
 
-                done
-              '';
-              inherit (base) meta src version;
-            };
+                  done
+                '';
+                inherit (base) meta src version;
+              };
+            default = mkEmacs { };
           };
           devShells.${system}.default = pkgs.mkShell {
             inherit (self.checks.${system}.pre-commit-check) shellHook;
