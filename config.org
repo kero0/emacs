@@ -2586,26 +2586,6 @@ Do something in other window
   :mode "logcat"
   :mode "bugreport")
 #+end_src
-** PlantUML
-#+begin_src emacs-lisp
-(use-package plantuml-mode
-  :mode "\\.plantuml\\'"
-  :custom
-  (plantuml-server-url nil)
-  (plantuml-default-exec-mode 'executable)
-  (plantuml-executable-path (or (executable-find "plantuml") "/usr/bin/plantuml"))
-  (org-plantuml-exec-mode 'plantuml)
-  (org-plantuml-executable-path plantuml-executable-path)
-  :config
-  (defun my/plantuml-capf-fix ()
-    (interactive)
-    (kill-local-variable 'completion-at-point-functions)
-    (add-to-list 'completion-at-point-functions #'plantuml-completion-at-point-function))
-
-  (add-hook 'plantuml-mode-hook #'my/plantuml-capf-fix)
-  (add-to-list 'org-src-lang-modes '("plantuml" . plantuml))
-  (org-babel-do-load-languages 'org-babel-load-languages '((plantuml . t))))
-#+end_src
 * Mail
 ** mu4e
 #+begin_src emacs-lisp :lexical t
@@ -3031,6 +3011,28 @@ Do something in other window
                                         (:eval . "never-export")
                                         (:comments . "link")))
   (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages))
+#+end_src
+*** PlantUML
+#+begin_src emacs-lisp
+(use-package ob-plantuml
+  :after org
+  :ensure nil
+  :commands org-babel-execute:plantuml
+  :custom
+  (org-babel-default-header-args:plantuml '((:results . "file")
+                                            (:exports . "results")
+                                            (:cache . "no")
+                                            (:noweb . "no")
+                                            (:hlines . "no")
+                                            (:tangle . "no")
+                                            (:padnewline . "yes")
+                                            (:eval . "never-export")
+                                            (:comments . "link")))
+  :config
+  (org-babel-do-load-languages 'org-babel-load-languages '((plantuml . t)))
+  (when-let* ((plantuml-executable (executable-find "plantuml")))
+    (setopt org-plantuml-jar-path plantuml-executable
+            org-plantuml-exec-mode 'plantuml)))
 #+end_src
 ** Auto Tangle
 #+begin_src emacs-lisp
