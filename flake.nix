@@ -101,15 +101,11 @@
                 (pkgs.stdenvNoCC.mkDerivation {
                   pname = "Free Serif Avva Shenouda";
                   version = "1.0";
-                  src = fetchurl {
-                    url = "https://st-takla.org/Dlds/fonts/webfont/FreeSerifAvvaShenouda.ttf";
-                    hash = "sha256-KU1AY68Mlht+6dKEgJirKqvGrm/gqV8C6vQoLIfzilY=";
-                  };
                   dontConfigure = true;
                   dontUnpack = true;
                   installPhase = ''
                     mkdir -p $out/share/fonts/truetype
-                    cp $src $out/share/fonts/truetype/FreeSerifAvvaShenouda.ttf
+                    cp ${./fonts/FreeSerifAvvaShenouda.ttf} $out/share/fonts/truetype/FreeSerifAvvaShenouda.ttf
                   '';
                 })
               ];
