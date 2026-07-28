@@ -132,7 +132,7 @@
                 early-default = mkTrivialPkg {
                   pkgs = pkgs.emacsPackagesFor base;
                   name = "early-default";
-                  src = pkgs.runCommandLocal "early-default" { } ''
+                  src = pkgs.runCommand "early-default" { } ''
                     mkdir -p $out
                     cp ${src}/config.org $out/config.org
                     ${base}/bin/emacs -Q --batch $out/config.org -f org-babel-tangle
