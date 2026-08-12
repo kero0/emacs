@@ -105,7 +105,12 @@
                   dontUnpack = true;
                   installPhase = ''
                     mkdir -p $out/share/fonts/truetype
-                    cp ${./fonts/FreeSerifAvvaShenouda.ttf} $out/share/fonts/truetype/FreeSerifAvvaShenouda.ttf
+                    cp ${
+                      pkgs.fetchurl {
+                        url = "https://github.com/kero0/emacs/raw/55c0ec77c56e909735fffadbee853d96c285294c/fonts/FreeSerifAvvaShenouda.ttf";
+                        hash = "sha256-C30H3aWa1q7AzfbIFzh+B93WPzTm3hlftXhkKqZNXnM=";
+                      }
+                    } $out/share/fonts/truetype/FreeSerifAvvaShenouda.ttf
                   '';
                 })
               ];
