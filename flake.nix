@@ -162,12 +162,6 @@
                       buildInputs = [ ];
                     };
                     logview = super.logview.overrideAttrs { src = inputs.packages-logview; };
-                    org = super.org.overrideAttrs {
-                      src = pkgs.fetchurl {
-                        url = "https://elpa.gnu.org/packages/org-9.8.8.tar";
-                        sha256 = "0rmpf3cdk8gxynyx750366kjrs5dlna0qx91ga93z6mxfcgj0px0";
-                      };
-                    };
                     ox-chameleon = mkTrivialPkg {
                       pkgs = self;
                       name = "ox-chameleon";
