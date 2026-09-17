@@ -32,7 +32,7 @@
       flake = false;
     };
     packages-revealjs = {
-      url = "github:hakimel/reveal.js/6.0.1";
+      url = "github:hakimel/reveal.js/6.0.2";
       flake = false;
     };
   };
