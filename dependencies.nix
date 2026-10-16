@@ -67,8 +67,8 @@ with pkgs;
 
   msmtp
 ]
-++ lib.optionals (!stdenv.isLinux) [
+++ lib.optionals (!stdenv.hostPlatform.isLinux) [
   coreutils-prefixed
   gnused
 ]
-++ (if stdenv.isDarwin then [ terminal-notifier ] else [ libnotify ])
+++ (if stdenv.hostPlatform.isDarwin then [ terminal-notifier ] else [ libnotify ])
