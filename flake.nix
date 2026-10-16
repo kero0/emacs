@@ -19,10 +19,6 @@
       };
     };
 
-    packages-eglot-booster = {
-      url = "github:jdtsmith/eglot-booster";
-      flake = false;
-    };
     packages-logview = {
       url = "github:doublep/logview/android-mode";
       flake = false;

@@ -2105,17 +2105,6 @@ Do something in other window
   :unless noninteractive
   :after (eglot tempel))
 #+end_src
-** Booster
-#+begin_src emacs-lisp
-(use-package eglot-booster
-  :after eglot
-  :custom
-  (eglot-booster-io-only (not (version< emacs-version "30")))
-  :config
-  (setf (car eglot-booster--boost) (executable-find "emacs-lsp-booster"))
-  (setf (car eglot-booster--boost-io-only) (executable-find "emacs-lsp-booster"))
-  (eglot-booster-mode))
-#+end_src
 ** Flycheck Eglot
 #+begin_src emacs-lisp
 (use-package flycheck-eglot

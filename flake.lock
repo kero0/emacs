@@ -104,22 +104,6 @@
         "type": "github"
       }
     },
-    "packages-eglot-booster": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1782829258,
-        "narHash": "sha256-HhWR40j/WFcorp8QttXtOz5yxL1B4JUXL+9IuNpoND0=",
-        "owner": "jdtsmith",
-        "repo": "eglot-booster",
-        "rev": "510f579409627c333ef0e9157db713b1004da842",
-        "type": "github"
-      },
-      "original": {
-        "owner": "jdtsmith",
-        "repo": "eglot-booster",
-        "type": "github"
-      }
-    },
     "packages-logview": {
       "flake": false,
       "locked": {
@@ -175,7 +159,6 @@
         "emacs-overlay": "emacs-overlay",
         "git-hooks": "git-hooks",
         "nixpkgs": "nixpkgs_2",
-        "packages-eglot-booster": "packages-eglot-booster",
         "packages-logview": "packages-logview",
         "packages-ox-chameleon": "packages-ox-chameleon",
         "packages-revealjs": "packages-revealjs"
