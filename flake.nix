@@ -152,11 +152,6 @@
                     early-default
                   ];
                   override = self: super: {
-                    eglot-booster = mkTrivialPkg {
-                      pkgs = self;
-                      name = "eglot-booster";
-                      buildInputs = [ ];
-                    };
                     logview = super.logview.overrideAttrs { src = inputs.packages-logview; };
                     ox-chameleon = mkTrivialPkg {
                       pkgs = self;
@@ -172,26 +167,36 @@
                 pname = "emacs";
                 paths = [ emacsWithPkgs ];
                 nativeBuildInputs = [ pkgs.makeWrapper ];
-                postBuild = ''
-                  for executable in $(ls $out/bin/* $out/Applications/*.app/Contents/MacOS/*); do
-                    wrapProgram "$executable" \
-                        --set MY_EMACS_PATH ${./.} \
-                        --prefix PATH : ${emacsWithPkgs}/bin:${dependencies}/bin \
-                        --set MY_TREESIT_PATH "${base.pkgs.treesit-grammars.with-all-grammars}/lib" \
-                        --set FONTCONFIG_FILE ${
-                          pkgs.makeFontsConf {
-                            fontDirectories = [
-                              "${fonts}/share/fonts"
-                            ];
-                          }
-                        } \
-                        --set OSFONTDIR "${fonts}/share/fonts" \
-                        --set TYPST_FONT_PATHS "${fonts}/share/fonts" \
-                        --set ASPELL_CONF 'dict-dir ${dependencies}/lib/aspell' \
-                        --set ORG_REVEAL_ROOT '${inputs.packages-revealjs}'
+                postBuild =
+                  let
+                    reexec = pkgs.writeShellScript "emacs-zsh-reexec" ''
+                      if [ -z "$__EMACS_ZSHENV_LOADED" ]; then
+                          export __EMACS_ZSHENV_LOADED=1
+                          exec ${pkgs.zsh}/bin/zsh -l -c 'exec "$0" "$@"' "$0" "$@"
+                      fi
+                    '';
+                  in
+                  ''
+                    for executable in $(ls $out/bin/* $out/Applications/*.app/Contents/MacOS/*); do
+                      wrapProgram "$executable" \
+                          --run 'source ${reexec}' \
+                          --set MY_EMACS_PATH ${./.} \
+                          --prefix PATH : ${emacsWithPkgs}/bin:${dependencies}/bin \
+                          --set MY_TREESIT_PATH "${base.pkgs.treesit-grammars.with-all-grammars}/lib" \
+                          --set FONTCONFIG_FILE ${
+                            pkgs.makeFontsConf {
+                              fontDirectories = [
+                                "${fonts}/share/fonts"
+                              ];
+                            }
+                          } \
+                          --set OSFONTDIR "${fonts}/share/fonts" \
+                          --set TYPST_FONT_PATHS "${fonts}/share/fonts" \
+                          --set ASPELL_CONF 'dict-dir ${dependencies}/lib/aspell' \
+                          --set ORG_REVEAL_ROOT '${inputs.packages-revealjs}'
 
-                  done
-                '';
+                    done
+                  '';
                 inherit (base) meta src version;
               };
             default = mkEmacs { };
