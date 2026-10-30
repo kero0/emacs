@@ -57,14 +57,14 @@
             version = "0.0.0";
             inherit src;
           }).overrideAttrs
-          (old: {
-            installPhase =
-              old.installPhase
-              + (builtins.concatStringsSep "\n" (map (s: ''cp -r "${s}" "$LISPDIR"'') extraFiles));
-            passthru = (old.passthru or { }) // {
-              treeSitter = true;
-            };
-          })
+            (old: {
+              installPhase =
+                old.installPhase
+                + (builtins.concatStringsSep "\n" (map (s: ''cp -r "${s}" "$LISPDIR"'') extraFiles));
+              passthru = (old.passthru or { }) // {
+                treeSitter = true;
+              };
+            })
         );
       f =
         system:
@@ -138,7 +138,7 @@
                     cp ${src}/config.org $out/config.org
                     ${base}/bin/emacs -Q --batch $out/config.org -f org-babel-tangle
                     mv $out/early-init.el $out/early-default.el
-                    rm $out/config.org
+                    rm $out/config.org $out/config.el
                   '';
                 };
                 emacsWithPkgs = pkgs.emacsWithPackagesFromUsePackage {
@@ -153,6 +153,14 @@
                   ];
                   override = self: super: {
                     logview = super.logview.overrideAttrs { src = inputs.packages-logview; };
+                    typst-ts-mode = super.typst-ts-mode.overrideAttrs (old: {
+                      src = pkgs.runCommand old.src.name { } ''
+                        mkdir pkg && cd pkg
+                        tar xf ${old.src}
+                        sed -i '/^;;;###autoload$/{N;/\n(define-compilation-mode/s/^;;;###autoload\n//}' */typst-ts-compile.el
+                        tar cf $out --sort=name --owner=0 --group=0 --numeric-owner --mtime=@1 *
+                      '';
+                    });
                     ox-chameleon = mkTrivialPkg {
                       pkgs = self;
                       name = "ox-chameleon";

@@ -17,9 +17,6 @@ with pkgs;
   zstd.bin
   zstd
 
-  # lsp
-  emacs-lsp-booster
-
   # spell
   enchant
   (aspellWithDicts (
