@@ -19,12 +19,7 @@ with pkgs;
 
   # spell
   enchant
-  (aspellWithDicts (
-    dicts: with dicts; [
-      en
-      en-computers
-    ]
-  ))
+  (aspellWithDicts (dicts: with dicts; [ en ]))
 
   ghostscript
 
