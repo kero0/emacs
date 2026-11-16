@@ -2787,6 +2787,13 @@ signatures and their parameter docs), fetched now and shown in the
    mu4e-update-interval (* 10 60)
    mu4e-get-mail-command "mbsync -a"
 
+   mu4e-index-lazy-check t
+   message-kill-buffer-on-exit t
+   mu4e-attachment-dir (expand-file-name "~/Downloads")
+   mu4e-headers-date-format "%F"
+   mu4e-headers-time-format "%R"
+   mu4e-compose-dont-reply-to-self t
+
    ;; Context policy
    mu4e-context-policy 'pick-first
    mu4e-compose-context-policy 'ask
