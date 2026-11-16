@@ -2720,7 +2720,8 @@ signatures and their parameter docs), fetched now and shown in the
   :if my/enable/mu4e
   :ensure nil
   :functions (make-mu4e-context mu4e-message mu4e-message-field
-              my/create-mu4e-context my/wrap-signature my/gmail-signature my/gatech-signature)
+              my/create-mu4e-context my/wrap-signature my/gmail-signature my/gatech-signature
+              my/gmail-address-p)
   :defines (mu4e-confirm-quit mu4e-change-filenames-when-moving mu4e-update-interval
             mu4e-get-mail-command mu4e-context-policy mu4e-compose-context-policy mu4e-contexts)
   :commands mu4e
@@ -2730,6 +2731,8 @@ signatures and their parameter docs), fetched now and shown in the
   :config
   (my/local-leader-def mu4e-headers-mode
       "u" '("Update" . mu4e-update-mail-and-index))
+  (defun my/gmail-address-p (address)
+    (string-search "gmail" address))
   ;; Context switching for multiple accounts
   (defun my/create-mu4e-context (name address signature server &optional key)
     (unless key (setq key (substring name 0 1)))
@@ -2742,12 +2745,15 @@ signatures and their parameter docs), fetched now and shown in the
                      (string-prefix-p (format "/%s/" name)
                                       (mu4e-message-field msg :maildir))))
      :vars `((user-mail-address . ,address)
+             ;; gmail keeps its own copy of sent mail
+             (mu4e-sent-messages-behavior . ,(if (my/gmail-address-p address) 'delete 'sent))
              (user-full-name . ,user-full-name)
              (mu4e-compose-signature . ,signature)
-             (mu4e-sent-folder . ,(format (if (string-search "gmail" address) "/%s/[Gmail]/Sent Mail" "/%s/Sent") name))
+             (mu4e-sent-folder . ,(format (if (my/gmail-address-p address) "/%s/[Gmail]/Sent Mail" "/%s/Sent") name))
              (mu4e-drafts-folder . ,(format "/%s/[Gmail]/Drafts" name))
              (mu4e-trash-folder . ,(format "/%s/[Gmail]/Trash" name))
-             (mu4e-refile-folder . ,(format "/%s/Archive" name))
+             ;; archiving on gmail is just taking the inbox label off
+             (mu4e-refile-folder . ,(format (if (my/gmail-address-p address) "/%s/[Gmail]/All Mail" "/%s/Archive") name))
              (smtpmail-smtp-user . ,address)
              (smtpmail-smtp-server . ,server)
              (smtpmail-smtp-service . 587)
