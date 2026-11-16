@@ -2795,7 +2795,7 @@ signatures and their parameter docs), fetched now and shown in the
 (after! mu4e
         (setopt message-send-mail-function #'message-send-mail-with-sendmail
               sendmail-program (executable-find "msmtp")
-              send-mail-function #'smtpmail-send-it
+              send-mail-function #'sendmail-send-it
               message-sendmail-f-is-evil t
               message-sendmail-extra-arguments '("--read-envelope-from")))
 #+end_src
