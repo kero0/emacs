@@ -2739,7 +2739,7 @@ signatures and their parameter docs), fetched now and shown in the
      :leave-func (lambda () (mu4e-message "Leaving context %s" name))
      :match-func (lambda (msg)
                    (when msg
-                     (string-prefix-p (format "/%s" address)
+                     (string-prefix-p (format "/%s/" name)
                                       (mu4e-message-field msg :maildir))))
      :vars `((user-mail-address . ,address)
              (user-full-name . ,user-full-name)
