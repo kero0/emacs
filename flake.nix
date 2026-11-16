@@ -123,7 +123,7 @@
                   inherit patches;
                   installPhase = ''
                     mkdir -p $out
-                    cp -r ${./.}/* $out/
+                    cp -r ./* $out/
                   '';
                 };
                 dependencies = pkgs.symlinkJoin {
